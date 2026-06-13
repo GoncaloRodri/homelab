@@ -7,31 +7,22 @@ on:
       - apps/auth/services/users/**
       - go.mod
       - go.sum
-
-env:
-  IMAGE: homelab/auth-users
+  pull_request:
+    paths:
+      - apps/auth/services/users/**
+      - go.mod
+      - go.sum
 
 jobs:
-  build-and-deploy:
-    runs-on: self-hosted
+  test:
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build image
-        run: |
-          docker build \
-            -t ${{ env.IMAGE }}:${{ github.sha }} \
-            -t ${{ env.IMAGE }}:latest \
-            -f apps/auth/services/users/Dockerfile \
-            .
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
 
-      - name: Import image into k3d
-        run: k3d image import ${{ env.IMAGE }}:${{ github.sha }} -c homelab
-
-      - name: Deploy
-        run: |
-          kubectl set image deployment/users \
-            users=${{ env.IMAGE }}:${{ github.sha }} \
-            -n auth
-          kubectl rollout status deployment/users -n auth --timeout=120s
+      - name: Test
+        run: go test ./apps/auth/services/users/...
