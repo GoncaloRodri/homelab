@@ -12,7 +12,28 @@ terraform {
       source  = "hashicorp/random"
       version = "~> 3.6"
     }
+    github = {
+      source  = "integrations/github"
+      version = "~> 6.0"
+    }
   }
+}
+
+variable "github_token" {
+  description = "GitHub PAT with repo and write:packages scopes (used for Actions secrets and ghcr.io pull)"
+  type        = string
+  sensitive   = true
+}
+
+variable "github_owner" {
+  description = "GitHub username / org that owns the homelab repo"
+  type        = string
+  default     = "GoncaloRodri"
+}
+
+provider "github" {
+  token = var.github_token
+  owner = var.github_owner
 }
 
 locals {
