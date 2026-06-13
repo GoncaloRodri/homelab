@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: api
-          image: homelab/api:latest
+          image: homelab/finance-api:latest
           imagePullPolicy: IfNotPresent
           ports:
             - name: http

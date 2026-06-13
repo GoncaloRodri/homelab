@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(/opt/homebrew/bin/gh pr create --draft --title 'feat\\(finance\\): improved UX across dashboard, transactions, reports and categories' --body ' *)",
+      "Bash(/opt/homebrew/bin/gh auth *)",
+      "Bash(go build *)",
+      "Bash(go test *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "mcp__visualize__read_me"
+    ]
+  }
+}
