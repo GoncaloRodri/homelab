@@ -207,6 +207,8 @@ type PortfolioData struct {
 	TotalPCLCents    int64
 	TotalPCLPct      float64
 	RealizedPCLCents int64
+	// ISINs for which no price could be fetched (so user can supply a ticker)
+	MissingPrices []string
 }
 
 type SharingData struct {

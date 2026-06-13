@@ -328,6 +328,36 @@ var defaultCategories = []struct {
 	{"Other", "#9E9E9E"},
 }
 
+func (s *Store) tickerMappings() *mgmongo.Collection {
+	return s.db.Collection("finance_ticker_mappings")
+}
+
+func (s *Store) getTickerMappings(ctx context.Context, userID string) ([]TickerMapping, error) {
+	ctx, span := mongo.StartSpan(ctx, "Store.getTickerMappings")
+	defer span.End()
+	cur, err := s.tickerMappings().Find(ctx, bson.M{"user_id": userID})
+	if err != nil {
+		return nil, err
+	}
+	defer cur.Close(ctx)
+	var items []TickerMapping
+	if err := cur.All(ctx, &items); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+func (s *Store) saveTickerMapping(ctx context.Context, userID, isin, ticker string) error {
+	ctx, span := mongo.StartSpan(ctx, "Store.saveTickerMapping")
+	defer span.End()
+	_, err := s.tickerMappings().UpdateOne(ctx,
+		bson.M{"_id": isin, "user_id": userID},
+		bson.M{"$set": bson.M{"ticker": ticker, "user_id": userID}},
+		options.UpdateOne().SetUpsert(true),
+	)
+	return err
+}
+
 func (s *Store) households() *mgmongo.Collection {
 	return s.db.Collection("finance_households")
 }
