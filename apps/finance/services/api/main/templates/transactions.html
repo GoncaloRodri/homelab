@@ -1,5 +1,11 @@
 {{define "content"}}
 {{$d := .}}
+{{if eq $d.Notice "all_duplicates"}}
+<div style="background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.4); border-radius:10px; padding:12px 16px; margin-bottom:20px; display:flex; align-items:center; gap:10px;">
+  <span style="font-size:1.1rem;">⚠</span>
+  <span style="font-size:0.9rem;">Every row in that file was already imported — nothing was added.</span>
+</div>
+{{end}}
 <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px;">
   <h1>Transactions</h1>
   <button class="btn btn-primary" onclick="openAddModal()">+ Add Transaction</button>

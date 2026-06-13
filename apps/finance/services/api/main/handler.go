@@ -642,19 +642,20 @@ func (h *Handler) Transactions(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render(w, txnsTmpl, map[string]interface{}{
-		"UserID":       a.UserID,
-		"Email":        a.Email,
-		"Title":        "Transactions",
-		"Route":        "transactions",
-		"IsOwner":      true,
-		"Txns":         txns,
-		"Categories":   cats,
-		"Accounts":     accounts,
-		"AccountNames": accountNames,
+		"UserID":         a.UserID,
+		"Email":          a.Email,
+		"Title":          "Transactions",
+		"Route":          "transactions",
+		"IsOwner":        true,
+		"Txns":           txns,
+		"Categories":     cats,
+		"Accounts":       accounts,
+		"AccountNames":   accountNames,
 		"CategoryColors": catColors,
-		"Cat":          cat,
-		"Search":       search,
-		"Days":         daysStr,
+		"Cat":            cat,
+		"Search":         search,
+		"Days":           daysStr,
+		"Notice":         r.URL.Query().Get("notice"),
 	})
 }
 
@@ -2241,48 +2242,13 @@ func (h *Handler) Household(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) AutoImport(w http.ResponseWriter, r *http.Request) {
 	auth := getAuth(r)
-	ctx := r.Context()
-
-	if r.Method == http.MethodPost {
-		_ = r.ParseForm()
-		sched := &ImportSchedule{
-			ID:        bson.NewObjectID().Hex(),
-			UserID:    auth.UserID,
-			AccountID: r.FormValue("account_id"),
-			Label:     r.FormValue("label"),
-			Format:    r.FormValue("format"),
-			URL:       r.FormValue("url"),
-			Active:    r.FormValue("active") == "on",
-			CreatedAt: time.Now(),
-		}
-		if err := h.store.createImportSchedule(ctx, sched); err != nil {
-			http.Error(w, "failed to create schedule", http.StatusInternalServerError)
-			return
-		}
-		http.Redirect(w, r, "/auto-import", http.StatusSeeOther)
-		return
-	}
-
-	if r.Method == http.MethodDelete {
-		id := r.PathValue("id")
-		if err := h.store.deleteImportSchedule(ctx, id, auth.UserID); err != nil {
-			http.Error(w, "failed to delete schedule", http.StatusInternalServerError)
-			return
-		}
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
-
-	schedules, _ := h.store.getImportSchedules(ctx, auth.UserID)
-	accounts, _ := h.store.getAccounts(ctx, auth.UserID)
-
+	accounts, _ := h.store.getAccounts(r.Context(), auth.UserID)
 	render(w, autoImportTmpl, &AutoImportData{
-		UserID:    auth.UserID,
-		Email:     auth.Email,
-		Title:     "Auto Import",
-		Route:     "/auto-import",
-		Accounts:  accounts,
-		Schedules: schedules,
+		UserID:   auth.UserID,
+		Email:    auth.Email,
+		Title:    "Import Guide",
+		Route:    "/auto-import",
+		Accounts: accounts,
 	})
 }
 
@@ -2320,8 +2286,6 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /household", h.Household)
 	mux.HandleFunc("DELETE /household", h.Household)
 	mux.HandleFunc("GET /auto-import", h.AutoImport)
-	mux.HandleFunc("POST /auto-import", h.AutoImport)
-	mux.HandleFunc("DELETE /auto-import/{id}", h.AutoImport)
 }
 
 func sortStrings(s []string) {
