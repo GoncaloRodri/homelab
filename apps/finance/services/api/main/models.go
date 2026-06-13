@@ -219,6 +219,38 @@ type SharingUser struct {
 	Email string
 }
 
+type SimulatorGoal struct {
+	Name         string
+	MonthlyCents int64
+	MonthsLeft   int64
+	Committed    bool
+}
+
+type SimulatorData struct {
+	UserID   string
+	Email    string
+	Title    string
+	Route    string
+
+	// current state passed to JS
+	IncomeCents      int64
+	FixedCents       int64 // recurring fixed costs (no goals)
+	GoalsCents       int64 // committed goal contributions
+	DisposableCents  int64 // income − fixed − goals
+	AvgSavingsCents  int64 // 3-month avg monthly savings
+	Goals            []SimulatorGoal
+
+	// savings rate history: one point per past month
+	SavingsHistory []SavingsPoint
+}
+
+type SavingsPoint struct {
+	Month       string
+	IncomeCents int64
+	SavedCents  int64
+	RatePct     int
+}
+
 type NetWorthPoint struct {
 	Month      string // "2025-01"
 	AssetCents int64
