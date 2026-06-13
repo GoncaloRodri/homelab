@@ -113,8 +113,9 @@ var FixedCategories = map[string]bool{
 }
 
 type RecurringExpense struct {
-	Category    string
+	Category     string
 	MonthlyCents int64
+	IsGoal       bool   // true when this entry comes from a committed goal
 }
 
 type DashboardData struct {
@@ -140,8 +141,9 @@ type DashboardData struct {
 	MonthSpentPct      int    // % of disposable already spent
 
 	RecurringExpenses  []RecurringExpense
-	BankShouldBe       int64  // sum of upcoming fixed costs + safety buffer
-	SafetyBufferCents  int64
+	BankShouldBe          int64
+	SafetyBufferCents     int64
+	TotalCommittedCents   int64  // sum of all fixed costs + committed goals
 
 	SavingsRatePct     int    // savings / income * 100 this month
 	LastMonthSavingsRatePct int

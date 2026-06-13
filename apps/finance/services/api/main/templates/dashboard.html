@@ -236,10 +236,14 @@
     {{$color := index $d.CategoryColors .Category}}
     <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border);">
       <div style="display:flex; align-items:center; gap:10px;">
-        {{if $color}}<span style="width:9px; height:9px; border-radius:50%; background:{{$color}}; flex-shrink:0; display:inline-block;"></span>{{end}}
+        {{if .IsGoal}}
+        <span style="width:9px; height:9px; border-radius:50%; background:var(--accent); flex-shrink:0; display:inline-block;"></span>
+        {{else if $color}}
+        <span style="width:9px; height:9px; border-radius:50%; background:{{$color}}; flex-shrink:0; display:inline-block;"></span>
+        {{end}}
         <div>
           <div style="font-size:13px; font-weight:500; color:var(--text);">{{.Category}}</div>
-          <div style="font-size:11px; color:var(--text3);">committed monthly cost</div>
+          <div style="font-size:11px; color:var(--text3);">{{if .IsGoal}}committed goal{{else}}recurring expense{{end}}</div>
         </div>
       </div>
       <div style="text-align:right;">
@@ -249,8 +253,9 @@
     </div>
     {{end}}
     <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 0 0 0;">
-      <span style="font-size:13px; font-weight:500; color:var(--text);">Total fixed</span>
-      <span style="font-size:15px; font-weight:600; color:var(--red);">− €{{cents $d.BankShouldBe}}</span>
+      <span style="font-size:13px; font-weight:500; color:var(--text);">Total committed</span>
+      <span class="animate-counter" style="font-size:15px; font-weight:600; color:var(--red);"
+            data-target="{{$d.TotalCommittedCents}}" data-prefix="€">€0</span>
     </div>
   </div>
 </div>
