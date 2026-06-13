@@ -140,6 +140,48 @@
     .nav a:not(.nav-brand):hover { color: var(--text); background: var(--surface2); }
     .nav a.active { color: var(--accent2); background: var(--accent-glow); }
     .nav-spacer { flex: 1; }
+
+    /* ── Nav dropdown ─────────────────────────────────────────────────── */
+    .nav-group { position: relative; }
+    .nav-group-btn {
+      display: flex; align-items: center; gap: 4px;
+      color: var(--text2);
+      font-size: 13.5px; font-weight: 500;
+      padding: 6px 10px;
+      border-radius: var(--radius-sm);
+      border: none; background: none; cursor: pointer;
+      transition: all 0.18s ease; white-space: nowrap;
+    }
+    .nav-group-btn:hover { color: var(--text); background: var(--surface2); }
+    .nav-group-btn.active { color: var(--accent2); background: var(--accent-glow); }
+    .nav-group-btn svg { width:10px; height:10px; transition: transform 0.18s ease; }
+    .nav-group:hover .nav-group-btn svg { transform: rotate(180deg); }
+    .nav-dropdown {
+      display: none;
+      position: absolute; top: calc(100% + 6px); left: 0;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-md);
+      min-width: 160px;
+      z-index: 200;
+      padding: 6px;
+      flex-direction: column; gap: 2px;
+    }
+    .nav-group:hover .nav-dropdown { display: flex; }
+    .nav-dropdown a {
+      display: block;
+      padding: 7px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 13px; font-weight: 500;
+      color: var(--text2); text-decoration: none;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+    .nav-dropdown a:hover { color: var(--text); background: var(--surface2); }
+    .nav-dropdown a.active { color: var(--accent2); background: var(--accent-glow); }
+    .nav-dropdown hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
+
     .nav-email {
       font-size: 12px;
       color: var(--text3);
@@ -391,21 +433,39 @@
       <div class="nav-brand-icon">₣</div>
       Finance
     </a>
-    <a href="/"            class="{{if eq .Route "dashboard"}}active{{end}}">Dashboard</a>
+    <a href="/"             class="{{if eq .Route "dashboard"}}active{{end}}">Dashboard</a>
     <a href="/transactions" class="{{if eq .Route "transactions"}}active{{end}}">Transactions</a>
-    <a href="/import"       class="{{if eq .Route "import"}}active{{end}}">Import</a>
-    <a href="/accounts"     class="{{if eq .Route "accounts"}}active{{end}}">Accounts</a>
-    <a href="/categories"   class="{{if eq .Route "categories"}}active{{end}}">Categories</a>
-    <a href="/reports"      class="{{if eq .Route "reports"}}active{{end}}">Reports</a>
-    <a href="/projections"  class="{{if eq .Route "projections"}}active{{end}}">Projections</a>
     <a href="/portfolio"    class="{{if eq .Route "portfolio"}}active{{end}}">Portfolio</a>
     <a href="/goals"        class="{{if eq .Route "goals"}}active{{end}}">Goals</a>
-    <a href="/networth"     class="{{if eq .Route "networth"}}active{{end}}">Net Worth</a>
-    <a href="/simulator"    class="{{if eq .Route "simulator"}}active{{end}}">What If</a>
-    <a href="/tax"          class="{{if eq .Route "tax"}}active{{end}}">Tax</a>
-    <a href="/household"    class="{{if eq .Route "household"}}active{{end}}">Household</a>
-    <a href="/auto-import"  class="{{if eq .Route "auto-import"}}active{{end}}">Import Guide</a>
-    <a href="/sharing"      class="{{if eq .Route "sharing"}}active{{end}}">Sharing</a>
+
+    {{$analysisActive := or (eq .Route "reports") (eq .Route "projections") (eq .Route "networth") (eq .Route "simulator") (eq .Route "tax")}}
+    <div class="nav-group">
+      <button class="nav-group-btn {{if $analysisActive}}active{{end}}">
+        Analysis <svg viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 1l4 4 4-4"/></svg>
+      </button>
+      <div class="nav-dropdown">
+        <a href="/reports"     class="{{if eq .Route "reports"}}active{{end}}">Reports</a>
+        <a href="/projections" class="{{if eq .Route "projections"}}active{{end}}">Projections</a>
+        <a href="/tax"         class="{{if eq .Route "tax"}}active{{end}}">Tax</a>
+        <hr>
+        <a href="/networth"    class="{{if eq .Route "networth"}}active{{end}}">Net Worth</a>
+        <a href="/simulator"   class="{{if eq .Route "simulator"}}active{{end}}">What If</a>
+      </div>
+    </div>
+
+    <a href="/people"       class="{{if eq .Route "people"}}active{{end}}">People</a>
+
+    {{$settingsActive := or (eq .Route "settings") (eq .Route "auto-import")}}
+    <div class="nav-group">
+      <button class="nav-group-btn {{if $settingsActive}}active{{end}}">
+        Settings <svg viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 1l4 4 4-4"/></svg>
+      </button>
+      <div class="nav-dropdown">
+        <a href="/settings?tab=accounts"    class="{{if eq .Route "settings"}}active{{end}}">Accounts & Categories</a>
+        <a href="/import"                   class="{{if eq .Route "import"}}active{{end}}">Import CSV</a>
+        <a href="/auto-import"              class="{{if eq .Route "auto-import"}}active{{end}}">Import Guide</a>
+      </div>
+    </div>
     <div class="nav-spacer"></div>
     <span class="nav-email">{{.Email}}</span>
     <button class="theme-btn" id="theme-toggle" title="Toggle dark/light mode">🌙</button>
