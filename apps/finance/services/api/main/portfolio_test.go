@@ -176,6 +176,27 @@ func TestTopMerchants(t *testing.T) {
 	}
 }
 
+func TestTickerStoreResolve(t *testing.T) {
+	ts := &tickerStore{mappings: []TickerMapping{
+		{ISIN: "IE00B3WJKG14", Ticker: "VWCE.DE"},
+		{ISIN: "US0378331005", Ticker: "AAPL"},
+	}}
+	tests := []struct {
+		isin string
+		want string
+	}{
+		{"IE00B3WJKG14", "VWCE.DE"},
+		{"US0378331005", "AAPL"},
+		{"XX0000000000", ""},
+	}
+	for _, tt := range tests {
+		got := ts.resolve(tt.isin)
+		if got != tt.want {
+			t.Errorf("resolve(%q) = %q, want %q", tt.isin, got, tt.want)
+		}
+	}
+}
+
 func TestAutoCategorize(t *testing.T) {
 	tests := []struct {
 		desc   string
