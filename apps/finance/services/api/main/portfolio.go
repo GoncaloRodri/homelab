@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"math"
 	"net/http"
 	"sort"
@@ -13,6 +14,30 @@ import (
 type TickerMapping struct {
 	ISIN   string `bson:"_id" json:"isin"`
 	Ticker string `bson:"ticker" json:"ticker"`
+}
+
+// isinToTicker maps well-known ISIN codes to their Yahoo Finance ticker symbols.
+// Add entries here for any ETF/stock you trade that isn't covered yet.
+var isinToTicker = map[string]string{
+	// Vanguard
+	"IE00B3RBWM25": "VWCE.DE",  // VWCE — All-World
+	"IE00B3XXRP09": "VWRL.AS",  // VWRL — All-World
+	"IE00BK5BQT80": "VWRA.L",   // VWRA — All-World (acc, LSE)
+	// iShares
+	"IE00B4L5Y983": "EUNL.DE",  // EUNL — MSCI World
+	"IE00B5BMR087": "SXR8.DE",  // SXR8 — S&P 500
+	"IE00B4K48X80": "SXRV.DE",  // SXRV — S&P 500 EUR hedged
+	"IE00B52MJY50": "IUSA.AS",  // IUSA — S&P 500
+	"IE00B0M63177": "IWRD.AS",  // IWRD — MSCI World
+	"IE00B4ND3602": "EMIM.AS",  // EMIM — Emerging Markets
+	"IE00BKM4GZ66": "IS3N.DE",  // IS3N — Core MSCI EM
+	"IE00B4L5YC18": "CSSPX.MI", // CSSPX — Core S&P 500
+	// Xtrackers
+	"LU0274208692": "DBXW.DE",  // DBXW — MSCI World
+	"LU0490618542": "XMWO.DE",  // XMWO — MSCI World Swap
+	// Amundi
+	"LU1681043599": "CW8.PA",   // CW8 — MSCI World
+	"FR0010315770": "CU2.PA",   // CU2 — S&P 500
 }
 
 type yahooChartResponse struct {
@@ -124,21 +149,27 @@ type TickerStore interface {
 	Load() error
 }
 
-func fetchPrices(tickers []string) (map[string]int64, error) {
-	if len(tickers) == 0 {
+// fetchPricesByISIN resolves each ISIN to a Yahoo Finance ticker (via isinToTicker),
+// fetches the current market price, and returns a map keyed by ISIN.
+// ISINs with no known ticker mapping are tried directly as a ticker (fallback).
+func fetchPricesByISIN(isins []string) (map[string]int64, error) {
+	if len(isins) == 0 {
 		return map[string]int64{}, nil
 	}
 
 	result := make(map[string]int64)
 	client := &http.Client{Timeout: 10 * time.Second}
 
-	for _, ticker := range tickers {
-		if ticker == "" {
-			continue
+	for _, isin := range isins {
+		ticker, ok := isinToTicker[isin]
+		if !ok {
+			ticker = isin // last-resort fallback
 		}
+
 		url := fmt.Sprintf("https://query1.finance.yahoo.com/v8/finance/chart/%s", ticker)
 		resp, err := client.Get(url)
 		if err != nil {
+			slog.Warn("price fetch failed", "isin", isin, "ticker", ticker, "err", err)
 			continue
 		}
 		body, err := io.ReadAll(resp.Body)
@@ -154,14 +185,17 @@ func fetchPrices(tickers []string) (map[string]int64, error) {
 
 		if len(chart.Chart.Result) > 0 {
 			price := chart.Chart.Result[0].Meta.RegularMarketPrice
-			result[ticker] = int64(price * 100)
+			if price > 0 {
+				result[isin] = int64(price * 100)
+				slog.Info("price fetched", "isin", isin, "ticker", ticker, "price_cents", result[isin])
+			}
 		}
 	}
 
 	return result, nil
 }
 
-func holdingsByISIN(trades []Trade) []string {
+func uniqueISINs(trades []Trade) []string {
 	seen := make(map[string]bool)
 	var result []string
 	for _, t := range trades {
