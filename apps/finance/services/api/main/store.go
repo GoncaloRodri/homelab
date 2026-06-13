@@ -260,6 +260,40 @@ func (s *Store) createPermission(ctx context.Context, p *Permission) error {
 	return err
 }
 
+func (s *Store) goals() *mgmongo.Collection {
+	return s.db.Collection("finance_goals")
+}
+
+func (s *Store) getGoals(ctx context.Context, userID string) ([]Goal, error) {
+	ctx, span := mongo.StartSpan(ctx, "Store.getGoals")
+	defer span.End()
+	opts := options.Find().SetSort(bson.M{"created_at": 1})
+	cur, err := s.goals().Find(ctx, bson.M{"user_id": userID}, opts)
+	if err != nil {
+		return nil, fmt.Errorf("find goals: %w", err)
+	}
+	defer cur.Close(ctx)
+	var goals []Goal
+	if err := cur.All(ctx, &goals); err != nil {
+		return nil, fmt.Errorf("decode goals: %w", err)
+	}
+	return goals, nil
+}
+
+func (s *Store) createGoal(ctx context.Context, g *Goal) error {
+	ctx, span := mongo.StartSpan(ctx, "Store.createGoal")
+	defer span.End()
+	_, err := s.goals().InsertOne(ctx, g)
+	return err
+}
+
+func (s *Store) deleteGoal(ctx context.Context, id, userID string) error {
+	ctx, span := mongo.StartSpan(ctx, "Store.deleteGoal")
+	defer span.End()
+	_, err := s.goals().DeleteOne(ctx, bson.M{"_id": id, "user_id": userID})
+	return err
+}
+
 func (s *Store) deletePermission(ctx context.Context, ownerID, viewerID string) error {
 	ctx, span := mongo.StartSpan(ctx, "Store.deletePermission")
 	defer span.End()
