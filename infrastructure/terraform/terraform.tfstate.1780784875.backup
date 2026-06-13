@@ -1,0 +1,1006 @@
+{
+  "version": 4,
+  "terraform_version": "1.15.5",
+  "serial": 172,
+  "lineage": "28673c1d-998f-000c-38f5-de7c9e848250",
+  "outputs": {},
+  "resources": [
+    {
+      "mode": "managed",
+      "type": "helm_release",
+      "name": "jaeger",
+      "provider": "provider[\"registry.terraform.io/hashicorp/helm\"]",
+      "instances": [
+        {
+          "schema_version": 1,
+          "attributes": {
+            "atomic": true,
+            "chart": "jaeger",
+            "cleanup_on_fail": false,
+            "create_namespace": false,
+            "dependency_update": false,
+            "description": null,
+            "devel": null,
+            "disable_crd_hooks": false,
+            "disable_openapi_validation": false,
+            "disable_webhooks": false,
+            "force_update": false,
+            "id": "jaeger",
+            "keyring": null,
+            "lint": false,
+            "manifest": null,
+            "max_history": 0,
+            "metadata": [
+              {
+                "app_version": "2.18.0",
+                "chart": "jaeger",
+                "first_deployed": 1780767567,
+                "last_deployed": 1780767567,
+                "name": "jaeger",
+                "namespace": "monitoring",
+                "notes": "###################################################################\n### ⚠️  EXPERIMENTAL - NO STABILITY GUARANTEES                  ###\n###                                                             ###\n### This chart is under active development.                     ###\n### Breaking changes may occur in minor versions.               ###\n###                                                             ###\n### See README.md for configuration details.                    ###\n###################################################################\n\n🚀 Congratulations on successfully installing Jaeger v2.18.0 (Chart v4.8.0)!\n\nTo access the query UI:\n  http://jaeger.homelab.local\n",
+                "revision": 1,
+                "values": "{\"jaeger\":{\"ingress\":{\"annotations\":{\"traefik.ingress.kubernetes.io/router.middlewares\":\"auth-forward-auth@kubernetescrd\"},\"enabled\":true,\"hosts\":[\"jaeger.homelab.local\"]}}}",
+                "version": "4.8.0"
+              }
+            ],
+            "name": "jaeger",
+            "namespace": "monitoring",
+            "pass_credentials": false,
+            "postrender": [],
+            "recreate_pods": false,
+            "render_subchart_notes": true,
+            "replace": false,
+            "repository": "https://jaegertracing.github.io/helm-charts",
+            "repository_ca_file": null,
+            "repository_cert_file": null,
+            "repository_key_file": null,
+            "repository_password": null,
+            "repository_username": null,
+            "reset_values": false,
+            "reuse_values": false,
+            "set": [],
+            "set_list": [],
+            "set_sensitive": [],
+            "skip_crds": false,
+            "status": "deployed",
+            "timeout": 300,
+            "upgrade_install": null,
+            "values": [
+              "\"jaeger\":\n  \"ingress\":\n    \"annotations\":\n      \"traefik.ingress.kubernetes.io/router.middlewares\": \"auth-forward-auth@kubernetescrd\"\n    \"enabled\": true\n    \"hosts\":\n    - \"jaeger.homelab.local\"\n"
+            ],
+            "verify": false,
+            "version": "4.8.0",
+            "wait": true,
+            "wait_for_jobs": false
+          },
+          "sensitive_attributes": [
+            [
+              {
+                "type": "get_attr",
+                "value": "repository_password"
+              }
+            ]
+          ],
+          "identity_schema_version": 0,
+          "private": "eyJzY2hlbWFfdmVyc2lvbiI6IjEifQ==",
+          "dependencies": [
+            "kubernetes_namespace_v1.monitoring"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "helm_release",
+      "name": "kube_prometheus_stack",
+      "provider": "provider[\"registry.terraform.io/hashicorp/helm\"]",
+      "instances": [
+        {
+          "schema_version": 1,
+          "attributes": {
+            "atomic": true,
+            "chart": "kube-prometheus-stack",
+            "cleanup_on_fail": false,
+            "create_namespace": false,
+            "dependency_update": false,
+            "description": null,
+            "devel": null,
+            "disable_crd_hooks": false,
+            "disable_openapi_validation": false,
+            "disable_webhooks": false,
+            "force_update": false,
+            "id": "kps",
+            "keyring": null,
+            "lint": false,
+            "manifest": null,
+            "max_history": 0,
+            "metadata": [
+              {
+                "app_version": "v0.91.0",
+                "chart": "kube-prometheus-stack",
+                "first_deployed": 1780767569,
+                "last_deployed": 1780767569,
+                "name": "kps",
+                "namespace": "monitoring",
+                "notes": "1. Get the application URL by running these commands:\n  export POD_NAME=$(kubectl get pods --namespace monitoring -l \"app.kubernetes.io/name=prometheus-node-exporter,app.kubernetes.io/instance=kps\" -o jsonpath=\"{.items[0].metadata.name}\")\n  echo \"Visit http://127.0.0.1:9100 to use your application\"\n  kubectl port-forward --namespace monitoring $POD_NAME 9100\n1. Get your 'admin' user password by running:\n\n   kubectl get secret --namespace monitoring kps-grafana -o jsonpath=\"{.data.admin-password}\" | base64 --decode ; echo\n\n\n2. The Grafana server can be accessed via port 80 on the following DNS name from within your cluster:\n\n   kps-grafana.monitoring.svc.cluster.local\n\n   If you bind grafana to 80, please update values in values.yaml and reinstall:\n   ```\n   securityContext:\n     runAsUser: 0\n     runAsGroup: 0\n     fsGroup: 0\n\n   command:\n   - \"setcap\"\n   - \"'cap_net_bind_service=+ep'\"\n   - \"/usr/sbin/grafana-server \u0026\u0026\"\n   - \"sh\"\n   - \"/run.sh\"\n   ```\n   Details refer to https://grafana.com/docs/installation/configuration/#http-port.\n   Or grafana would always crash.\n\n   From outside the cluster, the server URL(s) are:\n     http://grafana.homelab.local\n\n3. Login with the password from step 1 and the username: admin\n#################################################################################\n######   WARNING: Persistence is disabled!!! You will lose your data when   #####\n######            the Grafana pod is terminated.                            #####\n#################################################################################\n\nkube-prometheus-stack has been installed. Check its status by running:\n  kubectl --namespace monitoring get pods -l \"release=kps\"\n\nGet Grafana 'admin' user password by running:\n\n  kubectl --namespace monitoring get secrets kps-grafana -o jsonpath=\"{.data.admin-password}\" | base64 -d ; echo\n\nAccess Grafana local instance:\n\n  export POD_NAME=$(kubectl --namespace monitoring get pod -l \"app.kubernetes.io/name=grafana,app.kubernetes.io/instance=kps\" -oname)\n  kubectl --namespace monitoring port-forward $POD_NAME 3000\n\nGet your grafana admin user password by running:\n\n  kubectl get secret --namespace monitoring -l app.kubernetes.io/component=admin-secret -o jsonpath=\"{.items[0].data.admin-password}\" | base64 --decode ; echo\n\n\nVisit https://github.com/prometheus-operator/kube-prometheus for instructions on how to create \u0026 configure Alertmanager and Prometheus instances using the Operator.\n\nkube-state-metrics is a simple service that listens to the Kubernetes API server and generates metrics about the state of the objects.\nThe exposed metrics can be found here:\nhttps://github.com/kubernetes/kube-state-metrics/blob/master/docs/README.md#exposed-metrics\n\nThe metrics are exported on the HTTP endpoint /metrics on the listening port.\nIn your case, kps-kube-state-metrics.monitoring.svc.cluster.local:8080/metrics\n\nThey are served either as plaintext or protobuf depending on the Accept header.\nThey are designed to be consumed either by Prometheus itself or by a scraper that is compatible with scraping a Prometheus client endpoint.\n",
+                "revision": 1,
+                "values": "{\"alertmanager\":{\"enabled\":false},\"grafana\":{\"additionalDataSources\":[{\"access\":\"proxy\",\"isDefault\":false,\"name\":\"Jaeger\",\"type\":\"jaeger\",\"uid\":\"jaeger\",\"url\":\"http://jaeger.monitoring.svc:16686\"}],\"adminPassword\":\"jXWfhChbpD6QEDK2wLXbLHy7\",\"ingress\":{\"annotations\":{\"traefik.ingress.kubernetes.io/router.middlewares\":\"auth-forward-auth@kubernetescrd\"},\"enabled\":true,\"hosts\":[\"grafana.homelab.local\"],\"ingressClassName\":\"traefik\"}},\"kube-state-metrics\":{\"resources\":{\"requests\":{\"cpu\":\"50m\",\"memory\":\"128Mi\"}}},\"node-exporter\":{\"resources\":{\"requests\":{\"cpu\":\"25m\",\"memory\":\"64Mi\"}}},\"prometheus\":{\"prometheusSpec\":{\"resources\":{\"limits\":{\"cpu\":\"1\",\"memory\":\"1Gi\"},\"requests\":{\"cpu\":\"200m\",\"memory\":\"512Mi\"}}}}}",
+                "version": "86.0.2"
+              }
+            ],
+            "name": "kps",
+            "namespace": "monitoring",
+            "pass_credentials": false,
+            "postrender": [],
+            "recreate_pods": false,
+            "render_subchart_notes": true,
+            "replace": false,
+            "repository": "https://prometheus-community.github.io/helm-charts",
+            "repository_ca_file": null,
+            "repository_cert_file": null,
+            "repository_key_file": null,
+            "repository_password": null,
+            "repository_username": null,
+            "reset_values": false,
+            "reuse_values": false,
+            "set": [],
+            "set_list": [],
+            "set_sensitive": [],
+            "skip_crds": false,
+            "status": "deployed",
+            "timeout": 300,
+            "upgrade_install": null,
+            "values": [
+              "\"alertmanager\":\n  \"enabled\": false\n\"grafana\":\n  \"additionalDataSources\":\n  - \"access\": \"proxy\"\n    \"isDefault\": false\n    \"name\": \"Jaeger\"\n    \"type\": \"jaeger\"\n    \"uid\": \"jaeger\"\n    \"url\": \"http://jaeger.monitoring.svc:16686\"\n  \"adminPassword\": \"jXWfhChbpD6QEDK2wLXbLHy7\"\n  \"ingress\":\n    \"annotations\":\n      \"traefik.ingress.kubernetes.io/router.middlewares\": \"auth-forward-auth@kubernetescrd\"\n    \"enabled\": true\n    \"hosts\":\n    - \"grafana.homelab.local\"\n    \"ingressClassName\": \"traefik\"\n\"kube-state-metrics\":\n  \"resources\":\n    \"requests\":\n      \"cpu\": \"50m\"\n      \"memory\": \"128Mi\"\n\"node-exporter\":\n  \"resources\":\n    \"requests\":\n      \"cpu\": \"25m\"\n      \"memory\": \"64Mi\"\n\"prometheus\":\n  \"prometheusSpec\":\n    \"resources\":\n      \"limits\":\n        \"cpu\": \"1\"\n        \"memory\": \"1Gi\"\n      \"requests\":\n        \"cpu\": \"200m\"\n        \"memory\": \"512Mi\"\n"
+            ],
+            "verify": false,
+            "version": "86.0.2",
+            "wait": true,
+            "wait_for_jobs": false
+          },
+          "sensitive_attributes": [
+            [
+              {
+                "type": "get_attr",
+                "value": "repository_password"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "values"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 0,
+                  "type": "number"
+                }
+              }
+            ]
+          ],
+          "identity_schema_version": 0,
+          "private": "eyJzY2hlbWFfdmVyc2lvbiI6IjEifQ==",
+          "dependencies": [
+            "kubernetes_namespace_v1.monitoring",
+            "random_password.grafana"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "kubernetes_namespace",
+      "name": "auth",
+      "provider": "provider[\"registry.terraform.io/hashicorp/kubernetes\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "id": "auth",
+            "metadata": [
+              {
+                "annotations": {},
+                "generate_name": "",
+                "generation": 0,
+                "labels": {},
+                "name": "auth",
+                "resource_version": "1342",
+                "uid": "6ff9d759-4d8c-4cc0-81c5-ff88a50dfcb8"
+              }
+            ],
+            "timeouts": null,
+            "wait_for_default_service_account": false
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 1,
+          "identity": {
+            "api_version": "v1",
+            "kind": "Namespace",
+            "name": "auth"
+          },
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiZGVsZXRlIjozMDAwMDAwMDAwMDB9fQ=="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "kubernetes_namespace",
+      "name": "home",
+      "provider": "provider[\"registry.terraform.io/hashicorp/kubernetes\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "id": "home",
+            "metadata": [
+              {
+                "annotations": {},
+                "generate_name": "",
+                "generation": 0,
+                "labels": {},
+                "name": "home",
+                "resource_version": "752",
+                "uid": "8a12a328-0020-4584-b4de-3d32825d422b"
+              }
+            ],
+            "timeouts": null,
+            "wait_for_default_service_account": false
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 1,
+          "identity": {
+            "api_version": "v1",
+            "kind": "Namespace",
+            "name": "home"
+          },
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiZGVsZXRlIjozMDAwMDAwMDAwMDB9fQ=="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "kubernetes_namespace",
+      "name": "test",
+      "provider": "provider[\"registry.terraform.io/hashicorp/kubernetes\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "id": "test",
+            "metadata": [
+              {
+                "annotations": {},
+                "generate_name": "",
+                "generation": 0,
+                "labels": {},
+                "name": "test",
+                "resource_version": "1301",
+                "uid": "8d988e39-b925-469b-855e-cea4b15b58af"
+              }
+            ],
+            "timeouts": null,
+            "wait_for_default_service_account": false
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 1,
+          "identity": {
+            "api_version": "v1",
+            "kind": "Namespace",
+            "name": "test"
+          },
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiZGVsZXRlIjozMDAwMDAwMDAwMDB9fQ=="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "kubernetes_namespace_v1",
+      "name": "infrastructure",
+      "provider": "provider[\"registry.terraform.io/hashicorp/kubernetes\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "id": "infrastructure",
+            "metadata": [
+              {
+                "annotations": {},
+                "generate_name": "",
+                "generation": 0,
+                "labels": {},
+                "name": "infrastructure",
+                "resource_version": "753",
+                "uid": "c65f6fd0-1f45-4bc5-ab33-38f5f204586c"
+              }
+            ],
+            "timeouts": null,
+            "wait_for_default_service_account": false
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 1,
+          "identity": {
+            "api_version": "v1",
+            "kind": "Namespace",
+            "name": "infrastructure"
+          },
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiZGVsZXRlIjozMDAwMDAwMDAwMDB9fQ=="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "kubernetes_namespace_v1",
+      "name": "monitoring",
+      "provider": "provider[\"registry.terraform.io/hashicorp/kubernetes\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "id": "monitoring",
+            "metadata": [
+              {
+                "annotations": {},
+                "generate_name": "",
+                "generation": 0,
+                "labels": {},
+                "name": "monitoring",
+                "resource_version": "750",
+                "uid": "1d54a520-0942-48dd-8dac-9fbfed8f8ac3"
+              }
+            ],
+            "timeouts": null,
+            "wait_for_default_service_account": false
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 1,
+          "identity": {
+            "api_version": "v1",
+            "kind": "Namespace",
+            "name": "monitoring"
+          },
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiZGVsZXRlIjozMDAwMDAwMDAwMDB9fQ=="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "kubernetes_secret_v1",
+      "name": "mongo_auth",
+      "provider": "provider[\"registry.terraform.io/hashicorp/kubernetes\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "binary_data": null,
+            "binary_data_wo": null,
+            "binary_data_wo_revision": null,
+            "data": {
+              "MONGO_DB": "homelab",
+              "MONGO_URI": "mongodb://root:sNJtKbynerWlMtXMkh815cZh42K3HgsT@mongo.infrastructure:27017/homelab?authSource=admin"
+            },
+            "data_wo": null,
+            "data_wo_revision": null,
+            "id": "auth/mongo",
+            "immutable": false,
+            "metadata": [
+              {
+                "annotations": {},
+                "generate_name": "",
+                "generation": 0,
+                "labels": {},
+                "name": "mongo",
+                "namespace": "auth",
+                "resource_version": "769",
+                "uid": "4eee7588-cc92-445b-ab1e-b884faef9e8c"
+              }
+            ],
+            "timeouts": null,
+            "type": "Opaque",
+            "wait_for_service_account_token": true
+          },
+          "sensitive_attributes": [
+            [
+              {
+                "type": "get_attr",
+                "value": "binary_data"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "data"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "data"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": "MONGO_URI",
+                  "type": "string"
+                }
+              }
+            ]
+          ],
+          "identity_schema_version": 1,
+          "identity": {
+            "api_version": "v1",
+            "kind": "Secret",
+            "name": "mongo",
+            "namespace": "auth"
+          },
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMH19",
+          "dependencies": [
+            "kubernetes_namespace_v1.infrastructure",
+            "random_password.mongo"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "kubernetes_secret_v1",
+      "name": "mongo_infra",
+      "provider": "provider[\"registry.terraform.io/hashicorp/kubernetes\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "binary_data": null,
+            "binary_data_wo": null,
+            "binary_data_wo_revision": null,
+            "data": {
+              "MONGO_DB": "homelab",
+              "MONGO_INITDB_ROOT_PASSWORD": "sNJtKbynerWlMtXMkh815cZh42K3HgsT",
+              "MONGO_INITDB_ROOT_USERNAME": "root",
+              "MONGO_URI": "mongodb://root:sNJtKbynerWlMtXMkh815cZh42K3HgsT@mongo.infrastructure:27017/homelab?authSource=admin"
+            },
+            "data_wo": null,
+            "data_wo_revision": null,
+            "id": "infrastructure/mongo",
+            "immutable": false,
+            "metadata": [
+              {
+                "annotations": {},
+                "generate_name": "",
+                "generation": 0,
+                "labels": {},
+                "name": "mongo",
+                "namespace": "infrastructure",
+                "resource_version": "767",
+                "uid": "41927bd8-7f67-40a2-933a-2c82d27fb02c"
+              }
+            ],
+            "timeouts": null,
+            "type": "Opaque",
+            "wait_for_service_account_token": true
+          },
+          "sensitive_attributes": [
+            [
+              {
+                "type": "get_attr",
+                "value": "binary_data"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "data"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "data"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": "MONGO_INITDB_ROOT_PASSWORD",
+                  "type": "string"
+                }
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "data"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": "MONGO_URI",
+                  "type": "string"
+                }
+              }
+            ]
+          ],
+          "identity_schema_version": 1,
+          "identity": {
+            "api_version": "v1",
+            "kind": "Secret",
+            "name": "mongo",
+            "namespace": "infrastructure"
+          },
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMH19",
+          "dependencies": [
+            "kubernetes_namespace_v1.infrastructure",
+            "random_password.mongo"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "kubernetes_secret_v1",
+      "name": "mongo_test",
+      "provider": "provider[\"registry.terraform.io/hashicorp/kubernetes\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "binary_data": null,
+            "binary_data_wo": null,
+            "binary_data_wo_revision": null,
+            "data": {
+              "MONGO_DB": "homelab",
+              "MONGO_URI": "mongodb://root:sNJtKbynerWlMtXMkh815cZh42K3HgsT@mongo.infrastructure:27017/homelab?authSource=admin"
+            },
+            "data_wo": null,
+            "data_wo_revision": null,
+            "id": "test/mongo",
+            "immutable": false,
+            "metadata": [
+              {
+                "annotations": {},
+                "generate_name": "",
+                "generation": 0,
+                "labels": {},
+                "name": "mongo",
+                "namespace": "test",
+                "resource_version": "765",
+                "uid": "e92b52fb-c576-4ba8-8026-944b9825f583"
+              }
+            ],
+            "timeouts": null,
+            "type": "Opaque",
+            "wait_for_service_account_token": true
+          },
+          "sensitive_attributes": [
+            [
+              {
+                "type": "get_attr",
+                "value": "binary_data"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "data"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "data"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": "MONGO_URI",
+                  "type": "string"
+                }
+              }
+            ]
+          ],
+          "identity_schema_version": 1,
+          "identity": {
+            "api_version": "v1",
+            "kind": "Secret",
+            "name": "mongo",
+            "namespace": "test"
+          },
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMH19",
+          "dependencies": [
+            "kubernetes_namespace_v1.infrastructure",
+            "random_password.mongo"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "kubernetes_service_v1",
+      "name": "mongo",
+      "provider": "provider[\"registry.terraform.io/hashicorp/kubernetes\"]",
+      "instances": [
+        {
+          "schema_version": 1,
+          "attributes": {
+            "id": "infrastructure/mongo",
+            "metadata": [
+              {
+                "annotations": {},
+                "generate_name": "",
+                "generation": 0,
+                "labels": {
+                  "app": "mongo"
+                },
+                "name": "mongo",
+                "namespace": "infrastructure",
+                "resource_version": "770",
+                "uid": "c0efc1a3-164d-4b10-a3cd-309215c2debf"
+              }
+            ],
+            "spec": [
+              {
+                "allocate_load_balancer_node_ports": true,
+                "cluster_ip": "10.43.250.40",
+                "cluster_ips": [
+                  "10.43.250.40"
+                ],
+                "external_ips": [],
+                "external_name": "",
+                "external_traffic_policy": "",
+                "health_check_node_port": 0,
+                "internal_traffic_policy": "Cluster",
+                "ip_families": [
+                  "IPv4"
+                ],
+                "ip_family_policy": "SingleStack",
+                "load_balancer_class": "",
+                "load_balancer_ip": "",
+                "load_balancer_source_ranges": [],
+                "port": [
+                  {
+                    "app_protocol": "",
+                    "name": "",
+                    "node_port": 0,
+                    "port": 27017,
+                    "protocol": "TCP",
+                    "target_port": "27017"
+                  }
+                ],
+                "publish_not_ready_addresses": false,
+                "selector": {
+                  "app": "mongo"
+                },
+                "session_affinity": "None",
+                "session_affinity_config": [],
+                "type": "ClusterIP"
+              }
+            ],
+            "status": [
+              {
+                "load_balancer": [
+                  {
+                    "ingress": []
+                  }
+                ]
+              }
+            ],
+            "timeouts": null,
+            "wait_for_load_balancer": true
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 1,
+          "identity": {
+            "api_version": "v1",
+            "kind": "Service",
+            "name": "mongo",
+            "namespace": "infrastructure"
+          },
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDB9LCJzY2hlbWFfdmVyc2lvbiI6IjEifQ==",
+          "dependencies": [
+            "kubernetes_namespace_v1.infrastructure"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "kubernetes_stateful_set_v1",
+      "name": "mongo",
+      "provider": "provider[\"registry.terraform.io/hashicorp/kubernetes\"]",
+      "instances": [
+        {
+          "schema_version": 1,
+          "attributes": {
+            "id": "infrastructure/mongo",
+            "metadata": [
+              {
+                "annotations": {},
+                "generate_name": "",
+                "generation": 1,
+                "labels": {
+                  "app": "mongo"
+                },
+                "name": "mongo",
+                "namespace": "infrastructure",
+                "resource_version": "1136",
+                "uid": "ca244957-11ae-4caa-a2bf-fc87e70f21a9"
+              }
+            ],
+            "spec": [
+              {
+                "min_ready_seconds": 0,
+                "persistent_volume_claim_retention_policy": [
+                  {
+                    "when_deleted": "Retain",
+                    "when_scaled": "Retain"
+                  }
+                ],
+                "pod_management_policy": "OrderedReady",
+                "replicas": "1",
+                "revision_history_limit": 0,
+                "selector": [
+                  {
+                    "match_expressions": [],
+                    "match_labels": {
+                      "app": "mongo"
+                    }
+                  }
+                ],
+                "service_name": "mongo",
+                "template": [
+                  {
+                    "metadata": [
+                      {
+                        "annotations": {},
+                        "generate_name": "",
+                        "generation": 0,
+                        "labels": {
+                          "app": "mongo"
+                        },
+                        "name": "",
+                        "namespace": "",
+                        "resource_version": "",
+                        "uid": ""
+                      }
+                    ],
+                    "spec": [
+                      {
+                        "active_deadline_seconds": 0,
+                        "affinity": [],
+                        "automount_service_account_token": true,
+                        "container": [
+                          {
+                            "args": [],
+                            "command": [],
+                            "env": [],
+                            "env_from": [
+                              {
+                                "config_map_ref": [],
+                                "prefix": "",
+                                "secret_ref": [
+                                  {
+                                    "name": "mongo",
+                                    "optional": false
+                                  }
+                                ]
+                              }
+                            ],
+                            "image": "mongo:7",
+                            "image_pull_policy": "IfNotPresent",
+                            "lifecycle": [],
+                            "liveness_probe": [],
+                            "name": "mongo",
+                            "port": [
+                              {
+                                "container_port": 27017,
+                                "host_ip": "",
+                                "host_port": 0,
+                                "name": "mongodb",
+                                "protocol": "TCP"
+                              }
+                            ],
+                            "readiness_probe": [],
+                            "resources": [
+                              {
+                                "limits": {},
+                                "requests": {}
+                              }
+                            ],
+                            "security_context": [],
+                            "startup_probe": [],
+                            "stdin": false,
+                            "stdin_once": false,
+                            "termination_message_path": "/dev/termination-log",
+                            "termination_message_policy": "File",
+                            "tty": false,
+                            "volume_device": [],
+                            "volume_mount": [
+                              {
+                                "mount_path": "/data/db",
+                                "mount_propagation": "None",
+                                "name": "data",
+                                "read_only": false,
+                                "sub_path": "",
+                                "sub_path_expr": ""
+                              }
+                            ],
+                            "working_dir": ""
+                          }
+                        ],
+                        "dns_config": [],
+                        "dns_policy": "ClusterFirst",
+                        "enable_service_links": true,
+                        "host_aliases": [],
+                        "host_ipc": false,
+                        "host_network": false,
+                        "host_pid": false,
+                        "hostname": "",
+                        "image_pull_secrets": [],
+                        "init_container": [],
+                        "node_name": "",
+                        "node_selector": {},
+                        "os": [],
+                        "priority_class_name": "",
+                        "readiness_gate": [],
+                        "restart_policy": "Always",
+                        "runtime_class_name": "",
+                        "scheduler_name": "default-scheduler",
+                        "security_context": [],
+                        "service_account_name": "",
+                        "share_process_namespace": false,
+                        "subdomain": "",
+                        "termination_grace_period_seconds": 30,
+                        "toleration": [],
+                        "topology_spread_constraint": [],
+                        "volume": []
+                      }
+                    ]
+                  }
+                ],
+                "update_strategy": [],
+                "volume_claim_template": [
+                  {
+                    "metadata": [
+                      {
+                        "annotations": {},
+                        "generate_name": "",
+                        "generation": 0,
+                        "labels": {},
+                        "name": "data",
+                        "namespace": "default",
+                        "resource_version": "",
+                        "uid": ""
+                      }
+                    ],
+                    "spec": [
+                      {
+                        "access_modes": [
+                          "ReadWriteOnce"
+                        ],
+                        "resources": [
+                          {
+                            "limits": {},
+                            "requests": {
+                              "storage": "1Gi"
+                            }
+                          }
+                        ],
+                        "selector": [],
+                        "storage_class_name": "",
+                        "volume_mode": "Filesystem",
+                        "volume_name": ""
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "timeouts": null,
+            "wait_for_rollout": true
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 1,
+          "identity": {
+            "api_version": "apps/v1",
+            "kind": "StatefulSet",
+            "name": "mongo",
+            "namespace": "infrastructure"
+          },
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6NjAwMDAwMDAwMDAwLCJyZWFkIjo2MDAwMDAwMDAwMDAsInVwZGF0ZSI6NjAwMDAwMDAwMDAwfSwic2NoZW1hX3ZlcnNpb24iOiIxIn0=",
+          "dependencies": [
+            "kubernetes_namespace_v1.infrastructure",
+            "kubernetes_secret_v1.mongo_infra",
+            "random_password.mongo"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "random_password",
+      "name": "grafana",
+      "provider": "provider[\"registry.terraform.io/hashicorp/random\"]",
+      "instances": [
+        {
+          "schema_version": 3,
+          "attributes": {
+            "bcrypt_hash": "$2a$10$gtPbohVnFQk0/9B59snVXuDUad.55.IBqXmpGWPlvSSeUfbyINf4G",
+            "id": "none",
+            "keepers": null,
+            "length": 24,
+            "lower": true,
+            "min_lower": 0,
+            "min_numeric": 0,
+            "min_special": 0,
+            "min_upper": 0,
+            "number": true,
+            "numeric": true,
+            "override_special": null,
+            "result": "jXWfhChbpD6QEDK2wLXbLHy7",
+            "special": false,
+            "upper": true
+          },
+          "sensitive_attributes": [
+            [
+              {
+                "type": "get_attr",
+                "value": "bcrypt_hash"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "result"
+              }
+            ]
+          ],
+          "identity_schema_version": 0
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "random_password",
+      "name": "mongo",
+      "provider": "provider[\"registry.terraform.io/hashicorp/random\"]",
+      "instances": [
+        {
+          "schema_version": 3,
+          "attributes": {
+            "bcrypt_hash": "$2a$10$QUe3Nr4KWiTBkGMLhGFyneLnm/kx6HbeJecTjLWbyWU9blqOgTEdu",
+            "id": "none",
+            "keepers": null,
+            "length": 32,
+            "lower": true,
+            "min_lower": 0,
+            "min_numeric": 0,
+            "min_special": 0,
+            "min_upper": 0,
+            "number": true,
+            "numeric": true,
+            "override_special": null,
+            "result": "sNJtKbynerWlMtXMkh815cZh42K3HgsT",
+            "special": false,
+            "upper": true
+          },
+          "sensitive_attributes": [
+            [
+              {
+                "type": "get_attr",
+                "value": "bcrypt_hash"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "result"
+              }
+            ]
+          ],
+          "identity_schema_version": 0
+        }
+      ]
+    }
+  ],
+  "check_results": null
+}

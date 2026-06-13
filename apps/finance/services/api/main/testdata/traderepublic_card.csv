@@ -1,0 +1,6 @@
+"datetime","date","account_type","category","type","asset_class","name","symbol","shares","price","amount","fee","tax","currency","original_amount","original_currency","fx_rate","description","transaction_id","counterparty_name","counterparty_iban","payment_reference","mcc_code"
+"2025-12-11T07:33:41.453049Z","2025-12-11","DEFAULT","CASH","TRANSFER_INBOUND","","","","","","50.000000","","","EUR","","","","Incoming transfer from GONCALO GOMES RODRIGUES","019b0c54-79cd-75e6-acd8-16046db867b3","","","",""
+"2026-01-01T11:02:32.573760Z","2026-01-01","DEFAULT","CASH","INTEREST_PAYMENT","","","","","","0.040000","","","EUR","","","","Interest payment","019b7939-3b7d-732f-a7ec-0e42673d19c2","","","",""
+"2026-02-01T09:10:51.886389Z","2026-02-01","DEFAULT","CASH","INTEREST_PAYMENT","","","","","","0.170000","","","EUR","","","","Interest payment","019c1878-20ee-7359-bf26-876cbc34ce33","","","",""
+"2026-03-01T11:59:04.276954Z","2026-03-01","DEFAULT","CASH","INTEREST_PAYMENT","","","","","","0.140000","","","EUR","","","","Interest payment","019ca944-3054-7506-83a3-d6fd4ebfe09f","","","",""
+"2026-04-07T22:18:53.312194Z","2026-04-07","DEFAULT","CASH","TRANSFER_INSTANT_INBOUND","","","","","","300.000000","","","EUR","","","","Incoming transfer from GONCALO GOMES RODRIGUES","019d6a06-f200-711d-a05e-79301ac417c8","","","",""

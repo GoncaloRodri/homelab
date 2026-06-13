@@ -1,0 +1,102 @@
+{{define "content"}}
+{{$d := .}}
+<h1 style="margin-bottom: 24px;">Sharing</h1>
+
+<div class="card">
+  <h2>Grant Read Access</h2>
+  <form method="POST" class="flex" style="gap: 12px; align-items: end;">
+    <div class="form-group" style="margin-bottom: 0; flex: 1;">
+      <label>User Email</label>
+      <input type="text" name="viewer_id" id="viewerSearch" placeholder="Search by email..." required>
+      <div id="searchResults" style="display:none;"></div>
+    </div>
+    <button type="submit" class="btn btn-primary">Grant Access</button>
+  </form>
+</div>
+
+<div class="card">
+  <h2>People with Access to My Finances</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>User</th><th>Granted</th><th></th></tr>
+      </thead>
+      <tbody>
+        {{range $d.Grants}}
+        <tr>
+          <td>{{.ViewerID}}</td>
+          <td class="text-muted">{{.CreatedAt.Format "02 Jan 2006"}}</td>
+          <td>
+            <button class="btn btn-danger btn-sm" onclick="revoke('{{.ViewerID}}')">Revoke</button>
+          </td>
+        </tr>
+        {{else}}
+        <tr><td colspan="3" class="text-center text-muted">No access grants yet.</td></tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Access Granted to Me</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Owner</th><th>Granted</th></tr>
+      </thead>
+      <tbody>
+        {{range $d.Granted}}
+        <tr>
+          <td>{{.OwnerID}}</td>
+          <td class="text-muted">{{.CreatedAt.Format "02 Jan 2006"}}</td>
+        </tr>
+        {{else}}
+        <tr><td colspan="2" class="text-center text-muted">No one has granted you access yet.</td></tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const searchInput = document.getElementById('viewerSearch');
+const resultsDiv = document.getElementById('searchResults');
+let searchTimer;
+
+searchInput.addEventListener('input', function() {
+  clearTimeout(searchTimer);
+  const q = this.value.trim();
+  if (q.length < 2) { resultsDiv.style.display = 'none'; return; }
+  searchTimer = setTimeout(() => {
+    fetch('/api/users/search?q=' + encodeURIComponent(q))
+      .then(r => r.json())
+      .then(users => {
+        if (!users.length) { resultsDiv.style.display = 'none'; return; }
+        resultsDiv.innerHTML = users.map(u =>
+          `<div onclick="selectUser('${u.id}','${u.email}')" style="padding:6px 12px;cursor:pointer;border-bottom:1px solid #eee;">${u.email}</div>`
+        ).join('');
+        resultsDiv.style.display = 'block';
+      });
+  }, 300);
+});
+
+function selectUser(id, email) {
+  searchInput.value = email;
+  resultsDiv.style.display = 'none';
+}
+
+function revoke(viewerId) {
+  if (!confirm('Revoke access for this user?')) return;
+  fetch('/sharing/' + encodeURIComponent(viewerId), {method: 'DELETE'})
+    .then(() => location.reload());
+}
+</script>
+<style>
+#searchResults {
+  position: absolute; background: #fff; border: 1px solid #ddd;
+  border-radius: 6px; max-height: 200px; overflow-y: auto; z-index: 100;
+  width: 100%; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+</style>
+{{end}}

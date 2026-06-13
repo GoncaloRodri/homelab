@@ -1,0 +1,23 @@
+{{template "base.html" .}}
+{{define "title"}}Homelab{{end}}
+{{define "content"}}
+<div class="w-full max-w-3xl px-4 animate-fade-in animate-slide-up">
+  <div class="flex items-center justify-between mb-10">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-base font-bold shadow-lg shadow-primary-600/30">H</div>
+      <h1 class="text-xl font-semibold">Homelab</h1>
+    </div>
+    <a href="http://auth.homelab.local/api/logout" class="px-3.5 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-text-400 hover:text-text-100 hover:bg-white/10 transition-all duration-200 cursor-pointer no-underline">Sign out</a>
+  </div>
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    {{range .Services}}
+    <a href="{{.URL}}" class="group relative rounded-xl p-5 backdrop-blur-xl bg-white/5 border border-white/10 transition-all duration-300 hover:bg-white/10 hover:border-primary-500/30 hover:shadow-lg hover:shadow-primary-600/10 animate-fade-in animate-slide-up" style="animation-delay: {{.Delay}}s">
+      <div class="text-2xl mb-3">{{.Icon}}</div>
+      <h2 class="font-medium mb-1 text-text-100 group-hover:text-primary-400 transition-colors duration-200">{{.Name}}</h2>
+      <p class="text-sm text-text-400">{{.Description}}</p>
+      <div class="absolute inset-0 rounded-xl bg-gradient-to-br from-primary-500/0 to-primary-500/0 group-hover:from-primary-500/5 transition-all duration-300 pointer-events-none"></div>
+    </a>
+    {{end}}
+  </div>
+</div>
+{{end}}

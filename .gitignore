@@ -1,0 +1,8 @@
+skaffold.yaml
+
+# terraform
+*.tfstate
+.terraform
+
+# node
+node_modules

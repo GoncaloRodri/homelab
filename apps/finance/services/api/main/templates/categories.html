@@ -1,0 +1,65 @@
+{{define "content"}}
+{{$d := .}}
+<h1 style="margin-bottom: 24px;">Categories</h1>
+
+<div class="card">
+  <form method="POST" class="flex flex-wrap" style="gap: 12px; align-items: end;">
+    <div class="form-group" style="margin-bottom: 0; flex: 1;">
+      <label>Name</label>
+      <input type="text" name="name" placeholder="e.g. Dining" required>
+    </div>
+    <div class="form-group" style="margin-bottom: 0; width: 80px;">
+      <label>Color</label>
+      <input type="color" name="color" value="#7986CB">
+    </div>
+    <button type="submit" class="btn btn-primary">Add Category</button>
+  </form>
+</div>
+
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Color</th><th>Name</th><th>Monthly Budget</th><th></th></tr>
+      </thead>
+      <tbody>
+        {{range $d.Categories}}
+        <tr>
+          <td><span class="category-dot" style="background: {{.Color}}"></span></td>
+          <td>{{.Name}}</td>
+          <td>
+            <span class="budget-display" id="budget-{{.ID}}">
+              €{{cents .BudgetCents}}
+            </span>
+            <button class="btn btn-outline btn-sm" onclick="editBudget('{{.ID}}')">edit</button>
+          </td>
+          <td>
+            <button class="btn btn-danger btn-sm" onclick="delCat('{{.ID}}')">Delete</button>
+          </td>
+        </tr>
+        {{else}}
+        <tr><td colspan="4" class="text-center text-muted">No categories yet.</td></tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+function editBudget(id) {
+  const val = prompt('Monthly budget (€):');
+  if (!val) return;
+  const cents = Math.round(parseFloat(val.replace(',','.')) * 100);
+  if (isNaN(cents)) return;
+  fetch('/categories/' + id, {
+    method: 'PUT',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({budget_cents: cents})
+  }).then(() => location.reload());
+}
+function delCat(id) {
+  if (!confirm('Delete this category?')) return;
+  fetch('/categories/' + id, {method: 'DELETE'}).then(() => location.reload());
+}
+</script>
+{{end}}

@@ -1,0 +1,61 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: example-service
+  namespace: test
+  labels:
+    app: example-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: example-service
+  template:
+    metadata:
+      labels:
+        app: example-service
+    spec:
+      containers:
+        - name: example-service
+          image: homelab/example-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+          envFrom:
+            - secretRef:
+                name: mongodb-shared-config
+          env:
+            - name: PORT
+              value: "8080"
+            - name: LOG_LEVEL
+              value: "debug"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "jaeger.monitoring.svc:4317"
+          # Liveness: is the process alive?
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          # Readiness: is it ready to serve traffic?
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "32Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]

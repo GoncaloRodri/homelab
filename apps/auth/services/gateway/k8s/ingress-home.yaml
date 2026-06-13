@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gateway-home
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: auth-forward-auth@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: homelab.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: gateway
+                port:
+                  name: http

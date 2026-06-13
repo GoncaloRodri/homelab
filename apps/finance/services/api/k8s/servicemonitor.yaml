@@ -1,0 +1,19 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: api
+  namespace: finance
+  labels:
+    release: kps
+spec:
+  jobLabel: app
+  selector:
+    matchLabels:
+      app: api
+  namespaceSelector:
+    matchNames:
+      - finance
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
