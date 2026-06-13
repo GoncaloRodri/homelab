@@ -249,11 +249,14 @@ type GoalPlan struct {
 }
 
 type GoalsData struct {
-	UserID             string
-	Email              string
-	Title              string
-	Route              string
-	Goals              []GoalPlan
-	AvgMonthlySavings  int64  // 3-month average savings for projection
-	DisposableIncome   int64  // from current month dashboard calc
+	UserID                  string
+	Email                   string
+	Title                   string
+	Route                   string
+	Goals                   []GoalPlan
+	AvgMonthlySavings       int64
+	DisposableIncome        int64
+	CommittedMonthlyCents   int64  // sum of all committed goal contributions
+	RemainingDisposable     int64  // disposable after committed goals
+	ConflictWarning         string // set when committing would exceed disposable
 }
