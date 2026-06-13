@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: users
-          image: homelab/users:latest
+          image: homelab/auth-users:latest
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
