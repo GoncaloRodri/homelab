@@ -26,12 +26,25 @@ A self-hosted personal finance dashboard running on k3s. Tracks transactions, bu
 
 The main goal is to evolve from a **ledger** (records what happened) into a **financial co-pilot** (tells you what to do next, based on where you want to end up).
 
-### Phase 1 — Disposable income number *(next)*
+### Phase 1 — Dashboard redesign + disposable income number *(next)*
 
-A single, always-visible number: **"You have €X to spend freely this month."**
+Replace the current information-dense dashboard with a focused layout that immediately answers the questions that matter:
 
-Calculated as: `Income − fixed expenses − goal contributions − category budgets`
+**Hero block — "Available to spend until payday"**
+- A single, always-visible number calculated as: `Income − fixed expenses − goal contributions − category budgets`
+- Month-progress bar showing how much of the disposable budget has been used
 
+**3 diagnostic cards**
+- *Bank balance should be* — exact breakdown: rent + bills + subscriptions + investments + safety buffer = minimum recommended balance right now
+- *Savings rate* — % of income saved, with month-over-month delta
+- *Portfolio today* — total market value and today's change
+
+**Supporting panels (below the fold)**
+- *Stocks at a glance* — per-ETF value and P&L, without navigating to the full portfolio page
+- *Budget health* — thin progress bars per category, highlighted when near or over limit
+- *Recent activity* — last 4–5 transactions with colored category dots
+
+**Underlying data work**
 - Auto-detect fixed/recurring expenses from transaction history (rent, subscriptions, utilities)
 - Separate fixed costs from variable spend so budgets only cover what you can actually control
 - Savings rate trend (% of income saved each month)
