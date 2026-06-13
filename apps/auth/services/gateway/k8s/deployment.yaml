@@ -15,12 +15,10 @@ spec:
       labels:
         app: gateway
     spec:
-      imagePullSecrets:
-        - name: ghcr-credentials
       containers:
         - name: gateway
-          image: ghcr.io/goncalorodri/homelab/auth-gateway:latest
-          imagePullPolicy: Always
+          image: homelab/auth-gateway:latest
+          imagePullPolicy: IfNotPresent
           ports:
             - name: http
               containerPort: 8080
