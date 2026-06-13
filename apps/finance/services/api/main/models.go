@@ -96,6 +96,8 @@ type CSVImportRow struct {
 	Description string `json:"description"`
 	AmountCents int64  `json:"amount_cents"`
 	Category    string `json:"category"`
+	Fingerprint string `json:"fingerprint"`
+	Duplicate   bool   `json:"duplicate"`
 }
 
 type CSVImportPreview struct {

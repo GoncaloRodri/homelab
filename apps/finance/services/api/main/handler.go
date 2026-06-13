@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
 	"embed"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -792,8 +794,24 @@ func (h *Handler) ImportPreview(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// compute fingerprints and detect duplicates
+	var fingerprints []string
 	for i := range rows {
 		rows[i].Category = autoCategorize(rows[i].Description, catMap)
+		rows[i].Fingerprint = txnFingerprint(rows[i].Date, rows[i].Description, rows[i].AmountCents, accountID)
+		fingerprints = append(fingerprints, rows[i].Fingerprint)
+	}
+	existing, _ := h.store.getTransactions(ctx, a.UserID, bson.M{"bank_ref": bson.M{"$in": fingerprints}})
+	existingRefs := map[string]bool{}
+	for _, t := range existing {
+		existingRefs[t.BankRef] = true
+	}
+	duplicateCount := 0
+	for i := range rows {
+		if existingRefs[rows[i].Fingerprint] {
+			rows[i].Duplicate = true
+			duplicateCount++
+		}
 	}
 
 	importPreview := &CSVImportPreview{
@@ -815,6 +833,7 @@ func (h *Handler) ImportPreview(w http.ResponseWriter, r *http.Request) {
 		"SelectedFormat":  string(format),
 		"SelectedAccount": accountID,
 		"CategoryColors":  catColors,
+		"DuplicateCount":  duplicateCount,
 	})
 }
 
@@ -861,9 +880,24 @@ func (h *Handler) ImportConfirm(w http.ResponseWriter, r *http.Request) {
 
 	userCats := r.Form["categories"]
 
+	// compute fingerprints and skip duplicates
+	var fingerprints []string
+	for _, row := range rows {
+		fingerprints = append(fingerprints, txnFingerprint(row.Date, row.Description, row.AmountCents, accountID))
+	}
+	existing, _ := h.store.getTransactions(ctx, a.UserID, bson.M{"bank_ref": bson.M{"$in": fingerprints}})
+	existingRefs := map[string]bool{}
+	for _, t := range existing {
+		existingRefs[t.BankRef] = true
+	}
+
 	now := time.Now()
 	var txns []Transaction
 	for i, row := range rows {
+		fp := fingerprints[i]
+		if existingRefs[fp] {
+			continue
+		}
 		date, _ := time.Parse("2006-01-02", row.Date)
 		cat := "Others"
 		if i < len(userCats) && userCats[i] != "" {
@@ -878,8 +912,14 @@ func (h *Handler) ImportConfirm(w http.ResponseWriter, r *http.Request) {
 			Description: row.Description,
 			AmountCents: row.AmountCents,
 			Category:    cat,
+			BankRef:     fp,
 			CreatedAt:   now,
 		})
+	}
+
+	if len(txns) == 0 {
+		http.Redirect(w, r, "/transactions?notice=all_duplicates", http.StatusSeeOther)
+		return
 	}
 
 	if err := h.store.createTransactions(ctx, txns); err != nil {
@@ -889,6 +929,11 @@ func (h *Handler) ImportConfirm(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, "/transactions", http.StatusSeeOther)
+}
+
+func txnFingerprint(date, description string, amountCents int64, accountID string) string {
+	h := sha256.Sum256([]byte(fmt.Sprintf("%s|%s|%d|%s", date, description, amountCents, accountID)))
+	return hex.EncodeToString(h[:])[:16]
 }
 
 func autoCategorize(desc string, catMap map[string]string) string {
