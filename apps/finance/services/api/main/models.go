@@ -152,6 +152,8 @@ type DashboardData struct {
 	PortfolioPCLCents        int64
 	PortfolioHoldings        []Holding
 	PortfolioPricesAvailable bool
+
+	NetWorthCents int64
 }
 
 type PeriodSummary struct {
@@ -215,6 +217,31 @@ type SharingData struct {
 type SharingUser struct {
 	ID    string
 	Email string
+}
+
+type NetWorthPoint struct {
+	Month      string // "2025-01"
+	AssetCents int64
+	LiabCents  int64
+	NetCents   int64
+}
+
+type NetWorthData struct {
+	UserID   string
+	Email    string
+	Title    string
+	Route    string
+
+	// current snapshot
+	CashCents      int64 // running balance of all non-credit accounts
+	PortfolioCents int64 // market value (or cost basis)
+	CreditCents    int64 // total outstanding on credit accounts (positive = owed)
+	NetWorthCents  int64 // cash + portfolio − credit
+
+	PortfolioPricesAvailable bool
+
+	// month-by-month history
+	History []NetWorthPoint
 }
 
 // GoalType classifies a financial goal for display and calculation purposes.

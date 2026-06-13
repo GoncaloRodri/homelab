@@ -116,6 +116,7 @@ var (
 	portfolioTmpl   = parseTmpl("templates/base.html", "templates/portfolio.html")
 	sharingTmpl     = parseTmpl("templates/base.html", "templates/sharing.html")
 	goalsTmpl       = parseTmpl("templates/base.html", "templates/goals.html")
+	networthTmpl    = parseTmpl("templates/base.html", "templates/networth.html")
 )
 
 type authInfo struct {
@@ -464,6 +465,7 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 		PortfolioPCLCents:            portfolioPCLCents,
 		PortfolioHoldings:            portfolioHoldings,
 		PortfolioPricesAvailable:     portfolioPricesAvailable,
+		NetWorthCents:                portfolioValueCents + running,
 	})
 }
 
@@ -1543,6 +1545,94 @@ func parseFloat(s string) float64 {
 	return f
 }
 
+func (h *Handler) NetWorth(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	a := getAuth(r)
+
+	txns, err := h.store.getTransactions(ctx, a.UserID, bson.M{})
+	if err != nil {
+		slog.Error("networth get transactions", "err", err)
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+
+	// build a running total per month for cash (non-credit accounts treated as assets,
+	// credit accounts as liabilities)
+	// We don't have account-type info on transactions, so we use signing convention:
+	// Income category = income (+), everything else = expense (−).
+	// For a simple net-worth history: sum all transaction amounts cumulatively per month.
+	type monthKey = string
+	monthCash := make(map[monthKey]int64)
+	var months []string
+	seen := make(map[monthKey]bool)
+
+	// cumulative running balance across all txns sorted by date (store returns desc; reverse)
+	// running cumulative balance — reset is not possible so we track running sum
+	runningBalance := int64(0)
+	// txns are sorted desc by date; reverse to process oldest first
+	for i := len(txns) - 1; i >= 0; i-- {
+		t := txns[i]
+		runningBalance += t.AmountCents
+		mk := t.Date.Format("2006-01")
+		monthCash[mk] = runningBalance
+		if !seen[mk] {
+			seen[mk] = true
+			months = append(months, mk)
+		}
+	}
+	sortStrings(months)
+
+	// current cash = running balance at end of all transactions
+	cashCents := runningBalance
+
+	// portfolio
+	var portfolioCents int64
+	var pricesAvailable bool
+	if trades, err2 := h.store.getTrades(ctx, a.UserID); err2 == nil && len(trades) > 0 {
+		prices, _ := fetchPricesByISIN(uniqueISINs(trades))
+		holdings := computeHoldings(trades, prices)
+		pr := aggregatePortfolio(holdings)
+		for _, p := range prices {
+			if p > 0 {
+				pricesAvailable = true
+				break
+			}
+		}
+		if pricesAvailable {
+			portfolioCents = pr.TotalVal
+		} else {
+			portfolioCents = pr.TotalCost
+		}
+	}
+
+	netWorthCents := cashCents + portfolioCents
+
+	// build history points — each month: cash snapshot + portfolio (we only have current portfolio)
+	var history []NetWorthPoint
+	for _, m := range months {
+		cash := monthCash[m]
+		history = append(history, NetWorthPoint{
+			Month:      m,
+			AssetCents: cash + portfolioCents,
+			LiabCents:  0,
+			NetCents:   cash + portfolioCents,
+		})
+	}
+
+	render(w, networthTmpl, &NetWorthData{
+		UserID:                   a.UserID,
+		Email:                    a.Email,
+		Title:                    "Net Worth",
+		Route:                    "networth",
+		CashCents:                cashCents,
+		PortfolioCents:           portfolioCents,
+		CreditCents:              0,
+		NetWorthCents:            netWorthCents,
+		PortfolioPricesAvailable: pricesAvailable,
+		History:                  history,
+	})
+}
+
 func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /{$}", h.Dashboard)
 	mux.HandleFunc("GET /transactions", h.Transactions)
@@ -1562,6 +1652,7 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /portfolio", h.Portfolio)
 	mux.HandleFunc("GET /goals", h.Goals)
 	mux.HandleFunc("POST /goals", h.Goals)
+	mux.HandleFunc("GET /networth", h.NetWorth)
 	mux.HandleFunc("GET /sharing", h.Sharing)
 	mux.HandleFunc("POST /sharing", h.Sharing)
 	mux.HandleFunc("DELETE /sharing/{viewer_id}", h.Sharing)
