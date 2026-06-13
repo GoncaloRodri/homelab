@@ -214,3 +214,46 @@ type SharingUser struct {
 	ID    string
 	Email string
 }
+
+// GoalType classifies a financial goal for display and calculation purposes.
+type GoalType string
+
+const (
+	GoalTypeOnce        GoalType = "once"        // one-off purchase (Switch, holiday)
+	GoalTypeDeposit     GoalType = "deposit"      // house deposit / down-payment
+	GoalTypeEmergency   GoalType = "emergency"    // emergency fund (N months of expenses)
+	GoalTypeInvestment  GoalType = "investment"   // recurring investment target
+)
+
+type Goal struct {
+	ID            string    `bson:"_id" json:"id"`
+	UserID        string    `bson:"user_id" json:"user_id"`
+	Name          string    `bson:"name" json:"name"`
+	Type          GoalType  `bson:"type" json:"type"`
+	TargetCents   int64     `bson:"target_cents" json:"target_cents"`
+	SavedCents    int64     `bson:"saved_cents" json:"saved_cents"`
+	Deadline      time.Time `bson:"deadline" json:"deadline"`
+	Committed     bool      `bson:"committed" json:"committed"` // Phase 3: false until user commits
+	CreatedAt     time.Time `bson:"created_at" json:"created_at"`
+}
+
+// GoalPlan is computed at request time — never stored.
+type GoalPlan struct {
+	Goal
+	MonthsLeft          int
+	MonthlyCents        int64   // required monthly contribution
+	ImpactOnDisposable  int64   // how much disposable income this eats
+	MonthsAtCurrentRate int     // months to reach goal at current savings rate
+	Feasible            bool    // can reach it by deadline at required monthly
+	ProgressPct         int
+}
+
+type GoalsData struct {
+	UserID             string
+	Email              string
+	Title              string
+	Route              string
+	Goals              []GoalPlan
+	AvgMonthlySavings  int64  // 3-month average savings for projection
+	DisposableIncome   int64  // from current month dashboard calc
+}
