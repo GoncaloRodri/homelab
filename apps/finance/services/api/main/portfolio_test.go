@@ -133,7 +133,7 @@ func TestHoldingsByISIN(t *testing.T) {
 		{ISIN: "US0378331005"},
 		{ISIN: "IE00B0M62X35"},
 	}
-	got := holdingsByISIN(trades)
+	got := uniqueISINs(trades)
 	want := []string{"IE00B0M62X35", "US0378331005"}
 	if len(got) != len(want) {
 		t.Fatalf("got %d isins, want %d: %v", len(got), len(want), got)

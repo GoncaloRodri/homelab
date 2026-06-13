@@ -2,24 +2,26 @@
 {{$d := .}}
 <h1 style="margin-bottom:24px;">Projections</h1>
 
+{{if $d.Projections}}
+
 <div class="grid">
   <div class="card value-card animate-on-scroll">
     <h2>Projected Annual Spend</h2>
     <div class="value negative animate-counter" data-target="{{$d.AnnualTotal}}" data-prefix="€">€0.00</div>
-    <p class="text-muted" style="margin-top:8px;">Based on 6-month average</p>
+    <p class="text-muted" style="margin-top:8px; font-size:12px;">Based on 6-month average</p>
   </div>
   <div class="card value-card animate-on-scroll">
     <h2>Projected Monthly Spend</h2>
     {{$monthly := div $d.AnnualTotal 12}}
     <div class="value negative animate-counter" data-target="{{$monthly}}" data-prefix="€">€0.00</div>
-    <p class="text-muted" style="margin-top:8px;">Average across categories</p>
+    <p class="text-muted" style="margin-top:8px; font-size:12px;">Average across all categories</p>
   </div>
 </div>
 
 <div class="card animate-on-scroll">
-  <h2 style="margin-bottom:12px;">Monthly Average by Category — Last 6 Months</h2>
+  <h2 style="margin-bottom:16px;">Monthly Average by Category — Last 6 Months</h2>
   <div style="padding-top:4px;">
-    <canvas id="projChart" height="260"></canvas>
+    <canvas id="projChart" height="250"></canvas>
   </div>
 </div>
 
@@ -31,21 +33,31 @@
           <th>Category</th>
           <th class="text-right">Monthly Avg</th>
           <th class="text-right">Projected Annual</th>
-          <th style="width:200px;">Pace</th>
+          <th style="width:180px;">Share of Spend</th>
         </tr>
       </thead>
       <tbody>
-        {{range $cat, $avg := $d.MonthlyAvg}}
-        <td style="font-weight:500;">{{$cat}}</td>
-        <td class="cents negative">€{{printf "%.2f" $avg}}</td>
-        <td class="cents negative">€{{printf "%.2f" (mul $avg 12)}}</td>
-        <td>
-          <div style="background:var(--bg3); border-radius:6px; height:6px; overflow:hidden;">
-            <div style="height:100%; border-radius:6px; background:var(--accent);
-                 width:{{round (mul (div (round (mul $avg 100)) (div $d.AnnualTotal 12)) 100)}}%;
-                 max-width:100%;"></div>
-          </div>
-        </td>
+        {{range $d.Projections}}
+        {{$color := index $d.CategoryColors .Name}}
+        <tr>
+          <td>
+            <span style="display:inline-flex; align-items:center; gap:7px;">
+              {{if $color}}<span style="width:9px;height:9px;border-radius:50%;background:{{$color}};box-shadow:0 0 5px {{$color}}88;flex-shrink:0;"></span>{{end}}
+              <span style="font-weight:500;">{{.Name}}</span>
+            </span>
+          </td>
+          <td class="cents negative">€{{printf "%.2f" .MonthlyAvg}}</td>
+          <td class="cents negative">€{{printf "%.2f" .AnnualTotal}}</td>
+          <td>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <div style="flex:1; background:var(--bg3); border-radius:6px; height:7px; overflow:hidden;">
+                <div style="height:100%; border-radius:6px; width:{{.PacePct}}%;
+                     background:{{if $color}}{{$color}}{{else}}var(--accent){{end}};
+                     box-shadow:{{if $color}}0 0 5px {{$color}}66{{else}}0 0 5px var(--accent-glow){{end}};"></div>
+              </div>
+              <span style="font-size:11.5px; color:var(--text3); min-width:30px; text-align:right;">{{.PacePct}}%</span>
+            </div>
+          </td>
         </tr>
         {{end}}
       </tbody>
@@ -58,35 +70,44 @@ const isDark = () => document.documentElement.getAttribute('data-theme') === 'da
 const gridC  = () => isDark() ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)';
 const textC  = () => isDark() ? '#5c6585' : '#8a92b0';
 
-const catColors = [
-  '#6979f8','#f87171','#fbbf24','#34d399','#a78bfa',
-  '#f472b6','#38bdf8','#fb923c','#4ade80','#e879f9',
-  '#94a3b8','#22d3ee','#f97316','#a3e635',
-];
+const catColors = { {{range $k,$v := $d.CategoryColors}}"{{$k}}":"{{$v}}",{{end}} };
+const labels = [{{range $d.Projections}}"{{.Name}}",{{end}}];
+const data   = [{{range $d.Projections}}{{printf "%.2f" .MonthlyAvg}},{{end}}];
+const colors = labels.map(k => catColors[k] || '#6979f8');
 
 new Chart(document.getElementById('projChart'), {
   type: 'bar',
   data: {
-    labels: [{{range $cat, $_ := $d.MonthlyAvg}}"{{$cat}}",{{end}}],
+    labels,
     datasets: [{
       label: 'Monthly Avg (€)',
-      data:  [{{range $_, $avg := $d.MonthlyAvg}}{{$avg}},{{end}}],
-      backgroundColor: catColors.map(c => c + '99'),
-      borderColor:     catColors,
+      data,
+      backgroundColor: colors.map(c => c + '99'),
+      borderColor:     colors,
       borderWidth: 1.5,
       borderRadius: 6,
       borderSkipped: false,
     }]
   },
   options: {
+    indexAxis: 'y',
     responsive: true,
     animation: { duration: 900, easing: 'easeOutQuart' },
     plugins: { legend: { display: false } },
     scales: {
-      y: { beginAtZero: true, grid: { color: gridC() }, ticks: { color: textC(), callback: v => '€' + v } },
-      x: { grid: { display: false }, ticks: { color: textC() } }
+      x: { beginAtZero: true, grid: { color: gridC() }, ticks: { color: textC(), callback: v => '€' + v } },
+      y: { grid: { display: false }, ticks: { color: textC() } }
     }
   }
 });
 </script>
+
+{{else}}
+<div class="card empty-state animate-on-scroll">
+  <div style="font-size:48px; margin-bottom:16px;">📊</div>
+  <h3>No spending data yet</h3>
+  <p>Import at least a month of transactions to see projections.</p>
+  <a href="/import" class="btn btn-primary" style="margin-top:20px;">Import Transactions</a>
+</div>
+{{end}}
 {{end}}

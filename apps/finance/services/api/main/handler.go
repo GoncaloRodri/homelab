@@ -933,6 +933,41 @@ func (h *Handler) Projections(w http.ResponseWriter, r *http.Request) {
 	}
 
 	annualTotal := int64(math.Round(float64(-totalSpend) / float64(monthCount) * 12))
+	monthlyTotal := float64(annualTotal) / 12
+
+	// pre-compute pace percentage per category for the template (avoids float/int type issues)
+	type catProjection struct {
+		Name        string
+		MonthlyAvg  float64
+		AnnualTotal float64
+		PacePct     int
+	}
+	cats2, _ := h.store.getCategories(ctx, a.UserID)
+	catColors2 := make(map[string]string)
+	for _, c := range cats2 {
+		catColors2[c.Name] = c.Color
+	}
+
+	var projections []catProjection
+	for cat, avg := range monthlyAvg {
+		pct := 0
+		if monthlyTotal > 0 {
+			pct = int(math.Round(avg / monthlyTotal * 100))
+			if pct > 100 {
+				pct = 100
+			}
+		}
+		projections = append(projections, catProjection{
+			Name:        cat,
+			MonthlyAvg:  avg,
+			AnnualTotal: avg * 12,
+			PacePct:     pct,
+		})
+	}
+	// sort by monthly avg descending
+	sort.Slice(projections, func(i, j int) bool {
+		return projections[i].MonthlyAvg > projections[j].MonthlyAvg
+	})
 
 	render(w, projectionsTmpl, map[string]interface{}{
 		"UserID":        a.UserID,
@@ -940,9 +975,9 @@ func (h *Handler) Projections(w http.ResponseWriter, r *http.Request) {
 		"Title":         "Projections",
 		"Route":         "projections",
 		"IsOwner":       true,
-		"MonthlyAvg":    monthlyAvg,
+		"Projections":   projections,
 		"AnnualTotal":   annualTotal,
-		"CategoryNames": catNames,
+		"CategoryColors": catColors2,
 	})
 }
 
@@ -957,8 +992,8 @@ func (h *Handler) Portfolio(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tickers := holdingsByISIN(trades)
-	if len(tickers) == 0 {
+	isins := uniqueISINs(trades)
+	if len(isins) == 0 {
 		render(w, portfolioTmpl, &PortfolioData{
 			UserID: a.UserID,
 			Email:  a.Email,
@@ -968,7 +1003,7 @@ func (h *Handler) Portfolio(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	prices, err := fetchPrices(tickers)
+	prices, err := fetchPricesByISIN(isins)
 	if err != nil {
 		slog.Error("fetch prices", "err", err)
 	}
