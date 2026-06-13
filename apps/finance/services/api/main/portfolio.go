@@ -105,7 +105,7 @@ func computeHoldings(trades []Trade, prices map[string]int64) []Holding {
 
 		currentPrice := prices[isin]
 
-		currentValue := int64(float64(currentPrice) * a.shares / 100)
+		currentValue := int64(float64(currentPrice) * a.shares)
 		unrealizedPCL := currentValue - a.cost
 		pct := 0.0
 		if a.cost > 0 {
