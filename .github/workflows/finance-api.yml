@@ -7,34 +7,22 @@ on:
       - apps/finance/**
       - go.mod
       - go.sum
-
-env:
-  IMAGE: homelab/finance-api
+  pull_request:
+    paths:
+      - apps/finance/**
+      - go.mod
+      - go.sum
 
 jobs:
-  build-and-deploy:
-    runs-on: self-hosted
+  test:
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run tests
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Test
         run: go test ./apps/finance/services/api/main/...
-
-      - name: Build image
-        run: |
-          docker build \
-            -t ${{ env.IMAGE }}:${{ github.sha }} \
-            -t ${{ env.IMAGE }}:latest \
-            -f apps/finance/services/api/Dockerfile \
-            .
-
-      - name: Import image into k3d
-        run: k3d image import ${{ env.IMAGE }}:${{ github.sha }} -c homelab
-
-      - name: Deploy
-        run: |
-          kubectl set image deployment/api \
-            api=${{ env.IMAGE }}:${{ github.sha }} \
-            -n finance
-          kubectl rollout status deployment/api -n finance --timeout=120s
