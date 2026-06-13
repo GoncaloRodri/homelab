@@ -125,6 +125,8 @@ var (
 	taxTmpl         = parseTmpl("templates/base.html", "templates/tax.html")
 	householdTmpl   = parseTmpl("templates/base.html", "templates/household.html")
 	autoImportTmpl  = parseTmpl("templates/base.html", "templates/auto_import.html")
+	peopleTmpl      = parseTmpl("templates/base.html", "templates/people.html")
+	settingsTmpl    = parseTmpl("templates/base.html", "templates/settings.html")
 )
 
 type authInfo struct {
@@ -2252,6 +2254,159 @@ func (h *Handler) AutoImport(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// ── People (Sharing + Household merged) ───────────────────────────────────────
+
+func (h *Handler) People(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	a := getAuth(r)
+	tab := r.URL.Query().Get("tab")
+	if tab == "" {
+		tab = "sharing"
+	}
+
+	// Handle mutations — redirect back preserving tab
+	if r.Method == http.MethodPost {
+		_ = r.ParseForm()
+		switch r.FormValue("_action") {
+		case "share":
+			viewerID := r.FormValue("viewer_id")
+			if viewerID != "" && viewerID != a.UserID {
+				existing, _ := h.store.getPermissions(ctx, a.UserID)
+				already := false
+				for _, p := range existing {
+					if p.ViewerID == viewerID {
+						already = true
+						break
+					}
+				}
+				if !already {
+					_ = h.store.createPermission(ctx, &Permission{
+						ID:        bson.NewObjectID().Hex(),
+						OwnerID:   a.UserID,
+						ViewerID:  viewerID,
+						CreatedAt: time.Now(),
+					})
+				}
+			}
+			http.Redirect(w, r, "/people?tab=sharing", http.StatusSeeOther)
+			return
+		case "household":
+			partnerEmail := strings.TrimSpace(r.FormValue("partner_email"))
+			if partnerEmail != "" {
+				_ = h.store.createHousehold(ctx, &Household{
+					ID:        bson.NewObjectID().Hex(),
+					OwnerID:   a.UserID,
+					PartnerID: partnerEmail,
+					CreatedAt: time.Now(),
+				})
+			}
+			http.Redirect(w, r, "/people?tab=household", http.StatusSeeOther)
+			return
+		}
+	}
+
+	if r.Method == http.MethodDelete {
+		switch r.URL.Query().Get("kind") {
+		case "share":
+			_ = h.store.deletePermission(ctx, a.UserID, r.PathValue("id"))
+		case "household":
+			_ = h.store.deleteHousehold(ctx, a.UserID)
+		}
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	data := &PeopleData{
+		UserID: a.UserID,
+		Email:  a.Email,
+		Title:  "People",
+		Route:  "people",
+		Tab:    tab,
+	}
+
+	// Sharing data
+	perms, _ := h.store.getPermissions(ctx, a.UserID)
+	granted, _ := h.store.getGrantedViewers(ctx, a.UserID)
+	viewerIDs := map[string]bool{}
+	for _, p := range perms {
+		viewerIDs[p.ViewerID] = true
+	}
+	for id := range viewerIDs {
+		data.Viewers = append(data.Viewers, SharingUser{ID: id, Email: id})
+	}
+	data.Grants = perms
+	data.Granted = granted
+
+	// Household data
+	now := time.Now()
+	hh, err := h.store.getHousehold(ctx, a.UserID)
+	if err == nil && hh != nil {
+		data.HasHousehold = true
+		data.IsOwner = hh.OwnerID == a.UserID
+		partnerID := hh.PartnerID
+		if hh.OwnerID != a.UserID {
+			partnerID = hh.OwnerID
+		}
+		data.PartnerID = partnerID
+		data.PartnerEmail = partnerID
+
+		monthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
+		nextMonth := monthStart.AddDate(0, 1, 0)
+		myTxns, _ := h.store.getTransactions(ctx, a.UserID, bson.M{"date": bson.M{"$gte": monthStart, "$lt": nextMonth}})
+		partnerTxns, _ := h.store.getTransactions(ctx, partnerID, bson.M{"date": bson.M{"$gte": monthStart, "$lt": nextMonth}})
+		for _, t := range myTxns {
+			if t.AmountCents > 0 {
+				data.MyIncomeCents += t.AmountCents
+			} else {
+				data.CombinedExpenseCents += -t.AmountCents
+			}
+		}
+		for _, t := range partnerTxns {
+			if t.AmountCents > 0 {
+				data.PartnerIncomeCents += t.AmountCents
+			} else {
+				data.CombinedExpenseCents += -t.AmountCents
+			}
+		}
+		data.CombinedIncomeCents = data.MyIncomeCents + data.PartnerIncomeCents
+		data.CombinedDisposable = data.CombinedIncomeCents - data.CombinedExpenseCents
+		myGoals, _ := h.store.getGoals(ctx, a.UserID)
+		partnerGoals, _ := h.store.getGoals(ctx, partnerID)
+		for _, g := range myGoals {
+			data.MyGoals = append(data.MyGoals, GoalPlan{Goal: g})
+		}
+		for _, g := range partnerGoals {
+			data.PartnerGoals = append(data.PartnerGoals, GoalPlan{Goal: g})
+		}
+	}
+
+	render(w, peopleTmpl, data)
+}
+
+// ── Settings (Accounts + Categories merged) ────────────────────────────────────
+
+func (h *Handler) Settings(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	a := getAuth(r)
+	tab := r.URL.Query().Get("tab")
+	if tab == "" {
+		tab = "accounts"
+	}
+
+	accounts, _ := h.store.getAccounts(ctx, a.UserID)
+	categories, _ := h.store.getCategories(ctx, a.UserID)
+
+	render(w, settingsTmpl, &SettingsData{
+		UserID:     a.UserID,
+		Email:      a.Email,
+		Title:      "Settings",
+		Route:      "settings",
+		Tab:        tab,
+		Accounts:   accounts,
+		Categories: categories,
+	})
+}
+
 func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /{$}", h.Dashboard)
 	mux.HandleFunc("GET /transactions", h.Transactions)
@@ -2259,10 +2414,8 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /import/preview", h.ImportPreview)
 	mux.HandleFunc("POST /import/confirm", h.ImportConfirm)
 	mux.HandleFunc("POST /import/securities", h.ImportSecurities)
-	mux.HandleFunc("GET /accounts", h.Accounts)
 	mux.HandleFunc("POST /accounts", h.Accounts)
 	mux.HandleFunc("DELETE /accounts/{id}", h.Accounts)
-	mux.HandleFunc("GET /categories", h.Categories)
 	mux.HandleFunc("POST /categories", h.Categories)
 	mux.HandleFunc("PUT /categories/{id}", h.Categories)
 	mux.HandleFunc("DELETE /categories/{id}", h.Categories)
@@ -2273,18 +2426,31 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /goals", h.Goals)
 	mux.HandleFunc("GET /networth", h.NetWorth)
 	mux.HandleFunc("GET /simulator", h.Simulator)
-	mux.HandleFunc("GET /sharing", h.Sharing)
-	mux.HandleFunc("POST /sharing", h.Sharing)
-	mux.HandleFunc("DELETE /sharing/{viewer_id}", h.Sharing)
+	// legacy redirects so old bookmarks / links keep working
+	mux.HandleFunc("GET /sharing", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/people?tab=sharing", http.StatusMovedPermanently)
+	})
+	mux.HandleFunc("GET /household", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/people?tab=household", http.StatusMovedPermanently)
+	})
+	mux.HandleFunc("GET /accounts", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/settings?tab=accounts", http.StatusMovedPermanently)
+	})
+	mux.HandleFunc("GET /categories", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/settings?tab=categories", http.StatusMovedPermanently)
+	})
+	// people page
+	mux.HandleFunc("GET /people", h.People)
+	mux.HandleFunc("POST /people", h.People)
+	mux.HandleFunc("DELETE /people/{id}", h.People)
+	// settings page
+	mux.HandleFunc("GET /settings", h.Settings)
 	mux.HandleFunc("GET /api/users/search", h.SearchUsers)
 	mux.HandleFunc("POST /api/transactions", h.CreateTransaction)
 	mux.HandleFunc("PUT /api/transactions/{id}", h.UpdateTransaction)
 	mux.HandleFunc("DELETE /api/transactions/{id}", h.DeleteTransaction)
 	mux.HandleFunc("GET /tax", h.Tax)
 	mux.HandleFunc("GET /tax/export.csv", h.TaxExport)
-	mux.HandleFunc("GET /household", h.Household)
-	mux.HandleFunc("POST /household", h.Household)
-	mux.HandleFunc("DELETE /household", h.Household)
 	mux.HandleFunc("GET /auto-import", h.AutoImport)
 }
 
