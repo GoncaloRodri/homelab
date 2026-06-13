@@ -8,51 +8,51 @@
   <style>
     /* ── Tokens ─────────────────────────────────────────────────────── */
     :root {
-      --bg:          #0f1117;
-      --bg2:         #161b27;
-      --bg3:         #1e2535;
-      --surface:     rgba(30, 37, 53, 0.85);
-      --surface2:    rgba(40, 50, 72, 0.7);
-      --border:      rgba(255,255,255,0.07);
-      --border2:     rgba(255,255,255,0.12);
-      --text:        #e8eaf6;
-      --text2:       #9fa8c7;
-      --text3:       #5c6585;
-      --accent:      #6979f8;
-      --accent2:     #8b9ffc;
-      --accent-glow: rgba(105,121,248,0.25);
-      --green:       #4ade80;
+      --bg:          #080c10;
+      --bg2:         #0d1318;
+      --bg3:         #131c24;
+      --surface:     rgba(13, 22, 32, 0.88);
+      --surface2:    rgba(20, 32, 44, 0.75);
+      --border:      rgba(0,210,200,0.08);
+      --border2:     rgba(0,210,200,0.15);
+      --text:        #dff4f2;
+      --text2:       #7fb8b4;
+      --text3:       #3d6e6a;
+      --accent:      #00c9b8;
+      --accent2:     #33d9ca;
+      --accent-glow: rgba(0,201,184,0.22);
+      --green:       #00e5b0;
       --red:         #f87171;
-      --green-dim:   rgba(74,222,128,0.15);
-      --red-dim:     rgba(248,113,113,0.15);
-      --shadow-sm:   0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
-      --shadow-md:   0 4px 16px rgba(0,0,0,0.5), 0 2px 6px rgba(0,0,0,0.3);
-      --shadow-lg:   0 12px 40px rgba(0,0,0,0.6), 0 4px 12px rgba(0,0,0,0.4);
+      --green-dim:   rgba(0,229,176,0.12);
+      --red-dim:     rgba(248,113,113,0.13);
+      --shadow-sm:   0 1px 3px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.4);
+      --shadow-md:   0 4px 16px rgba(0,0,0,0.6), 0 2px 6px rgba(0,0,0,0.4);
+      --shadow-lg:   0 12px 40px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.5);
       --radius:      14px;
       --radius-sm:   8px;
       --nav-h:       58px;
     }
     [data-theme="light"] {
-      --bg:          #f0f2f8;
-      --bg2:         #e4e8f4;
-      --bg3:         #d8ddf0;
-      --surface:     rgba(255,255,255,0.9);
-      --surface2:    rgba(240,242,248,0.8);
-      --border:      rgba(0,0,0,0.07);
-      --border2:     rgba(0,0,0,0.12);
-      --text:        #1a1f36;
-      --text2:       #4a5275;
-      --text3:       #8a92b0;
-      --accent:      #4355e8;
-      --accent2:     #6373f0;
-      --accent-glow: rgba(67,85,232,0.18);
-      --green:       #16a34a;
+      --bg:          #edf6f5;
+      --bg2:         #dceeed;
+      --bg3:         #cae5e3;
+      --surface:     rgba(255,255,255,0.92);
+      --surface2:    rgba(237,246,245,0.85);
+      --border:      rgba(0,150,140,0.1);
+      --border2:     rgba(0,150,140,0.18);
+      --text:        #0d2422;
+      --text2:       #2a6460;
+      --text3:       #6aadaa;
+      --accent:      #00897b;
+      --accent2:     #00a896;
+      --accent-glow: rgba(0,137,123,0.15);
+      --green:       #00796b;
       --red:         #dc2626;
-      --green-dim:   rgba(22,163,74,0.1);
+      --green-dim:   rgba(0,121,107,0.1);
       --red-dim:     rgba(220,38,38,0.1);
-      --shadow-sm:   0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.05);
-      --shadow-md:   0 4px 16px rgba(0,0,0,0.1), 0 2px 6px rgba(0,0,0,0.06);
-      --shadow-lg:   0 12px 40px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.07);
+      --shadow-sm:   0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md:   0 4px 16px rgba(0,0,0,0.09), 0 2px 6px rgba(0,0,0,0.05);
+      --shadow-lg:   0 12px 40px rgba(0,0,0,0.11), 0 4px 12px rgba(0,0,0,0.06);
     }
 
     /* ── Reset & base ────────────────────────────────────────────────── */
@@ -74,8 +74,8 @@
       position: fixed;
       inset: 0;
       background-image:
-        radial-gradient(ellipse 80% 60% at 20% 10%, rgba(105,121,248,0.08) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 50% at 80% 80%, rgba(139,159,252,0.05) 0%, transparent 55%);
+        radial-gradient(ellipse 80% 60% at 20% 10%, rgba(0,201,184,0.07) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 80% 80%, rgba(0,150,140,0.04) 0%, transparent 55%);
       pointer-events: none;
       z-index: 0;
     }
