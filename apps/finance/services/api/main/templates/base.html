@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{if .Title}}{{.Title}} — {{end}}Finance</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%);
+      color: #333; min-height: 100vh;
+      animation: fadeIn 0.5s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slideInRow {
+      from { opacity: 0; transform: translateX(-12px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+    .nav {
+      background: linear-gradient(135deg, #1a237e, #283593);
+      color: #fff; padding: 0 24px;
+      display: flex; align-items: center; height: 56px; gap: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .nav a {
+      color: #c5cae9; text-decoration: none; font-size: 14px; font-weight: 500;
+      position: relative; transition: color 0.2s ease;
+    }
+    .nav a::after {
+      content: ''; position: absolute; bottom: -4px; left: 0; right: 0;
+      height: 2px; background: #fff; border-radius: 1px;
+      transform: scaleX(0); transition: transform 0.25s ease;
+    }
+    .nav a:hover { color: #fff; }
+    .nav a:hover::after { transform: scaleX(1); }
+    .nav a.active { color: #fff; }
+    .nav a.active::after { transform: scaleX(1); }
+    .nav .brand { font-size: 18px; font-weight: 700; color: #fff; margin-right: auto; }
+    .nav .brand::after { display: none; }
+    .nav .email { font-size: 12px; color: #9fa8da; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+    .card {
+      background: rgba(255,255,255,0.95); backdrop-filter: blur(8px);
+      border-radius: 12px; padding: 24px; margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      animation: fadeIn 0.4s ease-out both;
+    }
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.1), 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .card h2 { font-size: 16px; color: #666; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .card .value { font-size: 28px; font-weight: 700; }
+    .card .value.positive { color: #4caf50; }
+    .card .value.negative { color: #f44336; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; }
+    .table-wrap { overflow-x: auto; border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th {
+      text-align: left; padding: 10px 12px; border-bottom: 2px solid #e0e0e0;
+      color: #666; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    td { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; }
+    tbody tr {
+      animation: slideInRow 0.3s ease-out both;
+    }
+    tbody tr:nth-child(1) { animation-delay: 0.02s; }
+    tbody tr:nth-child(2) { animation-delay: 0.04s; }
+    tbody tr:nth-child(3) { animation-delay: 0.06s; }
+    tbody tr:nth-child(4) { animation-delay: 0.08s; }
+    tbody tr:nth-child(5) { animation-delay: 0.10s; }
+    tbody tr:nth-child(6) { animation-delay: 0.12s; }
+    tbody tr:nth-child(7) { animation-delay: 0.14s; }
+    tbody tr:nth-child(8) { animation-delay: 0.16s; }
+    tbody tr:nth-child(9) { animation-delay: 0.18s; }
+    tbody tr:nth-child(10) { animation-delay: 0.20s; }
+    tbody tr:nth-child(11) { animation-delay: 0.22s; }
+    tbody tr:nth-child(12) { animation-delay: 0.24s; }
+    tr:hover td { background: #f5f7ff; }
+    .badge {
+      display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 500;
+    }
+    .btn {
+      display: inline-block; padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 500;
+      border: none; cursor: pointer; text-decoration: none;
+      transition: all 0.2s ease;
+    }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+    .btn:active { transform: translateY(0); }
+    .btn-primary { background: linear-gradient(135deg, #3949ab, #5c6bc0); color: #fff; }
+    .btn-primary:hover { background: linear-gradient(135deg, #303f9f, #3949ab); }
+    .btn-danger { background: linear-gradient(135deg, #e53935, #ef5350); color: #fff; }
+    .btn-outline { background: transparent; border: 1px solid #c5cae9; color: #3949ab; }
+    .btn-outline:hover { background: #f5f7ff; border-color: #3949ab; }
+    .btn-sm { padding: 4px 10px; font-size: 12px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 4px; color: #555; }
+    .form-group input, .form-group select {
+      width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .form-group input:focus, .form-group select:focus {
+      outline: none; border-color: #3949ab; box-shadow: 0 0 0 3px rgba(57,73,171,0.1);
+    }
+    .flex { display: flex; gap: 8px; align-items: center; }
+    .flex-wrap { flex-wrap: wrap; }
+    .mb-16 { margin-bottom: 16px; }
+    .mb-8 { margin-bottom: 8px; }
+    .mt-16 { margin-top: 16px; }
+    .text-center { text-align: center; }
+    .text-right { text-align: right; }
+    .text-muted { color: #999; font-size: 12px; }
+    .error { color: #f44336; font-size: 14px; margin-bottom: 16px; }
+    .success { color: #4caf50; font-size: 14px; margin-bottom: 16px; }
+    .empty-state { text-align: center; padding: 48px; color: #999; }
+    .empty-state h3 { font-size: 18px; margin-bottom: 8px; color: #666; }
+    table .cents { text-align: right; font-variant-numeric: tabular-nums; }
+    .category-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+    .tag { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 12px; color: #fff; }
+    .value-card { position: relative; overflow: hidden; }
+    .value-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, #3949ab, #5c6bc0, #7986cb);
+      background-size: 200% auto; animation: shimmer 3s ease-in-out infinite;
+    }
+    .chart-container { position: relative; width: 100%; }
+    .animate-on-scroll {
+      opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+    }
+    .animate-on-scroll.visible { opacity: 1; transform: translateY(0); }
+    .animate-on-scroll:nth-child(2) { transition-delay: 0.1s; }
+    .animate-on-scroll:nth-child(3) { transition-delay: 0.2s; }
+    .animate-on-scroll:nth-child(4) { transition-delay: 0.3s; }
+    .animate-on-scroll:nth-child(5) { transition-delay: 0.4s; }
+    @media (max-width: 768px) {
+      .nav { padding: 0 12px; gap: 12px; overflow-x: auto; }
+      .container { padding: 12px; }
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <a href="/" class="brand">Finance</a>
+    <a href="/" class="{{if eq .Route "dashboard"}}active{{end}}">Dashboard</a>
+    <a href="/transactions" class="{{if eq .Route "transactions"}}active{{end}}">Transactions</a>
+    <a href="/import" class="{{if eq .Route "import"}}active{{end}}">Import</a>
+    <a href="/accounts" class="{{if eq .Route "accounts"}}active{{end}}">Accounts</a>
+    <a href="/categories" class="{{if eq .Route "categories"}}active{{end}}">Categories</a>
+    <a href="/reports" class="{{if eq .Route "reports"}}active{{end}}">Reports</a>
+    <a href="/projections" class="{{if eq .Route "projections"}}active{{end}}">Projections</a>
+    <a href="/portfolio" class="{{if eq .Route "portfolio"}}active{{end}}">Portfolio</a>
+    <a href="/sharing" class="{{if eq .Route "sharing"}}active{{end}}">Sharing</a>
+    <span class="email">{{.Email}}</span>
+  </nav>
+  <div class="container">
+    {{block "content" .}}{{end}}
+  </div>
+  <script>
+    function animateCounter(el) {
+      const target = parseFloat(el.getAttribute('data-target'));
+      const suffix = el.getAttribute('data-suffix') || '';
+      const prefix = el.getAttribute('data-prefix') || '';
+      const duration = parseInt(el.getAttribute('data-duration')) || 800;
+      const isPct = el.getAttribute('data-pct') !== null;
+      const start = performance.now();
+
+      function update(now) {
+        const t = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - t, 3);
+        const current = target * eased;
+        if (isPct) {
+          el.textContent = prefix + (current >= 0 ? '+' : '') + current.toFixed(2) + '%' + suffix;
+        } else {
+          el.textContent = prefix + Math.round(current).toLocaleString() + suffix;
+        }
+        if (t < 1) requestAnimationFrame(update);
+      }
+      requestAnimationFrame(update);
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          const counter = entry.target.querySelector('.animate-counter');
+          if (counter && !counter.dataset.counted) {
+            counter.dataset.counted = 'true';
+            animateCounter(counter);
+          }
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.animate-on-scroll').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>

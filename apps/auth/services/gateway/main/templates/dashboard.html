@@ -1,0 +1,238 @@
+{{template "base.html" .}}
+{{define "title"}}Dashboard - Homelab{{end}}
+{{define "content"}}
+<div class="w-full max-w-4xl px-4">
+  <div class="flex items-center justify-between mb-10 pt-8">
+    <div>
+      <h1 class="text-xl font-semibold">{{.Email}}</h1>
+      <p class="text-sm text-text-400 mt-0.5">Roles: {{join .Roles ", "}}</p>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="http://homelab.local" class="text-sm text-primary-400 hover:text-primary-300 underline">Home</a>
+      <a href="/api/logout" class="px-3.5 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-text-400 hover:text-text-100 hover:bg-white/10 transition-all no-underline">Sign out</a>
+    </div>
+  </div>
+
+  {{if .IsAdmin}}
+  <div class="space-y-10">
+    <div>
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold">Users</h2>
+        <button onclick="toggle('addUserForm')" class="text-sm px-3 py-1.5 rounded-lg bg-primary-600 hover:bg-primary-500 text-white transition-colors">+ Add User</button>
+      </div>
+      <div id="addUserForm" class="hidden mb-6 rounded-xl p-4 bg-white/5 border border-white/10">
+        <h3 class="text-sm font-medium mb-3">New User</h3>
+        <div class="grid gap-3 sm:grid-cols-3 mb-3">
+          <input id="newUserEmail" type="email" placeholder="Email" class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm focus:outline-none focus:border-primary-500">
+          <input id="newUserPassword" type="password" placeholder="Password" class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm focus:outline-none focus:border-primary-500">
+          <button onclick="createUser()" class="px-3 py-2 rounded-lg bg-primary-600 hover:bg-primary-500 text-sm text-white transition-colors">Create</button>
+        </div>
+        <div id="newUserRoles" class="flex flex-wrap gap-2">{{range .RoleDefs}}<label class="flex items-center gap-1.5 text-sm cursor-pointer"><input type="checkbox" value="{{.Name}}" class="new-user-role accent-primary-500"><span class="text-text-300">{{.Name}}</span></label>{{end}}</div>
+        <p id="newUserResult" class="text-xs mt-2 hidden"></p>
+      </div>
+      <div class="space-y-3">
+        {{range .Users}}{{$uid := .ID}}{{$uroles := .Roles}}
+        <div class="rounded-xl p-4 bg-white/5 border border-white/10">
+          <div class="flex items-center justify-between mb-3">
+            <span class="font-medium text-sm">{{.Email}}</span>
+          </div>
+          <div class="flex flex-wrap items-center gap-3 user-roles-{{$uid}}">
+            {{range $.RoleDefs}}
+            <label class="flex items-center gap-1.5 text-sm cursor-pointer">
+              <input type="checkbox" value="{{.Name}}" {{if has $uroles .Name}}checked{{end}} onchange="updateRoles('{{$uid}}', this)" class="accent-primary-500">
+              <span class="text-text-300">{{.Name}}</span>
+            </label>
+            {{end}}
+          </div>
+        </div>
+        {{end}}
+      </div>
+    </div>
+
+    <div>
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold">Roles</h2>
+        <button onclick="toggle('addRoleForm')" class="text-sm px-3 py-1.5 rounded-lg bg-primary-600 hover:bg-primary-500 text-white transition-colors">+ Add Role</button>
+      </div>
+      <div id="addRoleForm" class="hidden mb-6 rounded-xl p-4 bg-white/5 border border-white/10">
+        <h3 class="text-sm font-medium mb-3">New Role</h3>
+        <div class="grid gap-3 sm:grid-cols-4 mb-3">
+          <input id="newRoleName" placeholder="Role name" class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm focus:outline-none focus:border-primary-500">
+          <input id="newRoleDesc" placeholder="Description" class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm focus:outline-none focus:border-primary-500">
+          <input id="newRolePerms" placeholder="Permissions (comma-sep)" class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm focus:outline-none focus:border-primary-500">
+          <button onclick="createRole()" class="px-3 py-2 rounded-lg bg-primary-600 hover:bg-primary-500 text-sm text-white transition-colors">Create</button>
+        </div>
+        <p id="newRoleResult" class="text-xs mt-2 hidden"></p>
+      </div>
+      <div class="space-y-3">
+        {{range .RoleDefs}}
+        <div class="rounded-xl p-4 bg-white/5 border border-white/10" data-role-id="{{.ID}}">
+          <div class="flex items-start justify-between mb-2">
+            <div>
+              <span class="font-medium text-sm">{{.Name}}</span>
+              <span class="text-xs text-text-400 ml-2">{{.Description}}</span>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="editRole(this)" class="text-xs px-2 py-1 rounded bg-white/10 hover:bg-white/20 transition-colors">Edit</button>
+              <button onclick="deleteRole('{{.ID}}')" class="text-xs px-2 py-1 rounded bg-red-600/30 hover:bg-red-600/50 text-red-300 transition-colors">Delete</button>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-1">
+            {{range .Permissions}}<span class="px-2 py-0.5 rounded text-xs bg-primary-600/20 text-primary-300 border border-primary-600/30">{{.}}</span>{{end}}
+          </div>
+        </div>
+        {{end}}
+      </div>
+    </div>
+
+    <div>
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold">Invites</h2>
+        <button onclick="createInvite()" class="text-sm px-3 py-1.5 rounded-lg bg-primary-600 hover:bg-primary-500 text-white transition-colors">+ New Invite</button>
+      </div>
+      <div id="inviteResult" class="hidden mb-4 rounded-xl p-4 bg-white/5 border border-white/10">
+        <p class="text-sm">Invite code: <code id="inviteCode" class="text-primary-300 font-mono"></code></p>
+        <button onclick="copyInvite()" class="text-xs mt-2 px-2 py-1 rounded bg-white/10 hover:bg-white/20 transition-colors">Copy</button>
+      </div>
+    </div>
+  </div>
+  {{else}}
+  <div>
+    <h2 class="text-lg font-semibold mb-3">Your Roles</h2>
+    <div class="flex flex-wrap gap-2 mb-8">
+      {{range .Roles}}<span class="px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-sm">{{.}}</span>{{end}}
+    </div>
+    <h2 class="text-lg font-semibold mb-3">Your Permissions</h2>
+    <div class="flex flex-wrap gap-2">
+      {{range .Permissions}}<span class="px-3 py-1 rounded-lg bg-primary-600/20 text-primary-300 border border-primary-600/30 text-sm">{{.}}</span>{{end}}
+    </div>
+  </div>
+  {{end}}
+</div>
+
+<script>
+  async function api(path, opts) {
+    const res = await fetch(path, { credentials: "include", ...opts });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  }
+
+  function toggle(id) {
+    document.getElementById(id).classList.toggle("hidden");
+  }
+
+  window.updateRoles = async function(userId, el) {
+    const container = el.closest("[class^=user-roles]");
+    const checks = container.querySelectorAll("input[type=checkbox]");
+    const roles = Array.from(checks).filter(c => c.checked).map(c => c.value);
+    await api("/api/admin/users/" + userId, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ roles }),
+    });
+  };
+
+  async function createUser() {
+    const email = document.getElementById("newUserEmail").value.trim();
+    const password = document.getElementById("newUserPassword").value;
+    const checks = document.querySelectorAll("#newUserRoles input[type=checkbox]:checked");
+    const roles = Array.from(checks).map(c => c.value);
+    try {
+      await api("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, roles }),
+      });
+      location.reload();
+    } catch (e) {
+      const r = document.getElementById("newUserResult");
+      r.className = "text-xs mt-2 text-red-400";
+      r.textContent = e.message;
+      r.classList.remove("hidden");
+    }
+  }
+
+  async function createRole() {
+    const name = document.getElementById("newRoleName").value.trim();
+    const description = document.getElementById("newRoleDesc").value.trim();
+    const permsStr = document.getElementById("newRolePerms").value;
+    const permissions = permsStr.split(",").map(s => s.trim()).filter(Boolean);
+    try {
+      await api("/api/admin/roles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, description, permissions }),
+      });
+      location.reload();
+    } catch (e) {
+      const r = document.getElementById("newRoleResult");
+      r.className = "text-xs mt-2 text-red-400";
+      r.textContent = e.message;
+      r.classList.remove("hidden");
+    }
+  }
+
+  function editRole(btn) {
+    const card = btn.closest("[data-role-id]");
+    card.querySelectorAll(":scope > div:not(:last-child)").forEach(el => el.style.display = "none");
+    const name = card.querySelector(".font-medium").textContent;
+    const desc = card.querySelector(".text-xs.text-text-400")?.textContent || "";
+    const perms = Array.from(card.querySelector(".flex.flex-wrap.gap-1")?.querySelectorAll("span") || []).map(s => s.textContent).join(", ");
+    const editDiv = document.createElement("div");
+    editDiv.className = "space-y-2";
+    editDiv.innerHTML = `
+      <input class="edit-role-name w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm focus:outline-none focus:border-primary-500" value="${name}" placeholder="Name">
+      <input class="edit-role-desc w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm focus:outline-none focus:border-primary-500" value="${desc}" placeholder="Description">
+      <input class="edit-role-perms w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm focus:outline-none focus:border-primary-500" value="${perms}" placeholder="Permissions (comma-sep)">
+      <div class="flex gap-2">
+        <button onclick="saveRole(this)" class="text-xs px-3 py-1.5 rounded bg-primary-600 hover:bg-primary-500 text-white transition-colors">Save</button>
+        <button onclick="location.reload()" class="text-xs px-3 py-1.5 rounded bg-white/10 hover:bg-white/20 transition-colors">Cancel</button>
+      </div>`;
+    card.appendChild(editDiv);
+  }
+
+  async function saveRole(btn) {
+    const card = btn.closest("[data-role-id]");
+    const id = card.dataset.roleId;
+    const name = card.querySelector(".edit-role-name").value.trim();
+    const description = card.querySelector(".edit-role-desc").value.trim();
+    const permsStr = card.querySelector(".edit-role-perms").value;
+    const permissions = permsStr.split(",").map(s => s.trim()).filter(Boolean);
+    try {
+      await api("/api/admin/roles/" + id, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, description, permissions }),
+      });
+      location.reload();
+    } catch (e) {
+      alert("Failed: " + e.message);
+    }
+  }
+
+  async function deleteRole(id) {
+    if (!confirm("Delete this role?")) return;
+    try {
+      await api("/api/admin/roles/" + id, { method: "DELETE" });
+      location.reload();
+    } catch (e) {
+      alert("Failed: " + e.message);
+    }
+  }
+
+  async function createInvite() {
+    try {
+      const res = await api("/api/admin/invites", { method: "POST" });
+      document.getElementById("inviteResult").classList.remove("hidden");
+      document.getElementById("inviteCode").textContent = res.code;
+    } catch (e) {
+      alert("Failed: " + e.message);
+    }
+  }
+
+  function copyInvite() {
+    const code = document.getElementById("inviteCode").textContent;
+    navigator.clipboard.writeText(code).catch(() => {});
+  }
+</script>
+{{end}}

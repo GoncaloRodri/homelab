@@ -1,0 +1,67 @@
+{{define "content"}}
+{{$d := .}}
+<h1 style="margin-bottom: 24px;">Monthly Reports</h1>
+
+<div class="card animate-on-scroll">
+  <h2>12-Month Spend by Category</h2>
+  <canvas id="reportChart" height="300"></canvas>
+</div>
+
+<div class="card table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Month</th>
+        {{range $cat, $_ := $d.CategoryNames}}
+        <th class="text-right">{{$cat}}</th>
+        {{end}}
+        <th class="text-right">Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{range $d.MonthlyData}}
+      <tr>
+        <td><strong>{{.Month}}</strong></td>
+        {{range $cat, $_ := $d.CategoryNames}}
+        <td class="cents">€{{cents (index $.Totals $cat)}}</td>
+        {{end}}
+        {{$total := sub 0 0}}
+        {{range $_, $v := .Totals}}{{$total = add $total $v}}{{end}}
+        <td class="cents"><strong>€{{cents $total}}</strong></td>
+      </tr>
+      {{end}}
+    </tbody>
+  </table>
+</div>
+
+<script>
+new Chart(document.getElementById('reportChart'), {
+  type: 'bar',
+  data: {
+    labels: [{{range $d.MonthlyData}}"{{.Month}}",{{end}}],
+    datasets: [
+      {{$colors := $d.CategoryColors}}
+      {{range $cat, $_ := $d.CategoryNames}}
+      {
+        label: '{{$cat}}',
+        data: [{{range $d.MonthlyData}}{{index .Totals $cat | abs | div 100}},{{end}}],
+        backgroundColor: '{{index $colors $cat}}',
+        borderRadius: 2,
+      },
+      {{end}}
+    ]
+  },
+  options: {
+    responsive: true,
+    animation: { duration: 1000, easing: 'easeOutQuart' },
+    plugins: {
+      tooltip: { mode: 'index', intersect: false }
+    },
+    scales: {
+      x: { stacked: true, grid: { display: false } },
+      y: { stacked: true, beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { callback: v => '€' + v } }
+    }
+  }
+});
+</script>
+{{end}}

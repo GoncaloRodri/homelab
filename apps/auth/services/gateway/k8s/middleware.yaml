@@ -1,0 +1,12 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: forward-auth
+spec:
+  forwardAuth:
+    address: http://gateway.auth:80/verify
+    trustForwardHeader: true
+    authResponseHeaders:
+      - X-Auth-User-Id
+      - X-Auth-Email
+      - X-Auth-Roles

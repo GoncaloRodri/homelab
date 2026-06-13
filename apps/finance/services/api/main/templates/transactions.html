@@ -1,0 +1,87 @@
+{{define "content"}}
+{{$d := .}}
+<h1 style="margin-bottom: 24px;">Transactions</h1>
+
+<div class="card mb-16">
+  <form method="GET" class="flex flex-wrap">
+    <div class="form-group" style="margin-bottom: 0; min-width: 150px;">
+      <select name="category">
+        <option value="">All Categories</option>
+        {{range $d.Categories}}
+        <option value="{{.Name}}" {{if eq $.Cat .Name}}selected{{end}}>{{.Name}}</option>
+        {{end}}
+      </select>
+    </div>
+    <div class="form-group" style="margin-bottom: 0; min-width: 120px;">
+      <select name="days">
+        <option value="">All time</option>
+        <option value="30" {{if eq $.Days "30"}}selected{{end}}>30 days</option>
+        <option value="90" {{if eq $.Days "90"}}selected{{end}}>90 days</option>
+        <option value="365" {{if eq $.Days "365"}}selected{{end}}>1 year</option>
+      </select>
+    </div>
+    <div class="form-group" style="margin-bottom: 0; min-width: 200px;">
+      <input type="text" name="search" placeholder="Search description..." value="{{.Search}}">
+    </div>
+    <button type="submit" class="btn btn-primary">Filter</button>
+  </form>
+</div>
+
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Description</th>
+          <th>Account</th>
+          <th>Category</th>
+          <th class="text-right">Amount</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {{range $d.Txns}}
+        <tr>
+          <td>{{dateShort .Date}}</td>
+          <td class="desc-cell">{{.Description}}</td>
+          <td>{{.AccountID}}</td>
+          <td>
+            <span class="badge">{{.Category}}</span>
+            <button class="btn btn-outline btn-sm" onclick="editCat('{{.ID}}')">edit</button>
+          </td>
+          <td class="cents {{if lt .AmountCents 0}}negative{{else}}positive{{end}}">
+            €{{cents .AmountCents}}
+          </td>
+          <td>
+            <button class="btn btn-danger btn-sm" onclick="delTxn('{{.ID}}')">x</button>
+          </td>
+        </tr>
+        {{else}}
+        <tr><td colspan="6" class="text-center text-muted">No transactions found. <a href="/import">Import some!</a></td></tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+function editCat(id) {
+  const cat = prompt('New category:');
+  if (!cat) return;
+  fetch('/api/transactions/' + id, {
+    method: 'PUT',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({category: cat})
+  }).then(() => location.reload());
+}
+function delTxn(id) {
+  if (!confirm('Delete this transaction?')) return;
+  fetch('/api/transactions/' + id, {method: 'DELETE'})
+    .then(() => location.reload());
+}
+</script>
+<style>
+.desc-cell { max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+</style>
+{{end}}

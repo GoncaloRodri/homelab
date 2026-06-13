@@ -1,0 +1,266 @@
+{{define "content"}}
+{{$d := .}}
+<h1 style="margin-bottom: 24px;">Portfolio</h1>
+
+{{if $d.Holdings}}
+<div class="grid">
+  <div class="card value-card">
+    <h2>Total Value</h2>
+    <div class="value {{if ge $d.TotalPCLCents 0}}positive{{else}}negative{{end}}">
+      €{{cents $d.TotalValueCents}}
+    </div>
+  </div>
+  <div class="card value-card">
+    <h2>Total Cost</h2>
+    <div class="value">€{{cents $d.TotalCostCents}}</div>
+  </div>
+  <div class="card value-card">
+    <h2>Unrealized P&L</h2>
+    <div class="value {{if ge $d.TotalPCLCents 0}}positive{{else}}negative{{end}}">
+      {{pctSign $d.TotalPCLPct}}€{{cents $d.TotalPCLCents}}
+      ({{pctSign $d.TotalPCLPct}}{{printf "%.2f" $d.TotalPCLPct}}%)
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Allocation</h2>
+  <div style="max-width: 500px; margin: 0 auto; position: relative;">
+    <canvas id="allocationChart2d" height="300" style="display:none;"></canvas>
+    <div id="allocation3d" style="width:100%; height:400px;"></div>
+  </div>
+</div>
+
+<div class="card table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Stock</th>
+        <th>Shares</th>
+        <th class="text-right">Avg Entry</th>
+        <th class="text-right">Current Price</th>
+        <th class="text-right">Value</th>
+        <th class="text-right">P&L</th>
+        <th class="text-right">Return</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{range $i, $h := $d.Holdings}}
+      <tr>
+        <td><strong>{{.Name}}</strong><br><span class="text-muted">{{.ISIN}}</span></td>
+        <td>{{printf "%.4f" .SharesOwned}}</td>
+        <td class="cents">€{{cents .AvgEntryCents}}</td>
+        <td class="cents">€{{cents .CurrentPriceCents}}</td>
+        <td class="cents">€{{cents .CurrentValueCents}}</td>
+        <td class="cents {{if ge .UnrealizedPCLCents 0}}positive{{else}}negative{{end}}">
+          €{{cents .UnrealizedPCLCents}}
+        </td>
+        <td class="cents {{if ge .UnrealizedPCLPct 0}}positive{{else}}negative{{end}}">
+          {{pctSign .UnrealizedPCLPct}}{{printf "%.2f" .UnrealizedPCLPct}}%
+        </td>
+      </tr>
+      {{end}}
+    </tbody>
+  </table>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.170/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const colors = ['#FF6384','#36A2EB','#FFCE56','#4BC0C0','#9966FF','#FF9F40','#C9CBCF','#00E676','#651FFF','#FF6F00','#E91E63','#607D8B','#3F51B5','#9E9E9E'];
+
+const holdings = [
+  {{range $d.Holdings}}
+  { name: "{{.Name}}", value: {{.CurrentValueCents}} },
+  {{end}}
+];
+
+const total = holdings.reduce((s, h) => s + h.value, 0);
+if (total > 0) {
+  const container = document.getElementById('allocation3d');
+  const w = container.clientWidth;
+  const h = 400;
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 100);
+  camera.position.set(0, 4, 8);
+  camera.lookAt(0, 0, 0);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setSize(w, h);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  container.appendChild(renderer.domElement);
+
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+  controls.autoRotate = true;
+  controls.autoRotateSpeed = 1.5;
+  controls.minDistance = 4;
+  controls.maxDistance = 15;
+  controls.target.set(0, 0, 0);
+
+  const group = new THREE.Group();
+
+  const innerRadius = 1.2;
+  const outerRadius = 2.8;
+  const depth = 0.6;
+  let angle = 0;
+
+  const tooltip = document.createElement('div');
+  tooltip.style.cssText = 'position:absolute;background:rgba(0,0,0,0.8);color:#fff;padding:6px 12px;border-radius:6px;font-size:13px;pointer-events:none;opacity:0;transition:opacity 0.2s;z-index:10;';
+  container.appendChild(tooltip);
+
+  const raycaster = new THREE.Raycaster();
+  const pointer = new THREE.Vector2();
+  let hovered = null;
+
+  holdings.forEach((h, i) => {
+    const arcAngle = (h.value / total) * Math.PI * 2;
+    const color = colors[i % colors.length];
+
+    const shape = new THREE.Shape();
+    const segments = 32;
+    const startAngle = angle;
+    const endAngle = angle + arcAngle;
+
+    shape.moveTo(innerRadius, 0);
+    shape.absarc(0, 0, outerRadius, startAngle, endAngle, false);
+    shape.absarc(0, 0, innerRadius, endAngle, startAngle, true);
+    shape.closePath();
+
+    const extrudeSettings = {
+      depth: depth,
+      bevelEnabled: true,
+      bevelThickness: 0.08,
+      bevelSize: 0.04,
+      bevelSegments: 8,
+    };
+
+    const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+    const material = new THREE.MeshPhysicalMaterial({
+      color: color,
+      metalness: 0.2,
+      roughness: 0.3,
+      clearcoat: 0.1,
+      side: THREE.DoubleSide,
+    });
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.rotation.x = -Math.PI / 2;
+    mesh.position.y = -depth / 2;
+    mesh.userData = { holding: h };
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    group.add(mesh);
+
+    const edgeGeo = new THREE.EdgesGeometry(geometry);
+    const edgeMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.15 });
+    const edge = new THREE.LineSegments(edgeGeo, edgeMat);
+    edge.rotation.x = -Math.PI / 2;
+    edge.position.y = -depth / 2;
+    group.add(edge);
+
+    angle = endAngle;
+  });
+
+  scene.add(group);
+
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+  scene.add(ambientLight);
+
+  const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+  dirLight.position.set(5, 10, 7);
+  dirLight.castShadow = true;
+  scene.add(dirLight);
+
+  const backLight = new THREE.DirectionalLight(0xffffff, 0.4);
+  backLight.position.set(-5, 0, -5);
+  scene.add(backLight);
+
+  const floorGeo = new THREE.RingGeometry(1.5, 3.5, 64);
+  const floorMat = new THREE.MeshPhysicalMaterial({
+    color: 0x1a237e,
+    transparent: true,
+    opacity: 0.06,
+    side: THREE.DoubleSide,
+    roughness: 0.8,
+    metalness: 0.1,
+  });
+  const floor = new THREE.Mesh(floorGeo, floorMat);
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.y = -depth / 2 - 0.01;
+  scene.add(floor);
+
+  function onPointerMove(event) {
+    const rect = renderer.domElement.getBoundingClientRect();
+    pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+    raycaster.setFromCamera(pointer, camera);
+    const intersects = raycaster.intersectObjects(group.children);
+
+    if (intersects.length > 0) {
+      const hit = intersects[0].object;
+      if (hit.userData.holding) {
+        const h = hit.userData.holding;
+        const pct = ((h.value / total) * 100).toFixed(1);
+        tooltip.textContent = `${h.name}: €${(h.value / 100).toFixed(2)} (${pct}%)`;
+        tooltip.style.opacity = '1';
+        tooltip.style.left = (event.clientX - rect.left + 12) + 'px';
+        tooltip.style.top = (event.clientY - rect.top - 10) + 'px';
+
+        if (hovered !== hit) {
+          if (hovered) {
+            hovered.material.opacity = 1;
+            hovered.material.needsUpdate = true;
+          }
+          hit.material.opacity = 0.85;
+          hit.material.needsUpdate = true;
+          hovered = hit;
+        }
+        return;
+      }
+    }
+    tooltip.style.opacity = '0';
+    if (hovered) {
+      hovered.material.opacity = 1;
+      hovered.material.needsUpdate = true;
+      hovered = null;
+    }
+  }
+
+  renderer.domElement.addEventListener('pointermove', onPointerMove);
+
+  function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  function resize() {
+    const w2 = container.clientWidth;
+    camera.aspect = w2 / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w2, h);
+  }
+  window.addEventListener('resize', resize);
+}
+</script>
+{{else}}
+<div class="card empty-state">
+  <h3>No trades imported yet</h3>
+  <p>Go to <a href="/import">Import</a> and upload your Trade Republic securities CSV.</p>
+</div>
+{{end}}
+{{end}}

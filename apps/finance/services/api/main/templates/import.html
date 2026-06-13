@@ -1,0 +1,116 @@
+{{define "content"}}
+{{$d := .}}
+<h1 style="margin-bottom: 24px;">Import Transactions</h1>
+
+{{if $d.Preview}}
+<div class="card">
+  <h2>Preview — {{$d.Preview.Total}} rows</h2>
+  <form method="POST" action="/import/confirm" class="mt-16">
+    <input type="hidden" name="account_id" value="{{$d.Preview.AccountID}}">
+    <input type="hidden" name="format" value="{{$d.SelectedFormat}}">
+    <input type="hidden" name="raw_data" value="{{$d.RawData}}">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Date</th><th>Description</th><th class="text-right">Amount</th><th>Category</th></tr>
+        </thead>
+        <tbody>
+          {{range $i, $row := $d.Preview.Rows}}
+          <tr>
+            <td>{{$row.Date}}</td>
+            <td>{{$row.Description}}</td>
+            <td class="cents {{if lt $row.AmountCents 0}}negative{{else}}positive{{end}}">
+              €{{cents $row.AmountCents}}
+            </td>
+            <td>
+              <select name="categories" class="cat-select" data-color="">
+                {{range $cat := $d.Categories}}
+                <option value="{{$cat}}" data-color="{{index $d.CategoryColors $cat}}" {{if eq $cat $row.Category}}selected{{end}}>{{$cat}}</option>
+                {{end}}
+              </select>
+            </td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+    <div class="flex flex-wrap" style="gap: 8px; margin-top: 16px;">
+      <button type="submit" class="btn btn-primary">Confirm Import</button>
+      <a href="/import" class="btn btn-outline">Cancel</a>
+    </div>
+  </form>
+</div>
+{{else}}
+<div class="card">
+  <form method="POST" action="/import/preview" enctype="multipart/form-data">
+    <div class="form-group">
+      <label>Account</label>
+      <select name="account_id" required>
+        <option value="">Select account...</option>
+        {{range $d.Accounts}}
+        <option value="{{.ID}}">{{.Name}} ({{.Type}})</option>
+        {{end}}
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Bank / Format</label>
+      <select name="format" required>
+        <option value="cgd">Caixa Geral de Depósitos (CGD)</option>
+        <option value="traderepublic">Trade Republic (Card)</option>
+        <option value="generic">Generic CSV</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>CSV File</label>
+      <input type="file" name="file" accept=".csv,.txt" required>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Preview</button>
+  </form>
+
+  <hr style="margin: 24px 0;">
+
+  <h2 class="mb-16">Import Securities Trades</h2>
+  <form method="POST" action="/import/securities" enctype="multipart/form-data">
+    <div class="form-group">
+      <label>Trade Republic Securities CSV</label>
+      <input type="file" name="file" accept=".csv,.txt" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Import Securities</button>
+  </form>
+</div>
+{{end}}
+
+{{if $d.Error}}
+<div class="card error">{{$d.Error}}</div>
+{{end}}
+
+<style>
+  hr { border: none; border-top: 1px solid #e0e0e0; }
+  .cat-select {
+    padding: 4px 8px; border: 1px solid #ddd; border-radius: 6px;
+    font-size: 13px; background: #fff; cursor: pointer; min-width: 120px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    border-left: 4px solid #ddd;
+  }
+  .cat-select:focus {
+    outline: none; border-color: #3949ab; box-shadow: 0 0 0 3px rgba(57,73,171,0.1);
+  }
+  .cents.positive { color: #4caf50; font-weight: 600; }
+  .cents.negative { color: #f44336; }
+</style>
+
+<script>
+document.querySelectorAll('.cat-select').forEach(function(sel) {
+  function updateColor() {
+    var opt = sel.options[sel.selectedIndex];
+    var color = opt.getAttribute('data-color') || '#ddd';
+    sel.style.borderLeftColor = color;
+  }
+  sel.addEventListener('change', updateColor);
+  updateColor();
+});
+</script>
+{{end}}

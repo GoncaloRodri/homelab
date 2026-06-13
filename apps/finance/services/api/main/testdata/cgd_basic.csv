@@ -1,0 +1,14 @@
+Consultar saldos e movimentos � ordem - 07-06-2026
+
+Conta ;0679010000800 - EUR - CaixaJovem Extracto 
+Data de in�cio ;07-05-2026
+Data de fim ;07-06-2026
+
+Data mov. ;Data valor ;Descri��o ;D�bito ;Cr�dito ;Saldo contabil�stico ;Saldo dispon�vel ;Categoria ;
+02-01-2024;02-01-2024;Supermercado Pingo Doce;54,90;;1.000,00;1.000,00;COMPRAS;
+05-01-2024;05-01-2024;Continente;32,50;;967,50;967,50;COMPRAS;
+10-01-2024;10-01-2024;Restaurante O Cantinho;25,00;;942,50;942,50;COMPRAS;
+15-01-2024;15-01-2024;Uber Portugal;8,50;;934,00;934,00;COMPRAS;
+20-01-2024;20-01-2024;Salario Mensal;;2.500,00;3.434,00;3.434,00;Diversos;
+25-01-2024;25-01-2024;EDP Eletricidade;45,30;;3.388,70;3.388,70;COMPRAS;
+28-01-2024;28-01-2024;Zara Lisbon;89,99;;3.298,71;3.298,71;COMPRAS;

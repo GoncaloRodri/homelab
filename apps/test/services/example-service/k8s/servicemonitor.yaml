@@ -1,0 +1,18 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: example-service
+  labels:
+    release: kps
+spec:
+  jobLabel: app
+  selector:
+    matchLabels:
+      app: example-service
+  namespaceSelector:
+    matchNames:
+      - test
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s

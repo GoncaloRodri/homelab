@@ -1,0 +1,146 @@
+{{define "content"}}
+{{$d := .}}
+{{$change := sub $d.ThisMonth.TotalCents $d.LastMonth.TotalCents}}
+<h1 style="margin-bottom: 24px;">Dashboard</h1>
+
+<div class="grid">
+  <div class="card value-card animate-on-scroll">
+    <h2>This Month</h2>
+    <div class="value {{if lt $d.ThisMonth.TotalCents 0}}negative{{else}}positive{{end}} animate-counter"
+         data-target="{{$d.ThisMonth.TotalCents}}" data-prefix="€">€0</div>
+  </div>
+  <div class="card value-card animate-on-scroll">
+    <h2>Last Month</h2>
+    <div class="value {{if lt $d.LastMonth.TotalCents 0}}negative{{else}}positive{{end}} animate-counter"
+         data-target="{{$d.LastMonth.TotalCents}}" data-prefix="€">€0</div>
+  </div>
+  <div class="card value-card animate-on-scroll">
+    <h2>Change</h2>
+    <div class="value {{if lt $change 0}}negative{{else}}positive{{end}} animate-counter"
+         data-target="{{$change}}" data-prefix="€">€0</div>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="card animate-on-scroll">
+    <h2>Spending by Category (This Month)</h2>
+    <canvas id="thisMonthChart" height="200"></canvas>
+  </div>
+  <div class="card animate-on-scroll">
+    <h2>Balance Trend</h2>
+    <canvas id="balanceChart" height="200"></canvas>
+  </div>
+</div>
+
+<div class="card animate-on-scroll">
+  <h2>Recent Transactions</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Description</th>
+          <th>Category</th>
+          <th class="text-right">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{range $d.RecentTxns}}
+        <tr>
+          <td>{{dateShort .Date}}</td>
+          <td>{{.Description}}</td>
+          <td><span class="badge">{{.Category}}</span></td>
+          <td class="cents {{if lt .AmountCents 0}}negative{{else}}positive{{end}}">
+            €{{cents .AmountCents}}
+          </td>
+        </tr>
+        {{else}}
+        <tr><td colspan="4" class="text-center text-muted">No transactions yet. <a href="/import">Import some!</a></td></tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const barColors = ['#FF6384','#36A2EB','#FFCE56','#4BC0C0','#9966FF','#FF9F40','#C9CBCF','#00E676','#651FFF','#FF6F00','#E91E63','#607D8B','#3F51B5','#9E9E9E'];
+
+{{if $d.ThisMonth.ByCategory}}
+const thisMonthLabels = {{jsonKeys $d.ThisMonth.ByCategory}};
+const thisMonthData = {{jsonVals $d.ThisMonth.ByCategory}};
+const barGrads = thisMonthData.map((_, i) => {
+  const c = document.createElement('canvas').getContext('2d');
+  const g = c.createLinearGradient(0, 0, 0, 200);
+  g.addColorStop(0, barColors[i % barColors.length]);
+  g.addColorStop(0.6, barColors[i % barColors.length] + 'dd');
+  g.addColorStop(1, barColors[i % barColors.length] + '88');
+  return g;
+});
+new Chart(document.getElementById('thisMonthChart'), {
+  type: 'bar',
+  data: {
+    labels: thisMonthLabels,
+    datasets: [{
+      label: 'Spending (€)',
+      data: thisMonthData.map(v => Math.abs(v) / 100),
+      backgroundColor: barGrads,
+      borderColor: barColors.map(c => c + 'cc'),
+      borderWidth: 1,
+      borderRadius: 4,
+      borderSkipped: false,
+    }]
+  },
+  options: {
+    responsive: true,
+    animation: {
+      duration: 1200,
+      easing: 'easeOutQuart'
+    },
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } },
+      x: { grid: { display: false } }
+    }
+  }
+});
+{{end}}
+{{if $d.BalanceTrend}}
+const grad = document.createElement('canvas').getContext('2d').createLinearGradient(0,0,0,400);
+grad.addColorStop(0, 'rgba(57,73,171,0.35)');
+grad.addColorStop(0.5, 'rgba(57,73,171,0.12)');
+grad.addColorStop(1, 'rgba(57,73,171,0.01)');
+new Chart(document.getElementById('balanceChart'), {
+  type: 'line',
+  data: {
+    labels: [{{range $d.BalanceTrend}}"{{dateShort .Date}}",{{end}}],
+    datasets: [{
+      label: 'Balance (€)',
+      data: [{{range $d.BalanceTrend}}{{div .Cents 100}},{{end}}],
+      borderColor: '#3949ab',
+      backgroundColor: grad,
+      fill: true,
+      tension: 0.4,
+      pointRadius: 4,
+      pointHoverRadius: 7,
+      pointBackgroundColor: '#fff',
+      pointBorderColor: '#3949ab',
+      pointBorderWidth: 3,
+    }]
+  },
+  options: {
+    responsive: true,
+    animation: {
+      duration: 1500,
+      easing: 'easeOutQuart'
+    },
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { beginAtZero: false, grid: { color: 'rgba(0,0,0,0.05)' } },
+      x: { grid: { display: false } }
+    },
+    interaction: { intersect: false, mode: 'index' }
+  }
+});
+{{end}}
+</script>
+{{end}}
