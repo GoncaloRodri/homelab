@@ -154,6 +154,17 @@ func (m *mockStore) deleteGoal(_ context.Context, id, _ string) error {
 }
 func (m *mockStore) seedCategories(_ context.Context, _ string) error { return nil }
 
+func (m *mockStore) getHousehold(_ context.Context, _ string) (*Household, error) {
+	return nil, fmt.Errorf("not found")
+}
+func (m *mockStore) createHousehold(_ context.Context, _ *Household) error  { return nil }
+func (m *mockStore) deleteHousehold(_ context.Context, _ string) error       { return nil }
+func (m *mockStore) getImportSchedules(_ context.Context, _ string) ([]ImportSchedule, error) {
+	return nil, nil
+}
+func (m *mockStore) createImportSchedule(_ context.Context, _ *ImportSchedule) error { return nil }
+func (m *mockStore) deleteImportSchedule(_ context.Context, _, _ string) error        { return nil }
+
 // ── helpers ───────────────────────────────────────────────────────────────────
 
 func newHandler(store *mockStore) *Handler {

@@ -14,7 +14,12 @@
   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:8px;">
     <div>
       <h2 style="font-size:15px; font-weight:700; color:var(--text); text-transform:none; letter-spacing:0;">Preview</h2>
-      <p class="text-muted" style="margin-top:3px;">{{$d.Preview.Total}} rows — review categories before confirming.</p>
+      <p class="text-muted" style="margin-top:3px;">
+        {{$d.Preview.Total}} rows
+        {{if $d.DuplicateCount}}
+        — <span style="color:var(--yellow, #f59e0b); font-weight:600;">{{$d.DuplicateCount}} already imported</span> (shown greyed out, will be skipped)
+        {{end}}
+      </p>
     </div>
     <a href="/import" class="btn btn-outline btn-sm">← Back</a>
   </div>
@@ -36,13 +41,19 @@
         </thead>
         <tbody>
           {{range $i, $row := $d.Preview.Rows}}
-          <tr>
+          <tr {{if $row.Duplicate}}style="opacity:0.4;"{{end}}>
             <td style="white-space:nowrap; color:var(--text2);">{{$row.Date}}</td>
-            <td style="max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{$row.Description}}</td>
+            <td style="max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+              {{$row.Description}}
+              {{if $row.Duplicate}}<span style="font-size:11px; font-weight:600; color:var(--muted); margin-left:6px;">duplicate</span>{{end}}
+            </td>
             <td class="cents {{if lt $row.AmountCents 0}}negative{{else}}positive{{end}}" style="font-weight:600; white-space:nowrap;">
               {{if lt $row.AmountCents 0}}−{{else}}+{{end}}€{{cents (centsAbs $row.AmountCents)}}
             </td>
             <td>
+              {{if $row.Duplicate}}
+              <span style="font-size:12px; color:var(--muted);">—</span>
+              {{else}}
               <select name="categories" class="cat-select" data-selected="{{$row.Category}}"
                       style="font-size:12.5px; padding:5px 8px; border:1.5px solid var(--border2);
                              border-radius:6px; background:var(--bg2); color:var(--text);
@@ -51,6 +62,7 @@
                 <option value="{{$cat}}" {{if eq $cat $row.Category}}selected{{end}}>{{$cat}}</option>
                 {{end}}
               </select>
+              {{end}}
             </td>
           </tr>
           {{end}}

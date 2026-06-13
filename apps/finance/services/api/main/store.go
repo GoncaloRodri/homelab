@@ -328,6 +328,74 @@ var defaultCategories = []struct {
 	{"Other", "#9E9E9E"},
 }
 
+func (s *Store) households() *mgmongo.Collection {
+	return s.db.Collection("finance_households")
+}
+
+func (s *Store) importSchedules() *mgmongo.Collection {
+	return s.db.Collection("finance_import_schedules")
+}
+
+func (s *Store) getHousehold(ctx context.Context, userID string) (*Household, error) {
+	ctx, span := mongo.StartSpan(ctx, "Store.getHousehold")
+	defer span.End()
+	var h Household
+	err := s.households().FindOne(ctx, bson.M{"$or": bson.A{
+		bson.M{"owner_id": userID},
+		bson.M{"partner_id": userID},
+	}}).Decode(&h)
+	if err != nil {
+		return nil, err
+	}
+	return &h, nil
+}
+
+func (s *Store) createHousehold(ctx context.Context, h *Household) error {
+	ctx, span := mongo.StartSpan(ctx, "Store.createHousehold")
+	defer span.End()
+	_, err := s.households().InsertOne(ctx, h)
+	return err
+}
+
+func (s *Store) deleteHousehold(ctx context.Context, userID string) error {
+	ctx, span := mongo.StartSpan(ctx, "Store.deleteHousehold")
+	defer span.End()
+	_, err := s.households().DeleteOne(ctx, bson.M{"$or": bson.A{
+		bson.M{"owner_id": userID},
+		bson.M{"partner_id": userID},
+	}})
+	return err
+}
+
+func (s *Store) getImportSchedules(ctx context.Context, userID string) ([]ImportSchedule, error) {
+	ctx, span := mongo.StartSpan(ctx, "Store.getImportSchedules")
+	defer span.End()
+	cur, err := s.importSchedules().Find(ctx, bson.M{"user_id": userID})
+	if err != nil {
+		return nil, err
+	}
+	defer cur.Close(ctx)
+	var items []ImportSchedule
+	if err := cur.All(ctx, &items); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+func (s *Store) createImportSchedule(ctx context.Context, sched *ImportSchedule) error {
+	ctx, span := mongo.StartSpan(ctx, "Store.createImportSchedule")
+	defer span.End()
+	_, err := s.importSchedules().InsertOne(ctx, sched)
+	return err
+}
+
+func (s *Store) deleteImportSchedule(ctx context.Context, id, userID string) error {
+	ctx, span := mongo.StartSpan(ctx, "Store.deleteImportSchedule")
+	defer span.End()
+	_, err := s.importSchedules().DeleteOne(ctx, bson.M{"_id": id, "user_id": userID})
+	return err
+}
+
 func (s *Store) seedCategories(ctx context.Context, userID string) error {
 	ctx, span := mongo.StartSpan(ctx, "Store.seedCategories")
 	defer span.End()
