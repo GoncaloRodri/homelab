@@ -99,10 +99,11 @@ const palette = [
 
 const holdings = [
   {{range $d.Holdings}}{ name: "{{.Name}}", value: {{.CurrentValueCents}} },{{end}}
-];
+].filter(h => h.value > 0);
 
 const total = holdings.reduce((s, h) => s + h.value, 0);
-if (total <= 0) return;
+
+if (total > 0) {
 
 const container = document.getElementById('allocation3d');
 const W = container.clientWidth, H = 380;
@@ -211,6 +212,8 @@ window.addEventListener('resize', () => {
   camera.updateProjectionMatrix();
   renderer.setSize(w2, H);
 });
+
+} // end if (total > 0)
 </script>
 
 {{else}}
