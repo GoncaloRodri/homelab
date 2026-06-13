@@ -57,11 +57,15 @@
 
   <div class="card value-card animate-on-scroll">
     <h2>Portfolio today</h2>
-    {{if $d.PortfolioValueCents}}
+    {{if $d.PortfolioHoldings}}
     <div class="value animate-counter" data-target="{{$d.PortfolioValueCents}}" data-prefix="€" style="color:var(--text);">€0.00</div>
+    {{if $d.PortfolioPricesAvailable}}
     <p style="font-size:12px; margin-top:6px; {{if ge $d.PortfolioPCLCents 0}}color:var(--green){{else}}color:var(--red){{end}};">
       {{if ge $d.PortfolioPCLCents 0}}+{{else}}−{{end}}€{{cents (centsAbs $d.PortfolioPCLCents)}} total P&L
     </p>
+    {{else}}
+    <p style="font-size:12px; color:var(--text3); margin-top:6px;">cost basis · prices unavailable</p>
+    {{end}}
     {{else}}
     <div class="value" style="color:var(--text3); font-size:18px;">No trades yet</div>
     <p style="font-size:12px; color:var(--text3); margin-top:6px;"><a href="/import" style="color:var(--accent);">Import trades →</a></p>
@@ -120,19 +124,24 @@
       <div style="display:flex; align-items:center; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--border);">
         <div>
           <div style="font-size:13px; font-weight:600; color:var(--text);">{{.Name}}</div>
-          <div style="font-size:11px; color:var(--text3);">{{.ISIN}} · {{printf "%.2f" .SharesOwned}} shares</div>
+          <div style="font-size:11px; color:var(--text3);">{{printf "%.4f" .SharesOwned}} shares</div>
         </div>
         <div style="text-align:right;">
+          {{if $d.PortfolioPricesAvailable}}
           <div style="font-size:13px; font-weight:500; color:var(--text);">€{{cents .CurrentValueCents}}</div>
           <div style="font-size:12px; {{if ge .UnrealizedPCLCents 0}}color:var(--green){{else}}color:var(--red){{end}};">
             {{pctSign .UnrealizedPCLPct}}{{printf "%.1f" .UnrealizedPCLPct}}%
           </div>
+          {{else}}
+          <div style="font-size:13px; font-weight:500; color:var(--text);">€{{cents .TotalCostCents}}</div>
+          <div style="font-size:11px; color:var(--text3);">cost basis</div>
+          {{end}}
         </div>
       </div>
       {{end}}
       <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 0 0 0;">
-        <span style="font-size:13px; font-weight:500; color:var(--text);">Total</span>
-        <span class="animate-counter" style="font-size:15px; font-weight:600; {{if ge $d.PortfolioPCLCents 0}}color:var(--green){{else}}color:var(--red){{end}};"
+        <span style="font-size:13px; font-weight:500; color:var(--text);">Total{{if not $d.PortfolioPricesAvailable}} invested{{end}}</span>
+        <span class="animate-counter" style="font-size:15px; font-weight:600; color:var(--text);"
               data-target="{{$d.PortfolioValueCents}}" data-prefix="€">€0.00</span>
       </div>
     </div>
