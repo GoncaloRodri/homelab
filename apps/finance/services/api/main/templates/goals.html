@@ -155,19 +155,39 @@
         </p>
       </div>
 
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-        <div>
-          <label style="font-size:12px; color:var(--text2); display:block; margin-bottom:6px;">Target amount (€)</label>
-          <input name="target_euros" type="number" min="1" step="0.01" required placeholder="500"
-                 style="width:100%; padding:9px 12px; background:var(--bg3); border:1px solid var(--border);
-                        border-radius:8px; color:var(--text); font-size:14px;">
+      <div>
+        <label style="font-size:12px; color:var(--text2); display:block; margin-bottom:6px;">Target amount (€)</label>
+        <input name="target_euros" type="number" min="1" step="0.01" required placeholder="500"
+               style="width:100%; padding:9px 12px; background:var(--bg3); border:1px solid var(--border);
+                      border-radius:8px; color:var(--text); font-size:14px;">
+      </div>
+
+      <div>
+        <label style="font-size:12px; color:var(--text2); display:block; margin-bottom:6px;">Target date</label>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <select id="deadline-month"
+                  style="padding:9px 12px; background:var(--bg3); border:1px solid var(--border);
+                         border-radius:8px; color:var(--text); font-size:14px;">
+            <option value="01">January</option>
+            <option value="02">February</option>
+            <option value="03">March</option>
+            <option value="04">April</option>
+            <option value="05">May</option>
+            <option value="06">June</option>
+            <option value="07">July</option>
+            <option value="08">August</option>
+            <option value="09">September</option>
+            <option value="10">October</option>
+            <option value="11">November</option>
+            <option value="12">December</option>
+          </select>
+          <select id="deadline-year"
+                  style="padding:9px 12px; background:var(--bg3); border:1px solid var(--border);
+                         border-radius:8px; color:var(--text); font-size:14px;">
+          </select>
         </div>
-        <div>
-          <label style="font-size:12px; color:var(--text2); display:block; margin-bottom:6px;">Target date</label>
-          <input name="deadline" type="month" required
-                 style="width:100%; padding:9px 12px; background:var(--bg3); border:1px solid var(--border);
-                        border-radius:8px; color:var(--text); font-size:14px;">
-        </div>
+        <!-- hidden field submitted to server -->
+        <input type="hidden" name="deadline" id="deadline-value">
       </div>
 
       <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:4px;">
@@ -189,6 +209,30 @@ const typeHints = {
 function updateTypeHint(v) {
   document.getElementById('type-hint').textContent = typeHints[v] || '';
 }
+
+// populate year dropdown: current year + 10 years ahead
+(function() {
+  const now = new Date();
+  const yearSel = document.getElementById('deadline-year');
+  const monthSel = document.getElementById('deadline-month');
+  for (let y = now.getFullYear(); y <= now.getFullYear() + 10; y++) {
+    const opt = document.createElement('option');
+    opt.value = String(y);
+    opt.textContent = String(y);
+    yearSel.appendChild(opt);
+  }
+  // default month to next month
+  const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  monthSel.value = String(nextMonth.getMonth() + 1).padStart(2, '0');
+  yearSel.value = String(nextMonth.getFullYear());
+})();
+
+// wire hidden field before submit
+document.querySelector('#new-goal-modal form').addEventListener('submit', function() {
+  const m = document.getElementById('deadline-month').value;
+  const y = document.getElementById('deadline-year').value;
+  document.getElementById('deadline-value').value = y + '-' + m;
+});
 
 // close modal on backdrop click
 document.getElementById('new-goal-modal').addEventListener('click', function(e) {
