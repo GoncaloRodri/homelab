@@ -438,6 +438,81 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// ── Alerts ──────────────────────────────────────────────────────────
+	var alerts []Alert
+
+	// budget overspend alerts — compare per-category spend vs budget
+	for cat, budget := range catBudgets {
+		spent := -thisMonth.ByCategory[cat] // expenses are negative
+		if spent <= 0 || budget <= 0 {
+			continue
+		}
+		pct := int(float64(spent) / float64(budget) * 100)
+		if pct >= 100 {
+			alerts = append(alerts, Alert{
+				Level:   AlertDanger,
+				Message: fmt.Sprintf("You've exceeded your %s budget (€%.0f of €%.0f — %d%%).", cat, float64(spent)/100, float64(budget)/100, pct),
+			})
+		} else if pct >= 80 && monthProgressPct < 80 {
+			alerts = append(alerts, Alert{
+				Level:   AlertWarn,
+				Message: fmt.Sprintf("You've used %d%% of your %s budget but only %d%% of the month has passed.", pct, cat, monthProgressPct),
+			})
+		}
+	}
+
+	// goal deadline risk alerts
+	if goalList, err := h.store.getGoals(ctx, a.UserID); err == nil {
+		threeAgo := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location()).AddDate(0, -3, 0)
+		moSavings := make(map[int]int64)
+		for _, t := range txns {
+			if !t.Date.Before(threeAgo) && t.Date.Before(thisStart) {
+				moSavings[int(t.Date.Month())] += t.AmountCents
+			}
+		}
+		var totalS int64
+		for _, s := range moSavings {
+			if s > 0 {
+				totalS += s
+			}
+		}
+		avgS := int64(0)
+		if len(moSavings) > 0 {
+			avgS = totalS / int64(len(moSavings))
+		}
+		for _, g := range goalList {
+			remaining := g.TargetCents - g.SavedCents
+			if remaining <= 0 {
+				continue
+			}
+			ml := int64(monthsBetween(now, g.Deadline))
+			if ml < 1 {
+				ml = 1
+			}
+			needed := remaining / ml
+			if avgS < needed {
+				monthsOff := int64(0)
+				if avgS > 0 {
+					monthsOff = remaining/avgS - ml
+				}
+				msg := fmt.Sprintf("You're on track to miss your \"%s\" goal", g.Name)
+				if monthsOff > 0 {
+					msg += fmt.Sprintf(" by %d month(s)", monthsOff)
+				}
+				msg += fmt.Sprintf(" — need €%.0f/mo but saving ~€%.0f/mo.", float64(needed)/100, float64(avgS)/100)
+				alerts = append(alerts, Alert{Level: AlertWarn, Message: msg})
+			}
+		}
+	}
+
+	// overall spend pace alert
+	if monthProgressPct > 0 && monthSpentPct > monthProgressPct+20 {
+		alerts = append(alerts, Alert{
+			Level:   AlertWarn,
+			Message: fmt.Sprintf("You've spent %d%% of your disposable income but only %d%% of the month has passed — you're ahead of pace.", monthSpentPct, monthProgressPct),
+		})
+	}
+
 	render(w, dashboardTmpl, &DashboardData{
 		UserID:                  a.UserID,
 		Email:                   a.Email,
@@ -467,6 +542,7 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 		PortfolioHoldings:            portfolioHoldings,
 		PortfolioPricesAvailable:     portfolioPricesAvailable,
 		NetWorthCents:                portfolioValueCents + running,
+		Alerts:                       alerts,
 	})
 }
 
