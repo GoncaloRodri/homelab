@@ -240,12 +240,12 @@ type Goal struct {
 // GoalPlan is computed at request time — never stored.
 type GoalPlan struct {
 	Goal
-	MonthsLeft          int
-	MonthlyCents        int64   // required monthly contribution
-	ImpactOnDisposable  int64   // how much disposable income this eats
-	MonthsAtCurrentRate int     // months to reach goal at current savings rate
-	Feasible            bool    // can reach it by deadline at required monthly
-	ProgressPct         int
+	MonthsLeft          int64
+	MonthlyCents        int64
+	ImpactOnDisposable  int64
+	MonthsAtCurrentRate int64
+	Feasible            bool
+	ProgressPct         int64
 }
 
 type GoalsData struct {
