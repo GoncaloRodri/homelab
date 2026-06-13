@@ -115,6 +115,7 @@ var (
 	projectionsTmpl = parseTmpl("templates/base.html", "templates/projections.html")
 	portfolioTmpl   = parseTmpl("templates/base.html", "templates/portfolio.html")
 	sharingTmpl     = parseTmpl("templates/base.html", "templates/sharing.html")
+	goalsTmpl       = parseTmpl("templates/base.html", "templates/goals.html")
 )
 
 type authInfo struct {
@@ -1328,6 +1329,156 @@ func (h *Handler) healthz(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("ok"))
 }
 
+func (h *Handler) Goals(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	a := getAuth(r)
+
+	if r.Method == http.MethodPost {
+		if err := r.ParseForm(); err != nil {
+			http.Error(w, "bad request", http.StatusBadRequest)
+			return
+		}
+		action := r.FormValue("action")
+
+		if action == "delete" {
+			id := r.FormValue("id")
+			h.store.deleteGoal(ctx, id, a.UserID)
+			http.Redirect(w, r, "/goals", http.StatusSeeOther)
+			return
+		}
+
+		// create goal
+		name := r.FormValue("name")
+		goalType := GoalType(r.FormValue("type"))
+		targetStr := r.FormValue("target_euros")
+		deadlineStr := r.FormValue("deadline")
+
+		targetEuros := parseFloat(targetStr)
+		deadline, _ := time.Parse("2006-01", deadlineStr)
+
+		g := &Goal{
+			ID:          bson.NewObjectID().Hex(),
+			UserID:      a.UserID,
+			Name:        name,
+			Type:        goalType,
+			TargetCents: int64(targetEuros * 100),
+			Deadline:    deadline,
+			CreatedAt:   time.Now(),
+		}
+		if err := h.store.createGoal(ctx, g); err != nil {
+			slog.Error("create goal", "err", err)
+		}
+		http.Redirect(w, r, "/goals", http.StatusSeeOther)
+		return
+	}
+
+	goals, err := h.store.getGoals(ctx, a.UserID)
+	if err != nil {
+		slog.Error("get goals", "err", err)
+	}
+
+	// compute average monthly savings over last 3 months
+	txns, _ := h.store.getTransactions(ctx, a.UserID, bson.M{})
+	now := time.Now()
+	threeMonthsAgo := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location()).AddDate(0, -3, 0)
+	monthlySavings := make(map[int]int64)
+	for _, t := range txns {
+		if !t.Date.Before(threeMonthsAgo) && t.Date.Before(time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())) {
+			monthlySavings[int(t.Date.Month())] += t.AmountCents
+		}
+	}
+	var totalSavings int64
+	for _, s := range monthlySavings {
+		if s > 0 {
+			totalSavings += s
+		}
+	}
+	avgMonthlySavings := int64(0)
+	if len(monthlySavings) > 0 {
+		avgMonthlySavings = totalSavings / int64(len(monthlySavings))
+	}
+
+	// compute disposable income from this month's transactions
+	thisStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+	thisMonthIncome := int64(0)
+	fixedThisMonth := int64(0)
+	for _, t := range txns {
+		if t.Date.Before(thisStart) {
+			continue
+		}
+		if t.AmountCents > 0 {
+			thisMonthIncome += t.AmountCents
+		}
+		if FixedCategories[t.Category] && t.AmountCents < 0 {
+			fixedThisMonth += -t.AmountCents
+		}
+	}
+	disposable := thisMonthIncome - fixedThisMonth
+
+	// build goal plans
+	var plans []GoalPlan
+	for _, g := range goals {
+		remaining := g.TargetCents - g.SavedCents
+		if remaining < 0 {
+			remaining = 0
+		}
+
+		monthsLeft := int64(monthsBetween(now, g.Deadline))
+		if monthsLeft < 1 {
+			monthsLeft = 1
+		}
+
+		monthlyCents := remaining / monthsLeft
+
+		monthsAtRate := int64(0)
+		if avgMonthlySavings > 0 {
+			monthsAtRate = remaining / avgMonthlySavings
+		}
+
+		progressPct := int64(0)
+		if g.TargetCents > 0 {
+			progressPct = int64(float64(g.SavedCents) / float64(g.TargetCents) * 100)
+			if progressPct > 100 {
+				progressPct = 100
+			}
+		}
+
+		plans = append(plans, GoalPlan{
+			Goal:                g,
+			MonthsLeft:          monthsLeft,
+			MonthlyCents:        monthlyCents,
+			ImpactOnDisposable:  disposable - monthlyCents,
+			MonthsAtCurrentRate: monthsAtRate,
+			Feasible:            avgMonthlySavings >= monthlyCents,
+			ProgressPct:         progressPct,
+		})
+	}
+
+	render(w, goalsTmpl, &GoalsData{
+		UserID:            a.UserID,
+		Email:             a.Email,
+		Title:             "Goals",
+		Route:             "goals",
+		Goals:             plans,
+		AvgMonthlySavings: avgMonthlySavings,
+		DisposableIncome:  disposable,
+	})
+}
+
+func monthsBetween(from, to time.Time) int {
+	months := (to.Year()-from.Year())*12 + int(to.Month()) - int(from.Month())
+	if months < 0 {
+		return 0
+	}
+	return months
+}
+
+func parseFloat(s string) float64 {
+	var f float64
+	fmt.Sscanf(s, "%f", &f)
+	return f
+}
+
 func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /{$}", h.Dashboard)
 	mux.HandleFunc("GET /transactions", h.Transactions)
@@ -1345,6 +1496,8 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /reports", h.Reports)
 	mux.HandleFunc("GET /projections", h.Projections)
 	mux.HandleFunc("GET /portfolio", h.Portfolio)
+	mux.HandleFunc("GET /goals", h.Goals)
+	mux.HandleFunc("POST /goals", h.Goals)
 	mux.HandleFunc("GET /sharing", h.Sharing)
 	mux.HandleFunc("POST /sharing", h.Sharing)
 	mux.HandleFunc("DELETE /sharing/{viewer_id}", h.Sharing)
