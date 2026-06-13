@@ -1,0 +1,6 @@
+date,name,isin,type,quantity,price,total,currency
+2024-01-10,iShares S&P 500 IT Sector,IE00B3WJKG14,buy,0.5,60.00,30.00,EUR
+2024-01-15,Vanguard FTSE All-World,IE00B3RBWM25,buy,1.0,100.00,100.00,EUR
+2024-01-20,iShares Core S&P 500,IE00B5BMR087,buy,2.0,50.00,100.00,EUR
+2024-02-05,iShares S&P 500 IT Sector,IE00B3WJKG14,buy,1.0,62.00,62.00,EUR
+2024-02-10,Vanguard FTSE All-World,IE00B3RBWM25,buy,0.5,105.00,52.50,EUR
