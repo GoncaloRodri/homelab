@@ -221,6 +221,98 @@ type SharingUser struct {
 	Email string
 }
 
+// ── Tax Summary ──────────────────────────────────────────────────────────────
+
+type TaxDeductible struct {
+	Category    string
+	Description string
+	TotalCents  int64
+}
+
+type CapitalGainEntry struct {
+	ISIN       string
+	Name       string
+	BuyCents   int64
+	SellCents  int64
+	GainCents  int64
+	GainPct    float64
+}
+
+type TaxData struct {
+	UserID   string
+	Email    string
+	Title    string
+	Route    string
+	Year     int
+
+	GrossIncomeCents   int64
+	CapitalGainsCents  int64
+	CapitalLossesCents int64
+	NetCapitalCents    int64
+
+	Deductibles    []TaxDeductible
+	TotalDeductCents int64
+
+	CapitalEntries []CapitalGainEntry
+
+	// year options for selector
+	AvailableYears []int
+}
+
+// ── Household ────────────────────────────────────────────────────────────────
+
+type Household struct {
+	ID        string    `bson:"_id" json:"id"`
+	OwnerID   string    `bson:"owner_id" json:"owner_id"`
+	PartnerID string    `bson:"partner_id" json:"partner_id"`
+	CreatedAt time.Time `bson:"created_at" json:"created_at"`
+}
+
+type HouseholdData struct {
+	UserID   string
+	Email    string
+	Title    string
+	Route    string
+
+	HasHousehold  bool
+	IsOwner       bool
+	PartnerEmail  string
+	PartnerID     string
+
+	// combined view
+	CombinedIncomeCents    int64
+	CombinedExpenseCents   int64
+	CombinedDisposable     int64
+	MyIncomeCents          int64
+	PartnerIncomeCents     int64
+	MyGoals                []GoalPlan
+	PartnerGoals           []GoalPlan
+	SharedGoals            []GoalPlan // goals from both users
+}
+
+// ── Auto Import ──────────────────────────────────────────────────────────────
+
+type ImportSchedule struct {
+	ID        string    `bson:"_id" json:"id"`
+	UserID    string    `bson:"user_id" json:"user_id"`
+	AccountID string    `bson:"account_id" json:"account_id"`
+	Label     string    `bson:"label" json:"label"`
+	Format    string    `bson:"format" json:"format"`    // cgd, traderepublic, generic
+	URL       string    `bson:"url" json:"url"`          // URL to fetch CSV from (optional)
+	Active    bool      `bson:"active" json:"active"`
+	LastRunAt time.Time `bson:"last_run_at" json:"last_run_at"`
+	CreatedAt time.Time `bson:"created_at" json:"created_at"`
+}
+
+type AutoImportData struct {
+	UserID    string
+	Email     string
+	Title     string
+	Route     string
+	Accounts  []Account
+	Schedules []ImportSchedule
+}
+
 type AlertLevel string
 
 const (

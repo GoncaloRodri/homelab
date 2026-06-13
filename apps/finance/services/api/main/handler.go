@@ -11,6 +11,7 @@ import (
 	"math"
 	"net/http"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -119,6 +120,9 @@ var (
 	goalsTmpl       = parseTmpl("templates/base.html", "templates/goals.html")
 	networthTmpl    = parseTmpl("templates/base.html", "templates/networth.html")
 	simulatorTmpl   = parseTmpl("templates/base.html", "templates/simulator.html")
+	taxTmpl         = parseTmpl("templates/base.html", "templates/tax.html")
+	householdTmpl   = parseTmpl("templates/base.html", "templates/household.html")
+	autoImportTmpl  = parseTmpl("templates/base.html", "templates/auto_import.html")
 )
 
 type authInfo struct {
@@ -178,6 +182,12 @@ type storeIface interface {
 	updateGoal(ctx context.Context, id, userID string, update bson.M) error
 	deleteGoal(ctx context.Context, id, userID string) error
 	seedCategories(ctx context.Context, userID string) error
+	getHousehold(ctx context.Context, userID string) (*Household, error)
+	createHousehold(ctx context.Context, h *Household) error
+	deleteHousehold(ctx context.Context, userID string) error
+	getImportSchedules(ctx context.Context, userID string) ([]ImportSchedule, error)
+	createImportSchedule(ctx context.Context, sched *ImportSchedule) error
+	deleteImportSchedule(ctx context.Context, id, userID string) error
 }
 
 type Handler struct {
@@ -1870,6 +1880,367 @@ func (h *Handler) NetWorth(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// ── Tax Summary ───────────────────────────────────────────────────────────────
+
+func (h *Handler) Tax(w http.ResponseWriter, r *http.Request) {
+	auth := getAuth(r)
+	ctx := r.Context()
+
+	// year selector
+	yearStr := r.URL.Query().Get("year")
+	now := time.Now()
+	year := now.Year()
+	if yearStr != "" {
+		if y, err := strconv.Atoi(yearStr); err == nil && y >= 2000 && y <= now.Year() {
+			year = y
+		}
+	}
+
+	start := time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC)
+	end := time.Date(year+1, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	// income transactions
+	incomeTxns, err := h.store.getTransactions(ctx, auth.UserID, bson.M{
+		"category": "Income",
+		"date":     bson.M{"$gte": start, "$lt": end},
+	})
+	if err != nil {
+		http.Error(w, "failed to load income", http.StatusInternalServerError)
+		return
+	}
+	var grossIncome int64
+	for _, t := range incomeTxns {
+		grossIncome += t.AmountCents
+	}
+
+	// expense transactions by category (deductible candidates = all expenses)
+	expTxns, err := h.store.getTransactions(ctx, auth.UserID, bson.M{
+		"amount_cents": bson.M{"$lt": 0},
+		"date":         bson.M{"$gte": start, "$lt": end},
+	})
+	if err != nil {
+		http.Error(w, "failed to load expenses", http.StatusInternalServerError)
+		return
+	}
+	deductMap := map[string]int64{}
+	for _, t := range expTxns {
+		deductMap[t.Category] += -t.AmountCents
+	}
+	var deductibles []TaxDeductible
+	var totalDeduct int64
+	// order by category name for stable output
+	catNames := make([]string, 0, len(deductMap))
+	for c := range deductMap {
+		catNames = append(catNames, c)
+	}
+	sort.Strings(catNames)
+	for _, cat := range catNames {
+		amt := deductMap[cat]
+		deductibles = append(deductibles, TaxDeductible{Category: cat, TotalCents: amt})
+		totalDeduct += amt
+	}
+
+	// capital gains from trades in the selected year
+	trades, err := h.store.getTrades(ctx, auth.UserID)
+	if err != nil {
+		http.Error(w, "failed to load trades", http.StatusInternalServerError)
+		return
+	}
+
+	// FIFO matching: for each ISIN track buy queue, match sells
+	type buyLot struct {
+		qty        float64
+		priceCents int64
+	}
+	buyQueues := map[string][]buyLot{}
+	nameByISIN := map[string]string{}
+
+	// process buys in date order first (already sorted by date from store, but sort to be safe)
+	sort.Slice(trades, func(i, j int) bool { return trades[i].Date.Before(trades[j].Date) })
+
+	var capEntries []CapitalGainEntry
+	var capGains, capLosses int64
+
+	for _, t := range trades {
+		if t.Date.Before(start) {
+			// still build the buy queue from prior years so we can match sells
+			if t.Type == "buy" {
+				buyQueues[t.ISIN] = append(buyQueues[t.ISIN], buyLot{t.Quantity, t.PriceCents})
+				nameByISIN[t.ISIN] = t.Name
+			} else if t.Type == "sell" {
+				// consume from queue silently
+				q := t.Quantity
+				for q > 0 && len(buyQueues[t.ISIN]) > 0 {
+					lot := &buyQueues[t.ISIN][0]
+					if lot.qty <= q {
+						q -= lot.qty
+						buyQueues[t.ISIN] = buyQueues[t.ISIN][1:]
+					} else {
+						lot.qty -= q
+						q = 0
+					}
+				}
+			}
+			continue
+		}
+		if t.Date.After(end) {
+			continue
+		}
+		nameByISIN[t.ISIN] = t.Name
+		if t.Type == "buy" {
+			buyQueues[t.ISIN] = append(buyQueues[t.ISIN], buyLot{t.Quantity, t.PriceCents})
+		} else if t.Type == "sell" {
+			// FIFO match
+			remaining := t.Quantity
+			var costCents int64
+			for remaining > 0 && len(buyQueues[t.ISIN]) > 0 {
+				lot := &buyQueues[t.ISIN][0]
+				matched := lot.qty
+				if matched > remaining {
+					matched = remaining
+				}
+				costCents += int64(matched * float64(lot.priceCents))
+				lot.qty -= matched
+				remaining -= matched
+				if lot.qty == 0 {
+					buyQueues[t.ISIN] = buyQueues[t.ISIN][1:]
+				}
+			}
+			gainCents := t.TotalCents - costCents
+			gainPct := 0.0
+			if costCents > 0 {
+				gainPct = float64(gainCents) / float64(costCents) * 100
+			}
+			entry := CapitalGainEntry{
+				ISIN:      t.ISIN,
+				Name:      nameByISIN[t.ISIN],
+				BuyCents:  costCents,
+				SellCents: t.TotalCents,
+				GainCents: gainCents,
+				GainPct:   math.Round(gainPct*100) / 100,
+			}
+			capEntries = append(capEntries, entry)
+			if gainCents > 0 {
+				capGains += gainCents
+			} else {
+				capLosses += -gainCents
+			}
+		}
+	}
+
+	// available years: from first transaction year to current year
+	allTxns, _ := h.store.getTransactions(ctx, auth.UserID, bson.M{})
+	availYears := []int{}
+	minYear := now.Year()
+	for _, t := range allTxns {
+		if t.Date.Year() < minYear {
+			minYear = t.Date.Year()
+		}
+	}
+	for y := minYear; y <= now.Year(); y++ {
+		availYears = append(availYears, y)
+	}
+	if len(availYears) == 0 {
+		availYears = []int{now.Year()}
+	}
+
+	render(w, taxTmpl, &TaxData{
+		UserID:             auth.UserID,
+		Email:              auth.Email,
+		Title:              "Tax Summary",
+		Route:              "/tax",
+		Year:               year,
+		GrossIncomeCents:   grossIncome,
+		CapitalGainsCents:  capGains,
+		CapitalLossesCents: capLosses,
+		NetCapitalCents:    capGains - capLosses,
+		Deductibles:        deductibles,
+		TotalDeductCents:   totalDeduct,
+		CapitalEntries:     capEntries,
+		AvailableYears:     availYears,
+	})
+}
+
+func (h *Handler) TaxExport(w http.ResponseWriter, r *http.Request) {
+	// Reuse Tax logic output as CSV — redirect with same year param
+	auth := getAuth(r)
+	ctx := r.Context()
+
+	yearStr := r.URL.Query().Get("year")
+	now := time.Now()
+	year := now.Year()
+	if yearStr != "" {
+		if y, err := strconv.Atoi(yearStr); err == nil {
+			year = y
+		}
+	}
+	start := time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC)
+	end := time.Date(year+1, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	expTxns, _ := h.store.getTransactions(ctx, auth.UserID, bson.M{
+		"amount_cents": bson.M{"$lt": 0},
+		"date":         bson.M{"$gte": start, "$lt": end},
+	})
+
+	w.Header().Set("Content-Type", "text/csv")
+	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="tax_%d.csv"`, year))
+	fmt.Fprintf(w, "Date,Description,Category,Amount\n")
+	for _, t := range expTxns {
+		fmt.Fprintf(w, "%s,%q,%s,%.2f\n",
+			t.Date.Format("2006-01-02"),
+			t.Description,
+			t.Category,
+			float64(-t.AmountCents)/100,
+		)
+	}
+}
+
+// ── Household ─────────────────────────────────────────────────────────────────
+
+func (h *Handler) Household(w http.ResponseWriter, r *http.Request) {
+	auth := getAuth(r)
+	ctx := r.Context()
+	now := time.Now()
+
+	data := &HouseholdData{
+		UserID: auth.UserID,
+		Email:  auth.Email,
+		Title:  "Household",
+		Route:  "/household",
+	}
+
+	if r.Method == http.MethodPost {
+		partnerEmail := strings.TrimSpace(r.FormValue("partner_email"))
+		if partnerEmail == "" {
+			http.Error(w, "partner email required", http.StatusBadRequest)
+			return
+		}
+		// resolve partner user ID via permissions search (reuse SearchUsers pattern)
+		// For now store by email as ID placeholder — real lookup needs identity service
+		hh := &Household{
+			ID:        bson.NewObjectID().Hex(),
+			OwnerID:   auth.UserID,
+			PartnerID: partnerEmail, // stored as email; resolved on read
+			CreatedAt: now,
+		}
+		if err := h.store.createHousehold(ctx, hh); err != nil {
+			http.Error(w, "failed to create household", http.StatusInternalServerError)
+			return
+		}
+		http.Redirect(w, r, "/household", http.StatusSeeOther)
+		return
+	}
+
+	if r.Method == http.MethodDelete {
+		_ = h.store.deleteHousehold(ctx, auth.UserID)
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	hh, err := h.store.getHousehold(ctx, auth.UserID)
+	if err == nil && hh != nil {
+		data.HasHousehold = true
+		data.IsOwner = hh.OwnerID == auth.UserID
+		partnerID := hh.PartnerID
+		if hh.OwnerID == auth.UserID {
+			partnerID = hh.PartnerID
+		} else {
+			partnerID = hh.OwnerID
+		}
+		data.PartnerID = partnerID
+		data.PartnerEmail = partnerID // email stored as ID for now
+
+		// compute combined view for current month
+		monthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
+		nextMonth := monthStart.AddDate(0, 1, 0)
+
+		myTxns, _ := h.store.getTransactions(ctx, auth.UserID, bson.M{
+			"date": bson.M{"$gte": monthStart, "$lt": nextMonth},
+		})
+		partnerTxns, _ := h.store.getTransactions(ctx, partnerID, bson.M{
+			"date": bson.M{"$gte": monthStart, "$lt": nextMonth},
+		})
+
+		for _, t := range myTxns {
+			if t.AmountCents > 0 {
+				data.MyIncomeCents += t.AmountCents
+			} else {
+				data.CombinedExpenseCents += -t.AmountCents
+			}
+		}
+		for _, t := range partnerTxns {
+			if t.AmountCents > 0 {
+				data.PartnerIncomeCents += t.AmountCents
+			} else {
+				data.CombinedExpenseCents += -t.AmountCents
+			}
+		}
+		data.CombinedIncomeCents = data.MyIncomeCents + data.PartnerIncomeCents
+		data.CombinedDisposable = data.CombinedIncomeCents - data.CombinedExpenseCents
+
+		myGoals, _ := h.store.getGoals(ctx, auth.UserID)
+		partnerGoals, _ := h.store.getGoals(ctx, partnerID)
+		for _, g := range myGoals {
+			data.MyGoals = append(data.MyGoals, GoalPlan{Goal: g})
+		}
+		for _, g := range partnerGoals {
+			data.PartnerGoals = append(data.PartnerGoals, GoalPlan{Goal: g})
+		}
+		data.SharedGoals = append(data.MyGoals, data.PartnerGoals...)
+	}
+
+	render(w, householdTmpl, data)
+}
+
+// ── Auto Import ───────────────────────────────────────────────────────────────
+
+func (h *Handler) AutoImport(w http.ResponseWriter, r *http.Request) {
+	auth := getAuth(r)
+	ctx := r.Context()
+
+	if r.Method == http.MethodPost {
+		_ = r.ParseForm()
+		sched := &ImportSchedule{
+			ID:        bson.NewObjectID().Hex(),
+			UserID:    auth.UserID,
+			AccountID: r.FormValue("account_id"),
+			Label:     r.FormValue("label"),
+			Format:    r.FormValue("format"),
+			URL:       r.FormValue("url"),
+			Active:    r.FormValue("active") == "on",
+			CreatedAt: time.Now(),
+		}
+		if err := h.store.createImportSchedule(ctx, sched); err != nil {
+			http.Error(w, "failed to create schedule", http.StatusInternalServerError)
+			return
+		}
+		http.Redirect(w, r, "/auto-import", http.StatusSeeOther)
+		return
+	}
+
+	if r.Method == http.MethodDelete {
+		id := r.PathValue("id")
+		if err := h.store.deleteImportSchedule(ctx, id, auth.UserID); err != nil {
+			http.Error(w, "failed to delete schedule", http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	schedules, _ := h.store.getImportSchedules(ctx, auth.UserID)
+	accounts, _ := h.store.getAccounts(ctx, auth.UserID)
+
+	render(w, autoImportTmpl, &AutoImportData{
+		UserID:    auth.UserID,
+		Email:     auth.Email,
+		Title:     "Auto Import",
+		Route:     "/auto-import",
+		Accounts:  accounts,
+		Schedules: schedules,
+	})
+}
+
 func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /{$}", h.Dashboard)
 	mux.HandleFunc("GET /transactions", h.Transactions)
@@ -1898,6 +2269,14 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/transactions", h.CreateTransaction)
 	mux.HandleFunc("PUT /api/transactions/{id}", h.UpdateTransaction)
 	mux.HandleFunc("DELETE /api/transactions/{id}", h.DeleteTransaction)
+	mux.HandleFunc("GET /tax", h.Tax)
+	mux.HandleFunc("GET /tax/export.csv", h.TaxExport)
+	mux.HandleFunc("GET /household", h.Household)
+	mux.HandleFunc("POST /household", h.Household)
+	mux.HandleFunc("DELETE /household", h.Household)
+	mux.HandleFunc("GET /auto-import", h.AutoImport)
+	mux.HandleFunc("POST /auto-import", h.AutoImport)
+	mux.HandleFunc("DELETE /auto-import/{id}", h.AutoImport)
 }
 
 func sortStrings(s []string) {
