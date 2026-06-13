@@ -1,44 +1,59 @@
 {{define "content"}}
 {{$d := .}}
-<h1 style="margin-bottom: 24px;">Categories</h1>
+<h1 style="margin-bottom:24px;">Categories</h1>
 
-<div class="card">
-  <form method="POST" class="flex flex-wrap" style="gap: 12px; align-items: end;">
-    <div class="form-group" style="margin-bottom: 0; flex: 1;">
+<div class="card animate-on-scroll">
+  <h2 style="margin-bottom:16px;">Add Category</h2>
+  <form method="POST" class="flex flex-wrap" style="gap:12px; align-items:flex-end;">
+    <div class="form-group" style="margin-bottom:0; flex:1; min-width:160px;">
       <label>Name</label>
       <input type="text" name="name" placeholder="e.g. Dining" required>
     </div>
-    <div class="form-group" style="margin-bottom: 0; width: 80px;">
+    <div class="form-group" style="margin-bottom:0; width:90px;">
       <label>Color</label>
-      <input type="color" name="color" value="#7986CB">
+      <input type="color" name="color" value="#7986CB" style="padding:4px; height:38px;">
     </div>
-    <button type="submit" class="btn btn-primary">Add Category</button>
+    <button type="submit" class="btn btn-primary">Add</button>
   </form>
 </div>
 
-<div class="card">
+<div class="card animate-on-scroll">
   <div class="table-wrap">
     <table>
       <thead>
-        <tr><th>Color</th><th>Name</th><th>Monthly Budget</th><th></th></tr>
+        <tr>
+          <th style="width:40px;">Color</th>
+          <th>Name</th>
+          <th>Monthly Budget</th>
+          <th></th>
+        </tr>
       </thead>
       <tbody>
         {{range $d.Categories}}
-        <tr>
-          <td><span class="category-dot" style="background: {{.Color}}"></span></td>
-          <td>{{.Name}}</td>
+        <tr id="cat-row-{{.ID}}">
           <td>
-            <span class="budget-display" id="budget-{{.ID}}">
-              €{{cents .BudgetCents}}
+            <span style="display:inline-block; width:22px; height:22px; border-radius:50%; background:{{.Color}}; border:2px solid {{.Color}}44; vertical-align:middle;"></span>
+          </td>
+          <td style="font-weight:500;">{{.Name}}</td>
+          <td>
+            <span id="budget-display-{{.ID}}" style="font-size:14px; color:#444;">
+              {{if gt .BudgetCents 0}}€{{cents .BudgetCents}}{{else}}<span class="text-muted">No budget set</span>{{end}}
             </span>
-            <button class="btn btn-outline btn-sm" onclick="editBudget('{{.ID}}')">edit</button>
+            <span id="budget-edit-{{.ID}}" style="display:none;">
+              <input type="number" id="budget-input-{{.ID}}" placeholder="0.00" step="0.01" min="0"
+                     value="{{if gt .BudgetCents 0}}{{div .BudgetCents 100}}{{end}}"
+                     style="width:100px; padding:4px 8px; border:1px solid #c5cae9; border-radius:6px; font-size:13px;">
+              <button class="btn btn-primary btn-sm" onclick="saveBudget('{{.ID}}')">Save</button>
+              <button class="btn btn-outline btn-sm" onclick="cancelBudget('{{.ID}}')">Cancel</button>
+            </span>
+            <button class="btn btn-outline btn-sm" id="budget-btn-{{.ID}}" onclick="editBudget('{{.ID}}')" style="margin-left:8px;">Edit</button>
           </td>
           <td>
             <button class="btn btn-danger btn-sm" onclick="delCat('{{.ID}}')">Delete</button>
           </td>
         </tr>
         {{else}}
-        <tr><td colspan="4" class="text-center text-muted">No categories yet.</td></tr>
+        <tr><td colspan="4" class="text-center text-muted" style="padding:32px;">No categories yet. Add one above.</td></tr>
         {{end}}
       </tbody>
     </table>
@@ -47,19 +62,41 @@
 
 <script>
 function editBudget(id) {
-  const val = prompt('Monthly budget (€):');
-  if (!val) return;
-  const cents = Math.round(parseFloat(val.replace(',','.')) * 100);
-  if (isNaN(cents)) return;
+  document.getElementById('budget-display-' + id).style.display = 'none';
+  document.getElementById('budget-btn-' + id).style.display = 'none';
+  document.getElementById('budget-edit-' + id).style.display = 'inline-flex';
+  document.getElementById('budget-edit-' + id).style.gap = '6px';
+  document.getElementById('budget-edit-' + id).style.alignItems = 'center';
+  document.getElementById('budget-input-' + id).focus();
+}
+
+function cancelBudget(id) {
+  document.getElementById('budget-display-' + id).style.display = 'inline';
+  document.getElementById('budget-btn-' + id).style.display = 'inline-block';
+  document.getElementById('budget-edit-' + id).style.display = 'none';
+}
+
+function saveBudget(id) {
+  const val = parseFloat(document.getElementById('budget-input-' + id).value.replace(',', '.'));
+  if (isNaN(val) || val < 0) return;
+  const cents = Math.round(val * 100);
   fetch('/categories/' + id, {
     method: 'PUT',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({budget_cents: cents})
-  }).then(() => location.reload());
+  }).then(r => {
+    if (!r.ok) return;
+    const display = document.getElementById('budget-display-' + id);
+    display.innerHTML = cents > 0 ? '€' + (cents / 100).toFixed(2) : '<span class="text-muted">No budget set</span>';
+    cancelBudget(id);
+  });
 }
+
 function delCat(id) {
-  if (!confirm('Delete this category?')) return;
-  fetch('/categories/' + id, {method: 'DELETE'}).then(() => location.reload());
+  if (!confirm('Delete this category? Existing transactions will keep their category label.')) return;
+  fetch('/categories/' + id, {method: 'DELETE'}).then(r => {
+    if (r.ok) document.getElementById('cat-row-' + id).remove();
+  });
 }
 </script>
 {{end}}
