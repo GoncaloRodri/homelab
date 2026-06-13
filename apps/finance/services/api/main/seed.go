@@ -2,25 +2,24 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log/slog"
-	"net/http"
 	"os"
 	"time"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
-// SeedAdmin looks up the admin user by email (via the internal users service)
-// and seeds demo data if the account has no existing transactions.
+// SeedAdmin looks up the admin user by email directly in the shared MongoDB
+// (both services use the same DB) and seeds demo data if the account has no
+// existing transactions.
 func SeedAdmin(ctx context.Context, store *Store) {
 	email := os.Getenv("SEED_USER_EMAIL")
 	if email == "" {
 		email = "admin@homelab.local"
 	}
 
-	userID, err := lookupUserByEmail(email)
+	userID, err := lookupUserByEmailMongo(ctx, store, email)
 	if err != nil {
 		slog.Warn("seed: could not resolve admin user, skipping", "email", email, "err", err)
 		return
@@ -42,30 +41,19 @@ func SeedAdmin(ctx context.Context, store *Store) {
 	}
 }
 
-func lookupUserByEmail(email string) (string, error) {
-	usersURL := os.Getenv("USERS_SERVICE_URL")
-	if usersURL == "" {
-		usersURL = "http://users"
+// lookupUserByEmailMongo queries the shared "users" collection directly,
+// avoiding any cross-service HTTP dependency.
+func lookupUserByEmailMongo(ctx context.Context, store *Store, email string) (string, error) {
+	coll := store.db.Collection("users")
+	var result struct {
+		ID    string `bson:"_id"`
+		Email string `bson:"email"`
 	}
-	resp, err := http.Get(fmt.Sprintf("%s/admin/users?search=%s", usersURL, email))
+	err := coll.FindOne(ctx, bson.M{"email": email}).Decode(&result)
 	if err != nil {
-		return "", fmt.Errorf("users service unreachable: %w", err)
+		return "", fmt.Errorf("user %q not found in mongo: %w", email, err)
 	}
-	defer resp.Body.Close()
-
-	var users []struct {
-		ID    string `json:"id"`
-		Email string `json:"email"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&users); err != nil {
-		return "", fmt.Errorf("decode users response: %w", err)
-	}
-	for _, u := range users {
-		if u.Email == email {
-			return u.ID, nil
-		}
-	}
-	return "", fmt.Errorf("user %q not found", email)
+	return result.ID, nil
 }
 
 func seedAll(ctx context.Context, store *Store, userID string) error {
