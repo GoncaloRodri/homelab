@@ -1,89 +1,116 @@
 {{define "content"}}
 {{$d := .}}
-<h1 style="margin-bottom: 24px;">Sharing</h1>
+<h1 style="margin-bottom:24px;">Sharing</h1>
 
-<div class="card">
-  <h2>Grant Read Access</h2>
-  <form method="POST" class="flex" style="gap: 12px; align-items: end;">
-    <div class="form-group" style="margin-bottom: 0; flex: 1;">
+<div class="card animate-on-scroll">
+  <h2 style="margin-bottom:16px;">Grant Read Access</h2>
+  <form method="POST" class="flex flex-wrap" style="gap:10px; align-items:flex-end; position:relative;">
+    <div class="form-group" style="margin-bottom:0; flex:1; min-width:220px; position:relative;">
       <label>User Email</label>
-      <input type="text" name="viewer_id" id="viewerSearch" placeholder="Search by email..." required>
-      <div id="searchResults" style="display:none;"></div>
+      <input type="text" name="viewer_id" id="viewerSearch"
+             placeholder="Search by email…" autocomplete="off" required>
+      <div id="searchResults"></div>
     </div>
     <button type="submit" class="btn btn-primary">Grant Access</button>
   </form>
 </div>
 
-<div class="card">
-  <h2>People with Access to My Finances</h2>
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr><th>User</th><th>Granted</th><th></th></tr>
-      </thead>
-      <tbody>
-        {{range $d.Grants}}
-        <tr>
-          <td>{{.ViewerID}}</td>
-          <td class="text-muted">{{.CreatedAt.Format "02 Jan 2006"}}</td>
-          <td>
-            <button class="btn btn-danger btn-sm" onclick="revoke('{{.ViewerID}}')">Revoke</button>
-          </td>
-        </tr>
-        {{else}}
-        <tr><td colspan="3" class="text-center text-muted">No access grants yet.</td></tr>
-        {{end}}
-      </tbody>
-    </table>
+<div class="grid-2">
+  <div class="card animate-on-scroll">
+    <h2 style="margin-bottom:14px;">People with access to my finances</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>User</th><th>Since</th><th></th></tr>
+        </thead>
+        <tbody>
+          {{range $d.Grants}}
+          <tr>
+            <td style="font-size:13px;">{{.ViewerID}}</td>
+            <td class="text-muted">{{.CreatedAt.Format "02 Jan 2006"}}</td>
+            <td class="text-right">
+              <button class="btn btn-danger btn-sm" onclick="revoke('{{.ViewerID}}')">Revoke</button>
+            </td>
+          </tr>
+          {{else}}
+          <tr><td colspan="3" class="text-center text-muted" style="padding:28px;">No access grants yet.</td></tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card animate-on-scroll">
+    <h2 style="margin-bottom:14px;">Access granted to me</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Owner</th><th>Since</th></tr>
+        </thead>
+        <tbody>
+          {{range $d.Granted}}
+          <tr>
+            <td style="font-size:13px;">{{.OwnerID}}</td>
+            <td class="text-muted">{{.CreatedAt.Format "02 Jan 2006"}}</td>
+          </tr>
+          {{else}}
+          <tr><td colspan="2" class="text-center text-muted" style="padding:28px;">No one has shared with you yet.</td></tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
 
-<div class="card">
-  <h2>Access Granted to Me</h2>
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr><th>Owner</th><th>Granted</th></tr>
-      </thead>
-      <tbody>
-        {{range $d.Granted}}
-        <tr>
-          <td>{{.OwnerID}}</td>
-          <td class="text-muted">{{.CreatedAt.Format "02 Jan 2006"}}</td>
-        </tr>
-        {{else}}
-        <tr><td colspan="2" class="text-center text-muted">No one has granted you access yet.</td></tr>
-        {{end}}
-      </tbody>
-    </table>
-  </div>
-</div>
-
+<style>
+#searchResults {
+  position: absolute;
+  top: 100%; left: 0; right: 0;
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 50;
+  display: none;
+}
+#searchResults div {
+  padding: 9px 12px;
+  font-size: 13.5px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  transition: background 0.12s;
+}
+#searchResults div:last-child { border-bottom: none; }
+#searchResults div:hover { background: var(--bg3); }
+</style>
 <script>
-const searchInput = document.getElementById('viewerSearch');
-const resultsDiv = document.getElementById('searchResults');
 let searchTimer;
+const input   = document.getElementById('viewerSearch');
+const results = document.getElementById('searchResults');
 
-searchInput.addEventListener('input', function() {
+input.addEventListener('input', () => {
   clearTimeout(searchTimer);
-  const q = this.value.trim();
-  if (q.length < 2) { resultsDiv.style.display = 'none'; return; }
+  const q = input.value.trim();
+  if (q.length < 2) { results.style.display = 'none'; return; }
   searchTimer = setTimeout(() => {
     fetch('/api/users/search?q=' + encodeURIComponent(q))
       .then(r => r.json())
       .then(users => {
-        if (!users.length) { resultsDiv.style.display = 'none'; return; }
-        resultsDiv.innerHTML = users.map(u =>
-          `<div onclick="selectUser('${u.id}','${u.email}')" style="padding:6px 12px;cursor:pointer;border-bottom:1px solid #eee;">${u.email}</div>`
+        if (!users || !users.length) { results.style.display = 'none'; return; }
+        results.innerHTML = users.map(u =>
+          `<div onclick="selectUser('${u.id}','${u.email}')">${u.email}</div>`
         ).join('');
-        resultsDiv.style.display = 'block';
+        results.style.display = 'block';
       });
-  }, 300);
+  }, 280);
 });
 
 function selectUser(id, email) {
-  searchInput.value = email;
-  resultsDiv.style.display = 'none';
+  input.value = email;
+  results.style.display = 'none';
 }
 
 function revoke(viewerId) {
@@ -91,12 +118,9 @@ function revoke(viewerId) {
   fetch('/sharing/' + encodeURIComponent(viewerId), {method: 'DELETE'})
     .then(() => location.reload());
 }
+
+document.addEventListener('click', e => {
+  if (!input.contains(e.target)) results.style.display = 'none';
+});
 </script>
-<style>
-#searchResults {
-  position: absolute; background: #fff; border: 1px solid #ddd;
-  border-radius: 6px; max-height: 200px; overflow-y: auto; z-index: 100;
-  width: 100%; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-</style>
 {{end}}
