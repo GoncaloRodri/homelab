@@ -224,4 +224,35 @@
   </div>
 
 </div>
+
+{{if $d.RecurringExpenses}}
+<div class="card animate-on-scroll" style="margin-top:16px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+    <h2>Fixed costs</h2>
+    <span style="font-size:11px; color:var(--text3);">auto-detected · 3-month average</span>
+  </div>
+  <div style="display:flex; flex-direction:column;">
+    {{range $d.RecurringExpenses}}
+    {{$color := index $d.CategoryColors .Category}}
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border);">
+      <div style="display:flex; align-items:center; gap:10px;">
+        {{if $color}}<span style="width:9px; height:9px; border-radius:50%; background:{{$color}}; flex-shrink:0; display:inline-block;"></span>{{end}}
+        <div>
+          <div style="font-size:13px; font-weight:500; color:var(--text);">{{.Category}}</div>
+          <div style="font-size:11px; color:var(--text3);">committed monthly cost</div>
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:14px; font-weight:600; color:var(--red);">− €{{cents .MonthlyCents}}</div>
+        <div style="font-size:11px; color:var(--text3);">/ month</div>
+      </div>
+    </div>
+    {{end}}
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 0 0 0;">
+      <span style="font-size:13px; font-weight:500; color:var(--text);">Total fixed</span>
+      <span style="font-size:15px; font-weight:600; color:var(--red);">− €{{cents $d.BankShouldBe}}</span>
+    </div>
+  </div>
+</div>
+{{end}}
 {{end}}
