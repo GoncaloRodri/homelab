@@ -270,6 +270,44 @@ type Household struct {
 	CreatedAt time.Time `bson:"created_at" json:"created_at"`
 }
 
+// PeopleData combines Sharing and Household into a single page.
+type PeopleData struct {
+	UserID string
+	Email  string
+	Title  string
+	Route  string
+	Tab    string // "sharing" | "household"
+
+	// sharing tab
+	Grants  []Permission
+	Viewers []SharingUser
+	Granted []Permission
+
+	// household tab
+	HasHousehold         bool
+	IsOwner              bool
+	PartnerEmail         string
+	PartnerID            string
+	CombinedIncomeCents  int64
+	CombinedExpenseCents int64
+	CombinedDisposable   int64
+	MyIncomeCents        int64
+	PartnerIncomeCents   int64
+	MyGoals              []GoalPlan
+	PartnerGoals         []GoalPlan
+}
+
+// SettingsData combines Accounts and Categories into a single page.
+type SettingsData struct {
+	UserID     string
+	Email      string
+	Title      string
+	Route      string
+	Tab        string // "accounts" | "categories"
+	Accounts   []Account
+	Categories []Category
+}
+
 type HouseholdData struct {
 	UserID   string
 	Email    string
