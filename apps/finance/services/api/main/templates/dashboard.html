@@ -56,6 +56,13 @@
   </div>
 
   <div class="card value-card animate-on-scroll">
+    <h2>Net worth</h2>
+    <div class="value animate-counter {{if lt $d.NetWorthCents 0}}negative{{else}}positive{{end}}"
+         data-target="{{$d.NetWorthCents}}" data-prefix="€">€0.00</div>
+    <p style="font-size:12px; color:var(--text3); margin-top:6px;"><a href="/networth" style="color:var(--accent);">→ full breakdown</a></p>
+  </div>
+
+  <div class="card value-card animate-on-scroll">
     <h2>Portfolio today</h2>
     {{if $d.PortfolioHoldings}}
     <div class="value animate-counter" data-target="{{$d.PortfolioValueCents}}" data-prefix="€" style="color:var(--text);">€0.00</div>
