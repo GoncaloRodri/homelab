@@ -1423,21 +1423,21 @@ func (h *Handler) Goals(w http.ResponseWriter, r *http.Request) {
 			remaining = 0
 		}
 
-		monthsLeft := monthsBetween(now, g.Deadline)
+		monthsLeft := int64(monthsBetween(now, g.Deadline))
 		if monthsLeft < 1 {
 			monthsLeft = 1
 		}
 
-		monthlyCents := remaining / int64(monthsLeft)
+		monthlyCents := remaining / monthsLeft
 
-		monthsAtRate := 0
+		monthsAtRate := int64(0)
 		if avgMonthlySavings > 0 {
-			monthsAtRate = int(remaining / avgMonthlySavings)
+			monthsAtRate = remaining / avgMonthlySavings
 		}
 
-		progressPct := 0
+		progressPct := int64(0)
 		if g.TargetCents > 0 {
-			progressPct = int(float64(g.SavedCents) / float64(g.TargetCents) * 100)
+			progressPct = int64(float64(g.SavedCents) / float64(g.TargetCents) * 100)
 			if progressPct > 100 {
 				progressPct = 100
 			}
