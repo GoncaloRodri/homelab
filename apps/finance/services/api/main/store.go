@@ -287,6 +287,13 @@ func (s *Store) createGoal(ctx context.Context, g *Goal) error {
 	return err
 }
 
+func (s *Store) updateGoal(ctx context.Context, id, userID string, update bson.M) error {
+	ctx, span := mongo.StartSpan(ctx, "Store.updateGoal")
+	defer span.End()
+	_, err := s.goals().UpdateOne(ctx, bson.M{"_id": id, "user_id": userID}, bson.M{"$set": update})
+	return err
+}
+
 func (s *Store) deleteGoal(ctx context.Context, id, userID string) error {
 	ctx, span := mongo.StartSpan(ctx, "Store.deleteGoal")
 	defer span.End()
