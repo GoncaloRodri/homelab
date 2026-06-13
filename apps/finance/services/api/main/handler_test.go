@@ -154,6 +154,11 @@ func (m *mockStore) deleteGoal(_ context.Context, id, _ string) error {
 }
 func (m *mockStore) seedCategories(_ context.Context, _ string) error { return nil }
 
+func (m *mockStore) getTickerMappings(_ context.Context, _ string) ([]TickerMapping, error) {
+	return nil, nil
+}
+func (m *mockStore) saveTickerMapping(_ context.Context, _, _, _ string) error { return nil }
+
 func (m *mockStore) getHousehold(_ context.Context, _ string) (*Household, error) {
 	return nil, fmt.Errorf("not found")
 }

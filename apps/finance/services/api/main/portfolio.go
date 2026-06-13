@@ -13,6 +13,7 @@ import (
 
 type TickerMapping struct {
 	ISIN   string `bson:"_id" json:"isin"`
+	UserID string `bson:"user_id" json:"user_id"`
 	Ticker string `bson:"ticker" json:"ticker"`
 }
 
@@ -24,6 +25,7 @@ var isinToTicker = map[string]string{
 	"IE00B3XXRP09": "VWRL.AS",  // VWRL — All-World
 	"IE00BK5BQT80": "VWRA.L",   // VWRA — All-World (acc, LSE)
 	// iShares
+	"IE00B3WJKG14": "QDVE.DE",  // QDVE — S&P 500 Information Technology
 	"IE00B4L5Y983": "EUNL.DE",  // EUNL — MSCI World
 	"IE00B5BMR087": "SXR8.DE",  // SXR8 — S&P 500
 	"IE00B4K48X80": "SXRV.DE",  // SXRV — S&P 500 EUR hedged
@@ -105,7 +107,7 @@ func computeHoldings(trades []Trade, prices map[string]int64) []Holding {
 
 		currentPrice := prices[isin]
 
-		currentValue := int64(float64(currentPrice) * a.shares / 100)
+		currentValue := int64(float64(currentPrice) * a.shares)
 		unrealizedPCL := currentValue - a.cost
 		pct := 0.0
 		if a.cost > 0 {
@@ -149,10 +151,10 @@ type TickerStore interface {
 	Load() error
 }
 
-// fetchPricesByISIN resolves each ISIN to a Yahoo Finance ticker (via isinToTicker),
-// fetches the current market price, and returns a map keyed by ISIN.
-// ISINs with no known ticker mapping are tried directly as a ticker (fallback).
-func fetchPricesByISIN(isins []string) (map[string]int64, error) {
+// fetchPricesByISIN resolves each ISIN to a Yahoo Finance ticker, checking
+// custom (user-saved) mappings first, then the hardcoded isinToTicker map,
+// then falling back to the raw ISIN as a last resort.
+func fetchPricesByISIN(isins []string, custom map[string]string) (map[string]int64, error) {
 	if len(isins) == 0 {
 		return map[string]int64{}, nil
 	}
@@ -161,13 +163,21 @@ func fetchPricesByISIN(isins []string) (map[string]int64, error) {
 	client := &http.Client{Timeout: 10 * time.Second}
 
 	for _, isin := range isins {
-		ticker, ok := isinToTicker[isin]
-		if !ok {
+		ticker := custom[isin]
+		if ticker == "" {
+			ticker = isinToTicker[isin]
+		}
+		if ticker == "" {
 			ticker = isin // last-resort fallback
 		}
 
 		url := fmt.Sprintf("https://query1.finance.yahoo.com/v8/finance/chart/%s", ticker)
-		resp, err := client.Get(url)
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		if err != nil {
+			continue
+		}
+		req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; homelab-finance/1.0)")
+		resp, err := client.Do(req)
 		if err != nil {
 			slog.Warn("price fetch failed", "isin", isin, "ticker", ticker, "err", err)
 			continue

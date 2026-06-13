@@ -4,6 +4,23 @@
 
 {{if $d.Holdings}}
 
+{{if $d.MissingPrices}}
+<div style="background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.35); border-radius:12px; padding:16px 20px; margin-bottom:20px;">
+  <div style="font-weight:600; font-size:0.9rem; margin-bottom:12px;">⚠ Live price unavailable for {{len $d.MissingPrices}} holding{{if gt (len $d.MissingPrices) 1}}s{{end}} — add a Yahoo Finance ticker to fix this</div>
+  {{range $d.MissingPrices}}
+  <form method="post" action="/portfolio/ticker" style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+    <input type="hidden" name="isin" value="{{.}}">
+    <code style="font-size:0.8rem; color:var(--muted); min-width:140px;">{{.}}</code>
+    <input type="text" name="ticker" placeholder="e.g. QDVE.DE" required
+           style="padding:6px 10px; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text); font-size:0.85rem; width:130px;">
+    <button type="submit" style="padding:6px 14px; background:var(--accent); color:#fff; border:none; border-radius:8px; font-size:0.85rem; font-weight:600; cursor:pointer;">Save</button>
+    <a href="https://finance.yahoo.com/lookup/" target="_blank" rel="noopener"
+       style="font-size:0.78rem; color:var(--accent);">Look up ↗</a>
+  </form>
+  {{end}}
+</div>
+{{end}}
+
 <div class="grid">
   <div class="card value-card animate-on-scroll">
     <h2>Total Value</h2>
@@ -93,16 +110,17 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 const palette = [
-  '#6979f8','#f87171','#fbbf24','#34d399','#a78bfa',
-  '#f472b6','#38bdf8','#fb923c','#4ade80','#e879f9',
+  '#00d4ff','#0099cc','#00b894','#007a63','#005f8a',
+  '#00e5cc','#0077b6','#48cae4','#023e8a','#00b4d8',
 ];
 
 const holdings = [
   {{range $d.Holdings}}{ name: "{{.Name}}", value: {{.CurrentValueCents}} },{{end}}
-];
+].filter(h => h.value > 0);
 
 const total = holdings.reduce((s, h) => s + h.value, 0);
-if (total <= 0) return;
+
+if (total > 0) {
 
 const container = document.getElementById('allocation3d');
 const W = container.clientWidth, H = 380;
@@ -211,6 +229,8 @@ window.addEventListener('resize', () => {
   camera.updateProjectionMatrix();
   renderer.setSize(w2, H);
 });
+
+} // end if (total > 0)
 </script>
 
 {{else}}
