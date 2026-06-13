@@ -6,9 +6,9 @@
 </div>
 
 <div class="card mb-16">
-  <form method="GET" class="flex flex-wrap" style="gap:8px; align-items:flex-end;">
+  <form method="GET" class="flex flex-wrap" style="gap:10px; align-items:flex-end;">
     <div class="form-group" style="margin-bottom:0; min-width:160px;">
-      <label style="font-size:12px; color:#888;">Category</label>
+      <label>Category</label>
       <select name="category">
         <option value="">All Categories</option>
         {{range $d.Categories}}
@@ -16,18 +16,18 @@
         {{end}}
       </select>
     </div>
-    <div class="form-group" style="margin-bottom:0; min-width:120px;">
-      <label style="font-size:12px; color:#888;">Period</label>
+    <div class="form-group" style="margin-bottom:0; min-width:130px;">
+      <label>Period</label>
       <select name="days">
         <option value="">All time</option>
-        <option value="30" {{if eq $.Days "30"}}selected{{end}}>30 days</option>
-        <option value="90" {{if eq $.Days "90"}}selected{{end}}>90 days</option>
+        <option value="30"  {{if eq $.Days "30"}}selected{{end}}>30 days</option>
+        <option value="90"  {{if eq $.Days "90"}}selected{{end}}>90 days</option>
         <option value="365" {{if eq $.Days "365"}}selected{{end}}>1 year</option>
       </select>
     </div>
     <div class="form-group" style="margin-bottom:0; flex:1; min-width:200px;">
-      <label style="font-size:12px; color:#888;">Search</label>
-      <input type="text" name="search" placeholder="Search description..." value="{{.Search}}">
+      <label>Search</label>
+      <input type="text" name="search" placeholder="Description…" value="{{.Search}}">
     </div>
     <button type="submit" class="btn btn-primary">Filter</button>
     {{if or $.Cat $.Search $.Days}}
@@ -56,26 +56,36 @@
         {{range $d.Txns}}
         {{$color := index $d.CategoryColors .Category}}
         <tr id="row-{{.ID}}">
-          <td style="white-space:nowrap;">{{dateShort .Date}}</td>
-          <td class="desc-cell">{{.Description}}</td>
-          <td class="text-muted" style="font-size:13px;">
+          <td style="white-space:nowrap; color:var(--text2);">{{dateShort .Date}}</td>
+          <td style="max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{.Description}}</td>
+          <td style="font-size:12.5px; color:var(--text3);">
             {{$name := index $d.AccountNames .AccountID}}
-            {{if $name}}{{$name}}{{else}}<span style="opacity:0.4;">—</span>{{end}}
+            {{if $name}}{{$name}}{{else}}<span style="opacity:.35;">—</span>{{end}}
           </td>
           <td>
-            <span class="cat-badge" id="cat-{{.ID}}"
-                  style="background:{{if $color}}{{$color}}22{{else}}#e0e0e0{{end}}; color:{{if $color}}{{$color}}{{else}}#555{{end}}; border:1px solid {{if $color}}{{$color}}44{{else}}#ccc{{end}}; padding:2px 10px; border-radius:12px; font-size:12px; font-weight:500;">
-              {{if $color}}<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:{{$color}};margin-right:5px;vertical-align:middle;"></span>{{end}}{{.Category}}
+            <!-- badge shown normally -->
+            <span id="cat-{{.ID}}" class="badge" style="
+                background:{{if $color}}{{$color}}18{{else}}var(--bg3){{end}};
+                color:{{if $color}}{{$color}}{{else}}var(--text2){{end}};
+                border:1px solid {{if $color}}{{$color}}33{{else}}var(--border2){{end}};">
+              {{if $color}}<span class="category-dot" style="background:{{$color}};box-shadow:0 0 4px {{$color}}88;"></span>{{end}}
+              {{.Category}}
             </span>
-            <select class="cat-select" id="sel-{{.ID}}" style="display:none; font-size:12px; padding:2px 6px; border-radius:8px; border:1px solid #c5cae9;"
-                    onchange="saveCategory('{{.ID}}', this.value)" onblur="cancelEdit('{{.ID}}')">
+            <!-- inline dropdown, hidden until pencil clicked -->
+            <select id="sel-{{.ID}}" style="display:none; font-size:12px; padding:4px 8px;
+                border:1px solid var(--border2); border-radius:6px; background:var(--bg2); color:var(--text);"
+              onchange="saveCategory('{{.ID}}', this.value)"
+              onblur="cancelEdit('{{.ID}}')">
               {{range $d.Categories}}
-              <option value="{{.Name}}" {{if eq .Name $.Category}}selected{{end}}>{{.Name}}</option>
+              <option value="{{.Name}}">{{.Name}}</option>
               {{end}}
             </select>
-            <button class="btn btn-outline btn-sm" onclick="editCat('{{.ID}}')" id="edit-btn-{{.ID}}" title="Edit category">✎</button>
+            <button id="edit-btn-{{.ID}}" class="btn btn-outline btn-sm"
+                    onclick="editCat('{{.ID}}')" title="Edit category"
+                    style="margin-left:4px; padding:3px 7px;">✎</button>
           </td>
-          <td class="cents {{if lt .AmountCents 0}}negative{{else}}positive{{end}}" style="font-variant-numeric:tabular-nums; white-space:nowrap;">
+          <td class="cents {{if lt .AmountCents 0}}negative{{else}}positive{{end}}"
+              style="font-weight:600; white-space:nowrap;">
             {{if lt .AmountCents 0}}−{{else}}+{{end}}€{{cents (centsAbs .AmountCents)}}
           </td>
           <td>
@@ -83,7 +93,13 @@
           </td>
         </tr>
         {{else}}
-        <tr><td colspan="6" class="text-center text-muted" style="padding:40px;">No transactions found. <a href="/import">Import some</a> or <button class="btn btn-outline btn-sm" onclick="openAddModal()">add manually</button>.</td></tr>
+        <tr>
+          <td colspan="6" class="text-center text-muted" style="padding:44px;">
+            No transactions found.
+            <a href="/import" style="color:var(--accent);">Import some</a> or
+            <button class="btn btn-outline btn-sm" onclick="openAddModal()" style="margin-left:4px;">add manually</button>.
+          </td>
+        </tr>
         {{end}}
       </tbody>
     </table>
@@ -91,9 +107,17 @@
 </div>
 
 <!-- Add Transaction Modal -->
-<div id="add-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:200; align-items:center; justify-content:center;">
-  <div class="card" style="width:420px; max-width:95vw; margin:0; animation:fadeIn 0.2s ease-out;">
-    <h2 style="font-size:18px; font-weight:700; color:#333; margin-bottom:20px;">Add Transaction</h2>
+<div id="add-modal" style="display:none; position:fixed; inset:0;
+     background:rgba(0,0,0,0.55); backdrop-filter:blur(4px);
+     z-index:300; align-items:center; justify-content:center;">
+  <div class="card" style="width:440px; max-width:95vw; margin:0;
+       border:1px solid var(--border2); box-shadow:var(--shadow-lg);
+       animation:fadeUp 0.2s ease-out both;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+      <span style="font-size:16px; font-weight:700;">Add Transaction</span>
+      <button class="btn btn-outline btn-sm" onclick="closeAddModal()" style="padding:3px 8px;">✕</button>
+    </div>
+
     <div class="form-group">
       <label>Date</label>
       <input type="date" id="add-date" required>
@@ -104,10 +128,12 @@
     </div>
     <div class="form-group">
       <label>Amount (€)</label>
-      <div class="flex" style="gap:8px;">
-        <select id="add-sign" style="width:90px; padding:8px; border:1px solid #ddd; border-radius:8px;">
-          <option value="-1">Expense</option>
-          <option value="1">Income</option>
+      <div style="display:flex; gap:8px;">
+        <select id="add-sign" style="width:110px; padding:9px 10px;
+            border:1px solid var(--border2); border-radius:var(--radius-sm);
+            background:var(--bg2); color:var(--text);">
+          <option value="-1">− Expense</option>
+          <option value="1">+ Income</option>
         </select>
         <input type="number" id="add-amount" placeholder="0.00" step="0.01" min="0" style="flex:1;">
       </div>
@@ -118,9 +144,7 @@
         {{range $d.Categories}}
         <option value="{{.Name}}">{{.Name}}</option>
         {{end}}
-        {{if not $d.Categories}}
-        <option value="Others">Others</option>
-        {{end}}
+        {{if not $d.Categories}}<option value="Others">Others</option>{{end}}
       </select>
     </div>
     <div class="form-group">
@@ -132,20 +156,18 @@
         {{end}}
       </select>
     </div>
-    <div class="flex" style="gap:8px; justify-content:flex-end; margin-top:8px;">
+
+    <div id="add-error" class="error" style="display:none;"></div>
+
+    <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:4px;">
       <button class="btn btn-outline" onclick="closeAddModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="submitAdd()">Save</button>
+      <button class="btn btn-primary" onclick="submitAdd()">Save Transaction</button>
     </div>
-    <div id="add-error" class="error" style="display:none; margin-top:8px;"></div>
   </div>
 </div>
 
-<style>
-.desc-cell { max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.cat-badge { cursor:default; display:inline-flex; align-items:center; }
-</style>
 <script>
-const catColors = {{range $k,$v := $d.CategoryColors}}"{{$k}}":"{{$v}}",{{end}};
+const catColors = { {{range $k,$v := $d.CategoryColors}}"{{$k}}":"{{$v}}",{{end}} };
 
 function editCat(id) {
   document.getElementById('cat-' + id).style.display = 'none';
@@ -154,15 +176,13 @@ function editCat(id) {
   sel.style.display = 'inline-block';
   sel.focus();
 }
-
 function cancelEdit(id) {
   setTimeout(() => {
     document.getElementById('cat-' + id).style.display = 'inline-flex';
-    document.getElementById('edit-btn-' + id).style.display = 'inline-block';
+    document.getElementById('edit-btn-' + id).style.display = 'inline-flex';
     document.getElementById('sel-' + id).style.display = 'none';
-  }, 150);
+  }, 160);
 }
-
 function saveCategory(id, cat) {
   fetch('/api/transactions/' + id, {
     method: 'PUT',
@@ -170,16 +190,17 @@ function saveCategory(id, cat) {
     body: JSON.stringify({category: cat})
   }).then(r => {
     if (!r.ok) return;
-    const badge = document.getElementById('cat-' + id);
-    const color = catColors[cat] || '';
-    badge.style.background = color ? color + '22' : '#e0e0e0';
-    badge.style.color = color || '#555';
-    badge.style.border = '1px solid ' + (color ? color + '44' : '#ccc');
-    badge.innerHTML = (color ? `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${color};margin-right:5px;vertical-align:middle;"></span>` : '') + cat;
+    const color  = catColors[cat] || '';
+    const badge  = document.getElementById('cat-' + id);
+    badge.style.background   = color ? color + '18' : 'var(--bg3)';
+    badge.style.color        = color || 'var(--text2)';
+    badge.style.borderColor  = color ? color + '33' : 'var(--border2)';
+    badge.innerHTML = (color
+      ? `<span class="category-dot" style="background:${color};box-shadow:0 0 4px ${color}88;"></span>`
+      : '') + cat;
     cancelEdit(id);
   });
 }
-
 function delTxn(id) {
   if (!confirm('Delete this transaction?')) return;
   fetch('/api/transactions/' + id, {method: 'DELETE'}).then(r => {
@@ -188,47 +209,42 @@ function delTxn(id) {
 }
 
 function openAddModal() {
-  const modal = document.getElementById('add-modal');
-  modal.style.display = 'flex';
-  document.getElementById('add-date').value = new Date().toISOString().slice(0,10);
+  document.getElementById('add-modal').style.display = 'flex';
+  document.getElementById('add-date').value = new Date().toISOString().slice(0, 10);
   document.getElementById('add-desc').focus();
 }
-
 function closeAddModal() {
   document.getElementById('add-modal').style.display = 'none';
   document.getElementById('add-error').style.display = 'none';
 }
-
 function submitAdd() {
-  const date = document.getElementById('add-date').value;
-  const desc = document.getElementById('add-desc').value.trim();
-  const sign = parseInt(document.getElementById('add-sign').value);
-  const amt = parseFloat(document.getElementById('add-amount').value);
-  const cat = document.getElementById('add-cat').value;
-  const account = document.getElementById('add-account').value;
+  const date   = document.getElementById('add-date').value;
+  const desc   = document.getElementById('add-desc').value.trim();
+  const sign   = parseInt(document.getElementById('add-sign').value);
+  const amt    = parseFloat(document.getElementById('add-amount').value);
+  const cat    = document.getElementById('add-cat').value;
+  const acct   = document.getElementById('add-account').value;
+  const errEl  = document.getElementById('add-error');
 
   if (!date || !desc || isNaN(amt) || amt <= 0) {
-    const err = document.getElementById('add-error');
-    err.textContent = 'Please fill in date, description, and a positive amount.';
-    err.style.display = 'block';
+    errEl.textContent = 'Please fill in date, description, and a positive amount.';
+    errEl.style.display = 'block';
     return;
   }
+  errEl.style.display = 'none';
 
-  const amountCents = Math.round(amt * 100) * sign;
   fetch('/api/transactions', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({account_id: account, date, description: desc, amount_cents: amountCents, category: cat})
+    body: JSON.stringify({account_id: acct, date, description: desc, amount_cents: Math.round(amt * 100) * sign, category: cat})
   }).then(r => {
-    if (!r.ok) { document.getElementById('add-error').textContent = 'Failed to save.'; document.getElementById('add-error').style.display = 'block'; return; }
+    if (!r.ok) { errEl.textContent = 'Failed to save.'; errEl.style.display = 'block'; return; }
     closeAddModal();
     location.reload();
   });
 }
 
-document.getElementById('add-modal').addEventListener('click', function(e) {
-  if (e.target === this) closeAddModal();
-});
+document.getElementById('add-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeAddModal(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAddModal(); });
 </script>
 {{end}}
