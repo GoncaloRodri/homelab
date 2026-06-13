@@ -1,0 +1,125 @@
+{{define "content"}}
+{{$d := .}}
+
+<div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:8px;">
+  <h1>Net Worth</h1>
+  <span class="text-muted">{{if $d.Email}}{{$d.Email}}{{end}}</span>
+</div>
+
+<!-- Hero -->
+<div class="card animate-on-scroll" style="margin-bottom:16px; padding:24px 28px;">
+  <div style="font-size:12px; color:var(--text2); text-transform:uppercase; letter-spacing:.5px; margin-bottom:10px; display:flex; align-items:center; gap:8px;">
+    Total net worth
+    <span style="font-size:11px; background:var(--bg3); color:var(--text3); padding:2px 8px; border-radius:99px; font-weight:400; text-transform:none; letter-spacing:0;">
+      cash balance + portfolio
+    </span>
+  </div>
+  <div class="animate-counter {{if lt $d.NetWorthCents 0}}negative{{else}}positive{{end}}"
+       style="font-size:42px; font-weight:500; letter-spacing:-1.5px; line-height:1;"
+       data-target="{{$d.NetWorthCents}}" data-prefix="€">€0.00</div>
+</div>
+
+<!-- Breakdown cards -->
+<div class="grid" style="margin-bottom:16px;">
+
+  <div class="card value-card animate-on-scroll">
+    <h2>Cash balance</h2>
+    <div class="value animate-counter {{if lt $d.CashCents 0}}negative{{else}}positive{{end}}"
+         data-target="{{$d.CashCents}}" data-prefix="€">€0.00</div>
+    <p style="font-size:12px; color:var(--text3); margin-top:6px;">all transaction history</p>
+  </div>
+
+  <div class="card value-card animate-on-scroll">
+    <h2>Portfolio{{if not $d.PortfolioPricesAvailable}} (cost basis){{end}}</h2>
+    <div class="value animate-counter positive"
+         data-target="{{$d.PortfolioCents}}" data-prefix="€">€0.00</div>
+    {{if $d.PortfolioPricesAvailable}}
+    <p style="font-size:12px; color:var(--text3); margin-top:6px;">market value</p>
+    {{else}}
+    <p style="font-size:12px; color:var(--text3); margin-top:6px;">prices unavailable · cost basis shown</p>
+    {{end}}
+  </div>
+
+  {{if $d.CreditCents}}
+  <div class="card value-card animate-on-scroll">
+    <h2>Credit / liabilities</h2>
+    <div class="value negative animate-counter" data-target="{{$d.CreditCents}}" data-prefix="€">€0.00</div>
+    <p style="font-size:12px; color:var(--text3); margin-top:6px;">outstanding balance</p>
+  </div>
+  {{end}}
+
+</div>
+
+<!-- Historical chart -->
+{{if $d.History}}
+<div class="card animate-on-scroll">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+    <h2>Net worth over time</h2>
+    <span style="font-size:11px; color:var(--text3);">cumulative · all time</span>
+  </div>
+  <canvas id="nw-chart" height="220"></canvas>
+</div>
+
+<script>
+(function() {
+  const labels = [{{range $d.History}}"{{.Month}}",{{end}}];
+  const data   = [{{range $d.History}}{{.NetCents}},{{end}}];
+  const ctx = document.getElementById('nw-chart').getContext('2d');
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#6979f8';
+  const green  = getComputedStyle(document.documentElement).getPropertyValue('--green').trim()  || '#4ade80';
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Net Worth (€)',
+        data: data.map(v => v / 100),
+        borderColor: accent,
+        backgroundColor: isDark ? 'rgba(105,121,248,0.08)' : 'rgba(67,85,232,0.06)',
+        fill: true,
+        tension: 0.35,
+        pointRadius: data.length > 24 ? 0 : 3,
+        pointHoverRadius: 5,
+        borderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true,
+      interaction: { intersect: false, mode: 'index' },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => '€' + ctx.parsed.y.toLocaleString('pt-PT', {minimumFractionDigits:2})
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.05)' },
+          ticks: { color: isDark ? '#5c6585' : '#9fa8c7', maxTicksLimit: 12 }
+        },
+        y: {
+          grid: { color: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.05)' },
+          ticks: {
+            color: isDark ? '#5c6585' : '#9fa8c7',
+            callback: v => '€' + (v / 1000).toFixed(0) + 'k'
+          }
+        }
+      }
+    }
+  });
+})();
+</script>
+{{else}}
+<div class="card empty-state animate-on-scroll">
+  <div style="font-size:48px; margin-bottom:16px;">📊</div>
+  <h3>No transaction history yet</h3>
+  <p style="margin-bottom:20px;">Import some transactions to see your net worth over time.</p>
+  <a href="/import" class="btn btn-primary">Import transactions →</a>
+</div>
+{{end}}
+
+{{end}}
