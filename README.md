@@ -22,6 +22,47 @@ A self-hosted personal finance dashboard running on k3s. Tracks transactions, bu
 
 ---
 
+## Architecture
+
+### Deployment
+
+GitHub Actions CI/CD. Each app has its own workflow triggered by path filters (`apps/<name>/**`) so a change to the finance service does not rebuild or redeploy unrelated apps.
+
+### Apps and services
+
+Each app lives under `apps/<name>/` and follows a shared layout:
+
+```
+apps/<name>/
+  services/
+    api/          # Go service
+  k8s/            # Kubernetes manifests (deployment, service, ingress)
+  .github/        # App-specific CI workflow (if separate from root)
+```
+
+### Database
+
+All apps share a single MongoDB instance but each app owns a **dedicated database**: `homelab_finance`, `homelab_smarthome`, etc. The `users` service writes to `homelab` and is the canonical auth source — other apps query the `users` collection directly rather than making HTTP calls between services.
+
+### Auth
+
+A shared `users` service handles registration and login. Apps that need to identify the current user resolve the session against the shared MongoDB `users` collection.
+
+### Secrets
+
+Kubernetes Secrets managed manually with `kubectl`. Secrets are never committed to git — `.gitignore` covers `*.env` and any manifest containing literal credentials.
+
+### Adding a new app
+
+Copy an existing app directory as a starting point. Conventions to follow:
+
+- Use the app's own MongoDB database (not the shared `homelab` database)
+- Add a path-filtered GitHub Actions workflow under `.github/workflows/<name>.yml`
+- Place k8s manifests under `apps/<name>/k8s/` with at minimum: `deployment.yaml`, `service.yaml`, `ingress.yaml`
+- Read the MongoDB URI and any credentials from environment variables injected by Kubernetes Secrets
+
+---
+
 ## Roadmap
 
 The main goal is to evolve from a **ledger** (records what happened) into a **financial co-pilot** (tells you what to do next, based on where you want to end up).
