@@ -1,17 +1,9 @@
-name: finance-api
+name: ci
 
 on:
   push:
     branches: [main]
-    paths:
-      - apps/finance/**
-      - go.mod
-      - go.sum
   pull_request:
-    paths:
-      - apps/finance/**
-      - go.mod
-      - go.sum
 
 jobs:
   test:
@@ -25,4 +17,4 @@ jobs:
           go-version-file: go.mod
 
       - name: Test
-        run: go test ./apps/finance/services/api/main/...
+        run: go test ./...
