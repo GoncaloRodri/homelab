@@ -1,0 +1,295 @@
+{{define "content"}}
+{{$d := .}}
+
+<div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:8px;">
+  <h1>What If…</h1>
+  <span class="text-muted">adjust sliders to see the ripple effect</span>
+</div>
+
+<!-- Live output cards -->
+<div class="grid" style="margin-bottom:16px;">
+  <div class="card value-card animate-on-scroll">
+    <h2>Disposable income</h2>
+    <div id="out-disposable" class="value" style="color:var(--text);">€0.00</div>
+    <p style="font-size:12px; color:var(--text3); margin-top:6px;">after fixed costs &amp; goals</p>
+  </div>
+  <div class="card value-card animate-on-scroll">
+    <h2>Monthly savings</h2>
+    <div id="out-savings" class="value positive">€0.00</div>
+    <p style="font-size:12px; color:var(--text3); margin-top:6px;">income − all committed spend</p>
+  </div>
+  <div class="card value-card animate-on-scroll">
+    <h2>Savings rate</h2>
+    <div id="out-rate" class="value positive">0%</div>
+    <p style="font-size:12px; color:var(--text3); margin-top:6px;">savings ÷ income</p>
+  </div>
+</div>
+
+<!-- Controls + goal impact side by side -->
+<div class="grid-2" style="margin-bottom:16px;">
+
+  <!-- Sliders -->
+  <div class="card animate-on-scroll">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+      <h2>Adjustments</h2>
+      <button onclick="resetAll()" class="btn btn-outline btn-sm">Reset</button>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:24px;">
+
+      <!-- Income change -->
+      <div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+          <label style="font-size:13px; color:var(--text2); font-weight:500;">Income change</label>
+          <span id="lbl-income" style="font-size:13px; font-weight:600; color:var(--accent);">+0%</span>
+        </div>
+        <input type="range" id="sl-income" min="-50" max="100" value="0" step="1"
+               oninput="recalc()" style="width:100%; accent-color:var(--accent);">
+        <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text3); margin-top:4px;">
+          <span>−50%</span><span>+100%</span>
+        </div>
+      </div>
+
+      <!-- One-off expense -->
+      <div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+          <label style="font-size:13px; color:var(--text2); font-weight:500;">One-off expense</label>
+          <span id="lbl-oneoff" style="font-size:13px; font-weight:600; color:var(--red);">€0</span>
+        </div>
+        <input type="range" id="sl-oneoff" min="0" max="10000" value="0" step="50"
+               oninput="recalc()" style="width:100%; accent-color:var(--red);">
+        <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text3); margin-top:4px;">
+          <span>€0</span><span>€10 000</span>
+        </div>
+      </div>
+
+      <!-- Fixed costs change -->
+      <div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+          <label style="font-size:13px; color:var(--text2); font-weight:500;">Fixed costs change</label>
+          <span id="lbl-fixed" style="font-size:13px; font-weight:600; color:var(--text2);">+€0/mo</span>
+        </div>
+        <input type="range" id="sl-fixed" min="-500" max="1000" value="0" step="10"
+               oninput="recalc()" style="width:100%; accent-color:var(--accent);">
+        <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text3); margin-top:4px;">
+          <span>−€500</span><span>+€1 000</span>
+        </div>
+      </div>
+
+      <!-- New goal -->
+      <div style="border-top:1px solid var(--border); padding-top:20px;">
+        <label style="font-size:13px; color:var(--text2); font-weight:500; display:block; margin-bottom:12px;">
+          Hypothetical new goal
+        </label>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+          <div>
+            <label style="font-size:11px; color:var(--text3); display:block; margin-bottom:4px;">Amount (€)</label>
+            <input type="number" id="ng-amount" min="0" step="100" placeholder="5 000"
+                   oninput="recalc()"
+                   style="width:100%; padding:8px 10px; background:var(--bg3); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:13px;">
+          </div>
+          <div>
+            <label style="font-size:11px; color:var(--text3); display:block; margin-bottom:4px;">Months to save</label>
+            <input type="number" id="ng-months" min="1" max="120" step="1" placeholder="12"
+                   oninput="recalc()"
+                   style="width:100%; padding:8px 10px; background:var(--bg3); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:13px;">
+          </div>
+        </div>
+        <div style="font-size:12px; color:var(--text3);">
+          Would need <span id="ng-monthly" style="font-weight:600; color:var(--accent);">€0/mo</span>
+          — leaving <span id="ng-after" style="font-weight:600;">€0/mo</span> disposable
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Goal timeline impact -->
+  <div class="card animate-on-scroll">
+    <h2 style="margin-bottom:16px;">Goal timeline impact</h2>
+    {{if $d.Goals}}
+    <div id="goal-impact-list" style="display:flex; flex-direction:column; gap:10px;">
+      {{range $d.Goals}}
+      <div class="goal-row" data-monthly="{{.MonthlyCents}}" data-months="{{.MonthsLeft}}" data-committed="{{.Committed}}">
+        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px;">
+          <span style="font-size:13px; font-weight:500; color:var(--text);">
+            {{.Name}}
+            {{if .Committed}}<span style="font-size:10px; color:var(--green); margin-left:5px;">committed</span>{{end}}
+          </span>
+          <span class="goal-months" style="font-size:13px; font-weight:600; color:var(--text2);">{{.MonthsLeft}}mo</span>
+        </div>
+        <div style="background:var(--bg3); border-radius:99px; height:4px; overflow:hidden;">
+          <div class="goal-bar" style="height:100%; border-radius:99px; width:0%; background:var(--accent); transition:width 0.4s ease;"></div>
+        </div>
+        <div class="goal-feasibility" style="font-size:11px; color:var(--text3); margin-top:3px;"></div>
+      </div>
+      {{end}}
+    </div>
+    {{else}}
+    <div class="empty-state" style="padding:24px;">
+      <p>No goals yet. <a href="/goals" style="color:var(--accent);">Add some →</a></p>
+    </div>
+    {{end}}
+  </div>
+
+</div>
+
+<!-- Savings rate history chart -->
+{{if $d.SavingsHistory}}
+<div class="card animate-on-scroll">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+    <h2>Savings rate history</h2>
+    <span style="font-size:11px; color:var(--text3);">past months</span>
+  </div>
+  <canvas id="savings-chart" height="200"></canvas>
+</div>
+{{end}}
+
+<script>
+// ── State seeded from server ──────────────────────────────────────────────
+const BASE = {
+  income:      {{$d.IncomeCents}},
+  fixed:       {{$d.FixedCents}},
+  goals:       {{$d.GoalsCents}},
+  disposable:  {{$d.DisposableCents}},
+  avgSavings:  {{$d.AvgSavingsCents}},
+};
+
+function fmt(cents) {
+  const abs = Math.abs(cents);
+  const sign = cents < 0 ? '−' : '';
+  return sign + '€' + (abs / 100).toLocaleString('pt-PT', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+function recalc() {
+  const incomePct  = parseFloat(document.getElementById('sl-income').value) / 100;
+  const oneoff     = parseFloat(document.getElementById('sl-oneoff').value) * 100; // convert € to cents
+  const fixedDelta = parseFloat(document.getElementById('sl-fixed').value) * 100;
+
+  const newIncome  = Math.round(BASE.income * (1 + incomePct));
+  const newFixed   = BASE.fixed + fixedDelta;
+  const newDisp    = newIncome - newFixed - BASE.goals - oneoff;
+  const newSavings = newIncome - newFixed - BASE.goals;
+  const newRate    = newIncome > 0 ? Math.round(newSavings / newIncome * 100) : 0;
+
+  // labels
+  document.getElementById('lbl-income').textContent = (incomePct >= 0 ? '+' : '') + Math.round(incomePct * 100) + '%';
+  document.getElementById('lbl-income').style.color  = incomePct >= 0 ? 'var(--green)' : 'var(--red)';
+  document.getElementById('lbl-oneoff').textContent = '€' + (oneoff/100).toLocaleString('pt-PT');
+  document.getElementById('lbl-fixed').textContent  = (fixedDelta >= 0 ? '+' : '−') + '€' + (Math.abs(fixedDelta)/100).toLocaleString('pt-PT') + '/mo';
+
+  // output cards
+  setCard('out-disposable', newDisp);
+  setCard('out-savings',    newSavings);
+  document.getElementById('out-rate').textContent = newRate + '%';
+  document.getElementById('out-rate').className = 'value ' + (newRate >= 0 ? 'positive' : 'negative');
+
+  // new goal impact
+  const ngAmt    = parseFloat(document.getElementById('ng-amount').value || '0') * 100;
+  const ngMonths = parseFloat(document.getElementById('ng-months').value || '0');
+  const ngMonthly = ngMonths > 0 ? Math.round(ngAmt / ngMonths) : 0;
+  const ngAfter   = newDisp - ngMonthly;
+  document.getElementById('ng-monthly').textContent = '€' + (ngMonthly/100).toLocaleString('pt-PT', {minimumFractionDigits:2});
+  const ngAfterEl = document.getElementById('ng-after');
+  ngAfterEl.textContent = fmt(ngAfter) + '/mo';
+  ngAfterEl.style.color = ngAfter >= 0 ? 'var(--green)' : 'var(--red)';
+
+  // goal rows
+  document.querySelectorAll('.goal-row').forEach(row => {
+    const monthlyCents = parseInt(row.dataset.monthly);
+    const originalMonths = parseInt(row.dataset.months);
+    const committed = row.dataset.committed === 'true';
+
+    // at the new savings rate, how many months to hit the same target?
+    const target = monthlyCents * originalMonths;
+    const effectiveSavings = newSavings > 0 ? newSavings : 0;
+    const newMonths = effectiveSavings > 0 ? Math.ceil(target / effectiveSavings) : 9999;
+    const feasible = newMonths <= originalMonths;
+
+    row.querySelector('.goal-months').textContent = newMonths > 999 ? '—' : newMonths + 'mo';
+    row.querySelector('.goal-months').style.color = feasible ? 'var(--green)' : 'var(--red)';
+
+    const pct = Math.min(100, Math.round(originalMonths / Math.max(newMonths, 1) * 100));
+    row.querySelector('.goal-bar').style.width = pct + '%';
+    row.querySelector('.goal-bar').style.background = feasible ? 'var(--green)' : 'var(--red)';
+
+    const diff = newMonths - originalMonths;
+    const feasEl = row.querySelector('.goal-feasibility');
+    if (newMonths > 999) {
+      feasEl.textContent = 'Not achievable at this savings level';
+      feasEl.style.color = 'var(--red)';
+    } else if (feasible) {
+      feasEl.textContent = diff < 0 ? Math.abs(diff) + ' months faster ✓' : 'On track ✓';
+      feasEl.style.color = 'var(--green)';
+    } else {
+      feasEl.textContent = diff + ' months over deadline';
+      feasEl.style.color = 'var(--red)';
+    }
+  });
+}
+
+function setCard(id, cents) {
+  const el = document.getElementById(id);
+  el.textContent = fmt(cents);
+  el.className = 'value ' + (cents >= 0 ? 'positive' : 'negative');
+}
+
+function resetAll() {
+  document.getElementById('sl-income').value = 0;
+  document.getElementById('sl-oneoff').value = 0;
+  document.getElementById('sl-fixed').value  = 0;
+  document.getElementById('ng-amount').value = '';
+  document.getElementById('ng-months').value = '';
+  recalc();
+}
+
+// run on load
+recalc();
+
+{{if $d.SavingsHistory}}
+// ── Savings rate chart ────────────────────────────────────────────────────
+(function() {
+  const labels = [{{range $d.SavingsHistory}}"{{.Month}}",{{end}}];
+  const rates  = [{{range $d.SavingsHistory}}{{.RatePct}},{{end}}];
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const ctx = document.getElementById('savings-chart').getContext('2d');
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Savings rate %',
+        data: rates,
+        backgroundColor: rates.map(r => r >= 0
+          ? (isDark ? 'rgba(74,222,128,0.5)' : 'rgba(22,163,74,0.5)')
+          : (isDark ? 'rgba(248,113,113,0.5)' : 'rgba(220,38,38,0.5)')),
+        borderColor: rates.map(r => r >= 0
+          ? (isDark ? '#4ade80' : '#16a34a')
+          : (isDark ? '#f87171' : '#dc2626')),
+        borderWidth: 1.5,
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ctx.parsed.y + '%' } }
+      },
+      scales: {
+        x: {
+          grid: { color: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.05)' },
+          ticks: { color: isDark ? '#5c6585' : '#9fa8c7', maxTicksLimit: 12 }
+        },
+        y: {
+          grid: { color: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.05)' },
+          ticks: { color: isDark ? '#5c6585' : '#9fa8c7', callback: v => v + '%' }
+        }
+      }
+    }
+  });
+})();
+{{end}}
+</script>
+{{end}}
