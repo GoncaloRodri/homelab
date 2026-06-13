@@ -324,7 +324,7 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 	// disposable income = income - fixed recurring
 	disposableIncome := thisMonthIncome - totalFixedCents
 
-	// deduct committed goal contributions from disposable
+	// deduct committed goal contributions from disposable and add to fixed costs list
 	committedGoalsCents := int64(0)
 	if goals, err := h.store.getGoals(ctx, a.UserID); err == nil {
 		now2 := time.Now()
@@ -340,10 +340,17 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 			if ml < 1 {
 				ml = 1
 			}
-			committedGoalsCents += remaining / ml
+			monthly := remaining / ml
+			committedGoalsCents += monthly
+			recurringExpenses = append(recurringExpenses, RecurringExpense{
+				Category:     g.Name,
+				MonthlyCents: monthly,
+				IsGoal:       true,
+			})
 		}
 	}
 	disposableIncome -= committedGoalsCents
+	totalCommittedCents := totalFixedCents + committedGoalsCents
 
 	// variable spend so far this month (non-fixed categories, expenses only)
 	variableSpent := int64(0)
@@ -450,6 +457,7 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 		RecurringExpenses:       recurringExpenses,
 		BankShouldBe:            bankShouldBe,
 		SafetyBufferCents:       safetyBuffer,
+		TotalCommittedCents:     totalCommittedCents,
 		SavingsRatePct:          savingsRatePct,
 		LastMonthSavingsRatePct: lastMonthSavingsRatePct,
 		PortfolioValueCents:          portfolioValueCents,
