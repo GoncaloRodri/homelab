@@ -4,8 +4,6 @@ SHELL := /bin/zsh
 
 K3D_SCRIPT := infrastructure/k3d/k3d.sh
 TERRAFORM := terraform
-SHA       := $(shell git rev-parse --short HEAD)
-
 .PHONY: up
 up: ## Create the k3d dev cluster
 	$(K3D_SCRIPT) homelab
@@ -22,15 +20,15 @@ SERVICES := $(shell find apps -name Makefile -path "*/services/*" -exec dirname 
 
 .PHONY: deploy-finance
 deploy-finance: ## Build and deploy the finance API
-	$(MAKE) -C apps/finance/services/api build-deploy IMAGE_TAG=$(SHA)
+	$(MAKE) -C apps/finance/services/api build-deploy
 
 .PHONY: deploy-auth-users
 deploy-auth-users: ## Build and deploy the auth users service
-	$(MAKE) -C apps/auth/services/users build-deploy IMAGE_TAG=$(SHA)
+	$(MAKE) -C apps/auth/services/users build-deploy
 
 .PHONY: deploy-auth-gateway
 deploy-auth-gateway: ## Build and deploy the auth gateway service
-	$(MAKE) -C apps/auth/services/gateway build-deploy IMAGE_TAG=$(SHA)
+	$(MAKE) -C apps/auth/services/gateway build-deploy
 
 .PHONY: test
 test: ## Run all tests
@@ -40,7 +38,7 @@ test: ## Run all tests
 deploy-all: ## Build, load, deploy, and restart every service
 	@for dir in $(SERVICES); do \
 		echo "\033[36m>>> $$dir\033[0m"; \
-		$(MAKE) -C "$$dir" build-deploy IMAGE_TAG=$(SHA) || true; \
+		$(MAKE) -C "$$dir" build-deploy || true; \
 	done
 
 .PHONY: restart-all
