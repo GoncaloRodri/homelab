@@ -24,6 +24,7 @@ var isinToTicker = map[string]string{
 	"IE00B3XXRP09": "VWRL.AS",  // VWRL — All-World
 	"IE00BK5BQT80": "VWRA.L",   // VWRA — All-World (acc, LSE)
 	// iShares
+	"IE00B3WJKG14": "QDVE.DE",  // QDVE — S&P 500 Information Technology
 	"IE00B4L5Y983": "EUNL.DE",  // EUNL — MSCI World
 	"IE00B5BMR087": "SXR8.DE",  // SXR8 — S&P 500
 	"IE00B4K48X80": "SXRV.DE",  // SXRV — S&P 500 EUR hedged
