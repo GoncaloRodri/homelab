@@ -19,7 +19,7 @@
     <h2>Unrealized P&amp;L</h2>
     <div class="value {{if ge $d.TotalPCLCents 0}}positive{{else}}negative{{end}} animate-counter"
          data-target="{{$d.TotalPCLCents}}" data-prefix="€">€0.00</div>
-    <p style="font-size:13px; margin-top:6px; {{if ge $d.TotalPCLPct 0}}color:var(--green){{else}}color:var(--red){{end}};">
+    <p style="font-size:13px; margin-top:6px; color:{{if eq (pctSign $d.TotalPCLPct) "+"}}var(--green){{else}}var(--red){{end}};">
       {{pctSign $d.TotalPCLPct}}{{printf "%.2f" $d.TotalPCLPct}}%
     </p>
   </div>
@@ -66,6 +66,7 @@
                 {{if ge .UnrealizedPCLCents 0}}+{{else}}−{{end}}€{{cents (centsAbs .UnrealizedPCLCents)}}
               </div>
             </td>
+
           </tr>
           {{end}}
         </tbody>
