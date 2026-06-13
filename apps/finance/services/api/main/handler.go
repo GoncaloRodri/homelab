@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"math"
 	"net/http"
+	"sort"
 	"strings"
 	"time"
 
@@ -76,6 +77,22 @@ func parseTmpl(files ...string) *template.Template {
 		},
 		"round": func(f float64) float64 {
 			return math.Round(f)
+		},
+		"clampPct": func(spent, budget int64) int64 {
+			if budget <= 0 {
+				return 0
+			}
+			pct := int64(float64(spent) / float64(budget) * 100)
+			if pct > 100 {
+				return 100
+			}
+			if pct < 0 {
+				return 0
+			}
+			return pct
+		},
+		"isOver": func(spent, budget int64) bool {
+			return budget > 0 && spent > budget
 		},
 		"jsonVals": func(m map[string]int64) template.JS {
 			var vals []string
@@ -252,16 +269,41 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 		balPoints = balPoints[len(balPoints)-90:]
 	}
 
-	render(w, dashboardTmpl, &DashboardData{
-		UserID:       a.UserID,
-		Email:        a.Email,
-		Title:        "Dashboard",
-		Route:        "dashboard",
-		IsOwner:      true,
-		ThisMonth:    thisMonth,
-		LastMonth:    lastMonth,
-		RecentTxns:   recent,
-		BalanceTrend: balPoints,
+	// compute income vs expense split for this month
+	thisMonthIncome := int64(0)
+	thisMonthExpense := int64(0)
+	for _, amt := range thisMonth.ByCategory {
+		if amt > 0 {
+			thisMonthIncome += amt
+		} else {
+			thisMonthExpense += amt
+		}
+	}
+
+	// budget data: map category name -> budget cents
+	catBudgets := make(map[string]int64)
+	catColors := make(map[string]string)
+	for _, c := range cats {
+		if c.BudgetCents > 0 {
+			catBudgets[c.Name] = c.BudgetCents
+		}
+		catColors[c.Name] = c.Color
+	}
+
+	render(w, dashboardTmpl, map[string]interface{}{
+		"UserID":             a.UserID,
+		"Email":              a.Email,
+		"Title":              "Dashboard",
+		"Route":              "dashboard",
+		"IsOwner":            true,
+		"ThisMonth":          thisMonth,
+		"LastMonth":          lastMonth,
+		"RecentTxns":         recent,
+		"BalanceTrend":       balPoints,
+		"ThisMonthIncome":    thisMonthIncome,
+		"ThisMonthExpense":   thisMonthExpense,
+		"CategoryBudgets":    catBudgets,
+		"CategoryColors":     catColors,
 	})
 }
 
@@ -306,19 +348,76 @@ func (h *Handler) Transactions(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cats, _ := h.store.getCategories(ctx, a.UserID)
+	accounts, _ := h.store.getAccounts(ctx, a.UserID)
+
+	accountNames := make(map[string]string)
+	for _, acc := range accounts {
+		accountNames[acc.ID] = acc.Name
+	}
+
+	catColors := make(map[string]string)
+	for _, c := range cats {
+		catColors[c.Name] = c.Color
+	}
 
 	render(w, txnsTmpl, map[string]interface{}{
-		"UserID":     a.UserID,
-		"Email":      a.Email,
-		"Title":      "Transactions",
-		"Route":      "transactions",
-		"IsOwner":    true,
-		"Txns":       txns,
-		"Categories": cats,
-		"Cat":        cat,
-		"Search":     search,
-		"Days":       daysStr,
+		"UserID":       a.UserID,
+		"Email":        a.Email,
+		"Title":        "Transactions",
+		"Route":        "transactions",
+		"IsOwner":      true,
+		"Txns":         txns,
+		"Categories":   cats,
+		"Accounts":     accounts,
+		"AccountNames": accountNames,
+		"CategoryColors": catColors,
+		"Cat":          cat,
+		"Search":       search,
+		"Days":         daysStr,
 	})
+}
+
+func (h *Handler) CreateTransaction(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	a := getAuth(r)
+
+	var body struct {
+		AccountID   string `json:"account_id"`
+		Date        string `json:"date"`
+		Description string `json:"description"`
+		AmountCents int64  `json:"amount_cents"`
+		Category    string `json:"category"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, "bad request", http.StatusBadRequest)
+		return
+	}
+
+	date, err := time.Parse("2006-01-02", body.Date)
+	if err != nil {
+		date = time.Now()
+	}
+
+	txn := Transaction{
+		ID:          bson.NewObjectID().Hex(),
+		UserID:      a.UserID,
+		AccountID:   body.AccountID,
+		Date:        date,
+		Description: body.Description,
+		AmountCents: body.AmountCents,
+		Category:    body.Category,
+		CreatedAt:   time.Now(),
+	}
+
+	if err := h.store.createTransactions(ctx, []Transaction{txn}); err != nil {
+		slog.Error("create transaction", "err", err)
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(txn)
 }
 
 func (h *Handler) ImportPage(w http.ResponseWriter, r *http.Request) {
@@ -1085,18 +1184,11 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /sharing", h.Sharing)
 	mux.HandleFunc("DELETE /sharing/{viewer_id}", h.Sharing)
 	mux.HandleFunc("GET /api/users/search", h.SearchUsers)
+	mux.HandleFunc("POST /api/transactions", h.CreateTransaction)
 	mux.HandleFunc("PUT /api/transactions/{id}", h.UpdateTransaction)
 	mux.HandleFunc("DELETE /api/transactions/{id}", h.DeleteTransaction)
 }
 
 func sortStrings(s []string) {
-	if len(s) == 0 {
-		return
-	}
+	sort.Strings(s)
 }
-
-type stringSlice []string
-
-func (s stringSlice) Len() int           { return len(s) }
-func (s stringSlice) Less(i, j int) bool { return s[i] < s[j] }
-func (s stringSlice) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }

@@ -1,39 +1,88 @@
 {{define "content"}}
 {{$d := .}}
 {{$change := sub $d.ThisMonth.TotalCents $d.LastMonth.TotalCents}}
-<h1 style="margin-bottom: 24px;">Dashboard</h1>
+<h1 style="margin-bottom:24px;">Dashboard</h1>
 
-<div class="grid">
+<!-- Summary cards -->
+<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));">
   <div class="card value-card animate-on-scroll">
-    <h2>This Month</h2>
+    <h2>This Month (Net)</h2>
     <div class="value {{if lt $d.ThisMonth.TotalCents 0}}negative{{else}}positive{{end}} animate-counter"
          data-target="{{$d.ThisMonth.TotalCents}}" data-prefix="€">€0</div>
   </div>
   <div class="card value-card animate-on-scroll">
-    <h2>Last Month</h2>
-    <div class="value {{if lt $d.LastMonth.TotalCents 0}}negative{{else}}positive{{end}} animate-counter"
-         data-target="{{$d.LastMonth.TotalCents}}" data-prefix="€">€0</div>
+    <h2>Income</h2>
+    <div class="value positive animate-counter"
+         data-target="{{$d.ThisMonthIncome}}" data-prefix="€">€0</div>
   </div>
   <div class="card value-card animate-on-scroll">
-    <h2>Change</h2>
+    <h2>Expenses</h2>
+    <div class="value negative animate-counter"
+         data-target="{{$d.ThisMonthExpense}}" data-prefix="€">€0</div>
+  </div>
+  <div class="card value-card animate-on-scroll">
+    <h2>vs Last Month</h2>
     <div class="value {{if lt $change 0}}negative{{else}}positive{{end}} animate-counter"
          data-target="{{$change}}" data-prefix="€">€0</div>
   </div>
 </div>
 
-<div class="grid">
+<!-- Charts row -->
+<div class="grid" style="grid-template-columns:1fr 1fr;">
   <div class="card animate-on-scroll">
     <h2>Spending by Category (This Month)</h2>
-    <canvas id="thisMonthChart" height="200"></canvas>
+    {{if $d.ThisMonth.ByCategory}}
+    <canvas id="thisMonthChart" height="220"></canvas>
+    {{else}}
+    <div class="empty-state" style="padding:32px;">No spending data this month.</div>
+    {{end}}
   </div>
   <div class="card animate-on-scroll">
-    <h2>Balance Trend</h2>
-    <canvas id="balanceChart" height="200"></canvas>
+    <h2>Balance Trend (90 days)</h2>
+    {{if $d.BalanceTrend}}
+    <canvas id="balanceChart" height="220"></canvas>
+    {{else}}
+    <div class="empty-state" style="padding:32px;">No transactions yet. <a href="/import">Import some!</a></div>
+    {{end}}
   </div>
 </div>
 
+<!-- Budget progress -->
+{{if $d.CategoryBudgets}}
 <div class="card animate-on-scroll">
-  <h2>Recent Transactions</h2>
+  <h2 style="margin-bottom:16px;">Budget vs Actual (This Month)</h2>
+  <div style="display:flex; flex-direction:column; gap:14px;">
+    {{range $cat, $budget := $d.CategoryBudgets}}
+    {{$spent := index $d.ThisMonth.ByCategory $cat}}
+    {{$color := index $d.CategoryColors $cat}}
+    {{$spentAbs := centsAbs $spent}}
+    <div>
+      <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:5px;">
+        <span style="font-size:14px; font-weight:500; display:flex; align-items:center; gap:6px;">
+          {{if $color}}<span style="width:9px;height:9px;border-radius:50%;background:{{$color}};display:inline-block;"></span>{{end}}
+          {{$cat}}
+        </span>
+        <span style="font-size:13px; color:#666;">
+          €{{cents $spentAbs}} <span style="color:#aaa;">/ €{{cents $budget}}</span>
+        </span>
+      </div>
+      <div style="background:#f0f0f0; border-radius:6px; height:8px; overflow:hidden;">
+        <div style="height:100%; border-radius:6px; width:{{clampPct $spentAbs $budget}}%; transition:width 0.8s ease;
+             background:{{if isOver $spentAbs $budget}}#f44336{{else if $color}}{{$color}}{{else}}#3949ab{{end}};"></div>
+      </div>
+    </div>
+    {{end}}
+  </div>
+  <p class="text-muted" style="margin-top:12px;">Set budgets in <a href="/categories">Categories</a>.</p>
+</div>
+{{end}}
+
+<!-- Recent transactions -->
+<div class="card animate-on-scroll">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+    <h2>Recent Transactions</h2>
+    <a href="/transactions" class="btn btn-outline btn-sm">View all</a>
+  </div>
   <div class="table-wrap">
     <table>
       <thead>
@@ -46,16 +95,25 @@
       </thead>
       <tbody>
         {{range $d.RecentTxns}}
+        {{$color := index $d.CategoryColors .Category}}
         <tr>
-          <td>{{dateShort .Date}}</td>
-          <td>{{.Description}}</td>
-          <td><span class="badge">{{.Category}}</span></td>
-          <td class="cents {{if lt .AmountCents 0}}negative{{else}}positive{{end}}">
-            €{{cents .AmountCents}}
+          <td style="white-space:nowrap;">{{dateShort .Date}}</td>
+          <td style="max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{.Description}}</td>
+          <td>
+            <span style="display:inline-flex; align-items:center; gap:5px; padding:2px 10px; border-radius:12px; font-size:12px; font-weight:500;
+                         background:{{if $color}}{{$color}}22{{else}}#e0e0e0{{end}};
+                         color:{{if $color}}{{$color}}{{else}}#555{{end}};
+                         border:1px solid {{if $color}}{{$color}}44{{else}}#ccc{{end}};">
+              {{if $color}}<span style="width:7px;height:7px;border-radius:50%;background:{{$color}};"></span>{{end}}
+              {{.Category}}
+            </span>
+          </td>
+          <td class="cents {{if lt .AmountCents 0}}negative{{else}}positive{{end}}" style="white-space:nowrap;">
+            {{if lt .AmountCents 0}}−{{else}}+{{end}}€{{cents (centsAbs .AmountCents)}}
           </td>
         </tr>
         {{else}}
-        <tr><td colspan="4" class="text-center text-muted">No transactions yet. <a href="/import">Import some!</a></td></tr>
+        <tr><td colspan="4" class="text-center text-muted" style="padding:32px;">No transactions yet. <a href="/import">Import some!</a></td></tr>
         {{end}}
       </tbody>
     </table>
@@ -64,50 +122,42 @@
 
 <script>
 const barColors = ['#FF6384','#36A2EB','#FFCE56','#4BC0C0','#9966FF','#FF9F40','#C9CBCF','#00E676','#651FFF','#FF6F00','#E91E63','#607D8B','#3F51B5','#9E9E9E'];
+const catColors = { {{range $k,$v := $d.CategoryColors}}"{{$k}}":"{{$v}}",{{end}} };
 
 {{if $d.ThisMonth.ByCategory}}
 const thisMonthLabels = {{jsonKeys $d.ThisMonth.ByCategory}};
 const thisMonthData = {{jsonVals $d.ThisMonth.ByCategory}};
-const barGrads = thisMonthData.map((_, i) => {
-  const c = document.createElement('canvas').getContext('2d');
-  const g = c.createLinearGradient(0, 0, 0, 200);
-  g.addColorStop(0, barColors[i % barColors.length]);
-  g.addColorStop(0.6, barColors[i % barColors.length] + 'dd');
-  g.addColorStop(1, barColors[i % barColors.length] + '88');
-  return g;
-});
+const resolvedColors = thisMonthLabels.map((k,i) => catColors[k] || barColors[i % barColors.length]);
 new Chart(document.getElementById('thisMonthChart'), {
   type: 'bar',
   data: {
     labels: thisMonthLabels,
     datasets: [{
-      label: 'Spending (€)',
+      label: 'Amount (€)',
       data: thisMonthData.map(v => Math.abs(v) / 100),
-      backgroundColor: barGrads,
-      borderColor: barColors.map(c => c + 'cc'),
+      backgroundColor: resolvedColors.map(c => c + 'cc'),
+      borderColor: resolvedColors,
       borderWidth: 1,
-      borderRadius: 4,
+      borderRadius: 5,
       borderSkipped: false,
     }]
   },
   options: {
     responsive: true,
-    animation: {
-      duration: 1200,
-      easing: 'easeOutQuart'
-    },
+    animation: { duration: 1000, easing: 'easeOutQuart' },
     plugins: { legend: { display: false } },
     scales: {
-      y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } },
+      y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { callback: v => '€' + v } },
       x: { grid: { display: false } }
     }
   }
 });
 {{end}}
+
 {{if $d.BalanceTrend}}
-const grad = document.createElement('canvas').getContext('2d').createLinearGradient(0,0,0,400);
+const grad = document.createElement('canvas').getContext('2d').createLinearGradient(0,0,0,300);
 grad.addColorStop(0, 'rgba(57,73,171,0.35)');
-grad.addColorStop(0.5, 'rgba(57,73,171,0.12)');
+grad.addColorStop(0.6, 'rgba(57,73,171,0.1)');
 grad.addColorStop(1, 'rgba(57,73,171,0.01)');
 new Chart(document.getElementById('balanceChart'), {
   type: 'line',
@@ -120,23 +170,20 @@ new Chart(document.getElementById('balanceChart'), {
       backgroundColor: grad,
       fill: true,
       tension: 0.4,
-      pointRadius: 4,
-      pointHoverRadius: 7,
+      pointRadius: 0,
+      pointHoverRadius: 5,
       pointBackgroundColor: '#fff',
       pointBorderColor: '#3949ab',
-      pointBorderWidth: 3,
+      pointBorderWidth: 2,
     }]
   },
   options: {
     responsive: true,
-    animation: {
-      duration: 1500,
-      easing: 'easeOutQuart'
-    },
+    animation: { duration: 1200, easing: 'easeOutQuart' },
     plugins: { legend: { display: false } },
     scales: {
-      y: { beginAtZero: false, grid: { color: 'rgba(0,0,0,0.05)' } },
-      x: { grid: { display: false } }
+      y: { beginAtZero: false, grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { callback: v => '€' + v } },
+      x: { grid: { display: false }, ticks: { maxTicksLimit: 8 } }
     },
     interaction: { intersect: false, mode: 'index' }
   }

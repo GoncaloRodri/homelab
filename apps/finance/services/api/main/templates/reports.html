@@ -1,33 +1,39 @@
 {{define "content"}}
 {{$d := .}}
-<h1 style="margin-bottom: 24px;">Monthly Reports</h1>
+<h1 style="margin-bottom:24px;">Monthly Reports</h1>
 
 <div class="card animate-on-scroll">
   <h2>12-Month Spend by Category</h2>
   <canvas id="reportChart" height="300"></canvas>
 </div>
 
-<div class="card table-wrap">
+<div class="card table-wrap animate-on-scroll" style="overflow-x:auto;">
   <table>
     <thead>
       <tr>
         <th>Month</th>
         {{range $cat, $_ := $d.CategoryNames}}
-        <th class="text-right">{{$cat}}</th>
+        <th class="text-right" style="white-space:nowrap;">
+          {{$color := index $d.CategoryColors $cat}}
+          {{if $color}}<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:{{$color}};margin-right:4px;vertical-align:middle;"></span>{{end}}{{$cat}}
+        </th>
         {{end}}
         <th class="text-right">Total</th>
       </tr>
     </thead>
     <tbody>
-      {{range $d.MonthlyData}}
+      {{range $row := $d.MonthlyData}}
       <tr>
-        <td><strong>{{.Month}}</strong></td>
+        <td><strong>{{$row.Month}}</strong></td>
         {{range $cat, $_ := $d.CategoryNames}}
-        <td class="cents">€{{cents (index $.Totals $cat)}}</td>
+        <td class="cents">
+          {{$v := index $row.Totals $cat}}
+          {{if $v}}<span class="{{if lt $v 0}}negative{{else}}positive{{end}}">€{{cents $v}}</span>{{else}}<span class="text-muted">—</span>{{end}}
+        </td>
         {{end}}
         {{$total := sub 0 0}}
-        {{range $_, $v := .Totals}}{{$total = add $total $v}}{{end}}
-        <td class="cents"><strong>€{{cents $total}}</strong></td>
+        {{range $_, $v := $row.Totals}}{{$total = add $total $v}}{{end}}
+        <td class="cents"><strong class="{{if lt $total 0}}negative{{else}}positive{{end}}">€{{cents $total}}</strong></td>
       </tr>
       {{end}}
     </tbody>
@@ -44,8 +50,10 @@ new Chart(document.getElementById('reportChart'), {
       {{range $cat, $_ := $d.CategoryNames}}
       {
         label: '{{$cat}}',
-        data: [{{range $d.MonthlyData}}{{index .Totals $cat | abs | div 100}},{{end}}],
+        data: [{{range $d.MonthlyData}}{{$v := index .Totals $cat}}{{if $v}}{{abs $v | div 100}}{{else}}0{{end}},{{end}}],
         backgroundColor: '{{index $colors $cat}}',
+        borderColor: '{{index $colors $cat}}',
+        borderWidth: 0,
         borderRadius: 2,
       },
       {{end}}
@@ -55,6 +63,7 @@ new Chart(document.getElementById('reportChart'), {
     responsive: true,
     animation: { duration: 1000, easing: 'easeOutQuart' },
     plugins: {
+      legend: { position: 'bottom', labels: { boxWidth: 12, padding: 16 } },
       tooltip: { mode: 'index', intersect: false }
     },
     scales: {
