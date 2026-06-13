@@ -4,6 +4,23 @@
 
 {{if $d.Holdings}}
 
+{{if $d.MissingPrices}}
+<div style="background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.35); border-radius:12px; padding:16px 20px; margin-bottom:20px;">
+  <div style="font-weight:600; font-size:0.9rem; margin-bottom:12px;">⚠ Live price unavailable for {{len $d.MissingPrices}} holding{{if gt (len $d.MissingPrices) 1}}s{{end}} — add a Yahoo Finance ticker to fix this</div>
+  {{range $d.MissingPrices}}
+  <form method="post" action="/portfolio/ticker" style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+    <input type="hidden" name="isin" value="{{.}}">
+    <code style="font-size:0.8rem; color:var(--muted); min-width:140px;">{{.}}</code>
+    <input type="text" name="ticker" placeholder="e.g. QDVE.DE" required
+           style="padding:6px 10px; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text); font-size:0.85rem; width:130px;">
+    <button type="submit" style="padding:6px 14px; background:var(--accent); color:#fff; border:none; border-radius:8px; font-size:0.85rem; font-weight:600; cursor:pointer;">Save</button>
+    <a href="https://finance.yahoo.com/lookup/" target="_blank" rel="noopener"
+       style="font-size:0.78rem; color:var(--accent);">Look up ↗</a>
+  </form>
+  {{end}}
+</div>
+{{end}}
+
 <div class="grid">
   <div class="card value-card animate-on-scroll">
     <h2>Total Value</h2>

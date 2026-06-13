@@ -13,6 +13,7 @@ import (
 
 type TickerMapping struct {
 	ISIN   string `bson:"_id" json:"isin"`
+	UserID string `bson:"user_id" json:"user_id"`
 	Ticker string `bson:"ticker" json:"ticker"`
 }
 
@@ -150,10 +151,10 @@ type TickerStore interface {
 	Load() error
 }
 
-// fetchPricesByISIN resolves each ISIN to a Yahoo Finance ticker (via isinToTicker),
-// fetches the current market price, and returns a map keyed by ISIN.
-// ISINs with no known ticker mapping are tried directly as a ticker (fallback).
-func fetchPricesByISIN(isins []string) (map[string]int64, error) {
+// fetchPricesByISIN resolves each ISIN to a Yahoo Finance ticker, checking
+// custom (user-saved) mappings first, then the hardcoded isinToTicker map,
+// then falling back to the raw ISIN as a last resort.
+func fetchPricesByISIN(isins []string, custom map[string]string) (map[string]int64, error) {
 	if len(isins) == 0 {
 		return map[string]int64{}, nil
 	}
@@ -162,8 +163,11 @@ func fetchPricesByISIN(isins []string) (map[string]int64, error) {
 	client := &http.Client{Timeout: 10 * time.Second}
 
 	for _, isin := range isins {
-		ticker, ok := isinToTicker[isin]
-		if !ok {
+		ticker := custom[isin]
+		if ticker == "" {
+			ticker = isinToTicker[isin]
+		}
+		if ticker == "" {
 			ticker = isin // last-resort fallback
 		}
 

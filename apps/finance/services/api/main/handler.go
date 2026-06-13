@@ -186,6 +186,8 @@ type storeIface interface {
 	updateGoal(ctx context.Context, id, userID string, update bson.M) error
 	deleteGoal(ctx context.Context, id, userID string) error
 	seedCategories(ctx context.Context, userID string) error
+	getTickerMappings(ctx context.Context, userID string) ([]TickerMapping, error)
+	saveTickerMapping(ctx context.Context, userID, isin, ticker string) error
 	getHousehold(ctx context.Context, userID string) (*Household, error)
 	createHousehold(ctx context.Context, h *Household) error
 	deleteHousehold(ctx context.Context, userID string) error
@@ -460,7 +462,7 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 	var portfolioHoldings []Holding
 	var portfolioPricesAvailable bool
 	if trades, err := h.store.getTrades(ctx, a.UserID); err == nil && len(trades) > 0 {
-		prices, _ := fetchPricesByISIN(uniqueISINs(trades))
+		prices, _ := fetchPricesByISIN(uniqueISINs(trades), nil)
 		holdings := computeHoldings(trades, prices)
 		pr := aggregatePortfolio(holdings)
 		portfolioHoldings = pr.Holdings
@@ -1330,9 +1332,24 @@ func (h *Handler) Portfolio(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	prices, err := fetchPricesByISIN(isins)
+	// load user-saved ISIN→ticker overrides
+	customMappings, _ := h.store.getTickerMappings(ctx, a.UserID)
+	custom := make(map[string]string, len(customMappings))
+	for _, m := range customMappings {
+		custom[m.ISIN] = m.Ticker
+	}
+
+	prices, err := fetchPricesByISIN(isins, custom)
 	if err != nil {
 		slog.Error("fetch prices", "err", err)
+	}
+
+	// collect ISINs for which we got no price
+	var missingPrices []string
+	for _, isin := range isins {
+		if prices[isin] == 0 {
+			missingPrices = append(missingPrices, isin)
+		}
 	}
 
 	holdings := computeHoldings(trades, prices)
@@ -1348,7 +1365,25 @@ func (h *Handler) Portfolio(w http.ResponseWriter, r *http.Request) {
 		TotalCostCents:  pr.TotalCost,
 		TotalPCLCents:   pr.TotalPCL,
 		TotalPCLPct:     pr.PCLPct,
+		MissingPrices:   missingPrices,
 	})
+}
+
+func (h *Handler) SaveTickerMapping(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	a := getAuth(r)
+	isin := strings.TrimSpace(r.FormValue("isin"))
+	ticker := strings.TrimSpace(r.FormValue("ticker"))
+	if isin == "" || ticker == "" {
+		http.Error(w, "isin and ticker required", http.StatusBadRequest)
+		return
+	}
+	if err := h.store.saveTickerMapping(ctx, a.UserID, isin, ticker); err != nil {
+		slog.Error("save ticker mapping", "err", err)
+		http.Error(w, "save error", http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(w, r, "/portfolio", http.StatusSeeOther)
 }
 
 func (h *Handler) ImportSecurities(w http.ResponseWriter, r *http.Request) {
@@ -1884,7 +1919,7 @@ func (h *Handler) NetWorth(w http.ResponseWriter, r *http.Request) {
 	var portfolioCents int64
 	var pricesAvailable bool
 	if trades, err2 := h.store.getTrades(ctx, a.UserID); err2 == nil && len(trades) > 0 {
-		prices, _ := fetchPricesByISIN(uniqueISINs(trades))
+		prices, _ := fetchPricesByISIN(uniqueISINs(trades), nil)
 		holdings := computeHoldings(trades, prices)
 		pr := aggregatePortfolio(holdings)
 		for _, p := range prices {
@@ -2414,6 +2449,7 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /import/preview", h.ImportPreview)
 	mux.HandleFunc("POST /import/confirm", h.ImportConfirm)
 	mux.HandleFunc("POST /import/securities", h.ImportSecurities)
+	mux.HandleFunc("POST /portfolio/ticker", h.SaveTickerMapping)
 	mux.HandleFunc("POST /accounts", h.Accounts)
 	mux.HandleFunc("DELETE /accounts/{id}", h.Accounts)
 	mux.HandleFunc("POST /categories", h.Categories)
