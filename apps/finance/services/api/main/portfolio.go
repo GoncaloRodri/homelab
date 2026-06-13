@@ -167,7 +167,12 @@ func fetchPricesByISIN(isins []string) (map[string]int64, error) {
 		}
 
 		url := fmt.Sprintf("https://query1.finance.yahoo.com/v8/finance/chart/%s", ticker)
-		resp, err := client.Get(url)
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		if err != nil {
+			continue
+		}
+		req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; homelab-finance/1.0)")
+		resp, err := client.Do(req)
 		if err != nil {
 			slog.Warn("price fetch failed", "isin", isin, "ticker", ticker, "err", err)
 			continue
