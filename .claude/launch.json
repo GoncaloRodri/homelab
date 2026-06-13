@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "finance-api",
+      "runtimeExecutable": "go",
+      "runtimeArgs": ["run", "./apps/finance/services/api/main/"],
+      "port": 8080
+    }
+  ]
+}

@@ -204,7 +204,7 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 	now := time.Now()
 	thisStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
 	lastStart := thisStart.AddDate(0, -1, 0)
-	lastEnd := thisStart.Add(-time.Nanosecond)
+	threeMonthsAgo := thisStart.AddDate(0, -3, 0)
 
 	txns, err := h.store.getTransactions(ctx, a.UserID, bson.M{})
 	if err != nil {
@@ -217,21 +217,22 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		slog.Error("get categories", "err", err)
 	}
+	catColors := make(map[string]string)
+	catBudgets := make(map[string]int64)
 	catNames := make(map[string]string)
 	for _, c := range cats {
 		catNames[c.Name] = c.Name
+		catColors[c.Name] = c.Color
+		if c.BudgetCents > 0 {
+			catBudgets[c.Name] = c.BudgetCents
+		}
 	}
 
-	thisMonth := &PeriodSummary{
-		TotalCents:    0,
-		ByCategory:    make(map[string]int64),
-		CategoryNames: catNames,
-	}
-	lastMonth := &PeriodSummary{
-		TotalCents:    0,
-		ByCategory:    make(map[string]int64),
-		CategoryNames: catNames,
-	}
+	thisMonth := &PeriodSummary{ByCategory: make(map[string]int64), CategoryNames: catNames}
+	lastMonth := &PeriodSummary{ByCategory: make(map[string]int64), CategoryNames: catNames}
+
+	// fixed spending by category over the last 3 months (for recurring detection)
+	fixedByMonth := make(map[string]map[int]int64) // category -> month-offset -> total
 
 	var recent []Transaction
 	var balPoints []BalancePoint
@@ -239,25 +240,36 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 	var balDates []string
 
 	for _, t := range txns {
-		if t.Date.After(thisStart) || t.Date.Equal(thisStart) {
+		isThisMonth := !t.Date.Before(thisStart)
+		isLastMonth := !t.Date.Before(lastStart) && t.Date.Before(thisStart)
+		isRecent3 := !t.Date.Before(threeMonthsAgo) && t.Date.Before(thisStart)
+
+		if isThisMonth {
 			thisMonth.TotalCents += t.AmountCents
 			thisMonth.ByCategory[t.Category] += t.AmountCents
-		} else if t.Date.After(lastStart) && t.Date.Before(lastEnd.Add(24*time.Hour)) {
+		} else if isLastMonth {
 			lastMonth.TotalCents += t.AmountCents
 			lastMonth.ByCategory[t.Category] += t.AmountCents
 		}
 
-		if len(recent) < 10 {
+		// accumulate fixed category spending over last 3 months
+		if isRecent3 && FixedCategories[t.Category] && t.AmountCents < 0 {
+			mo := int(t.Date.Month())
+			if fixedByMonth[t.Category] == nil {
+				fixedByMonth[t.Category] = make(map[int]int64)
+			}
+			fixedByMonth[t.Category][mo] += -t.AmountCents
+		}
+
+		if len(recent) < 5 {
 			recent = append(recent, t)
 		}
 
 		day := t.Date.Format("2006-01-02")
 		balByDate[day] += t.AmountCents
+		balDates = appendIfMissing(balDates, day)
 	}
 
-	for d := range balByDate {
-		balDates = append(balDates, d)
-	}
 	sortStrings(balDates)
 	running := int64(0)
 	for _, d := range balDates {
@@ -269,41 +281,142 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 		balPoints = balPoints[len(balPoints)-90:]
 	}
 
-	// compute income vs expense split for this month
+	// income / expense split
 	thisMonthIncome := int64(0)
 	thisMonthExpense := int64(0)
 	for _, amt := range thisMonth.ByCategory {
 		if amt > 0 {
 			thisMonthIncome += amt
 		} else {
-			thisMonthExpense += amt
+			thisMonthExpense += -amt
+		}
+	}
+	lastMonthIncome := int64(0)
+	lastMonthSavings := int64(0)
+	for _, amt := range lastMonth.ByCategory {
+		if amt > 0 {
+			lastMonthIncome += amt
+		}
+	}
+	lastMonthSavings = lastMonth.TotalCents
+	if lastMonthSavings < 0 {
+		lastMonthSavings = 0
+	}
+
+	// detect recurring fixed expenses (average over last 3 months)
+	var recurringExpenses []RecurringExpense
+	totalFixedCents := int64(0)
+	for cat, byMonth := range fixedByMonth {
+		total := int64(0)
+		for _, v := range byMonth {
+			total += v
+		}
+		avg := total / int64(len(byMonth))
+		recurringExpenses = append(recurringExpenses, RecurringExpense{Category: cat, MonthlyCents: avg})
+		totalFixedCents += avg
+	}
+	sort.Slice(recurringExpenses, func(i, j int) bool {
+		return recurringExpenses[i].MonthlyCents > recurringExpenses[j].MonthlyCents
+	})
+
+	// disposable income = income - fixed recurring
+	disposableIncome := thisMonthIncome - totalFixedCents
+
+	// variable spend so far this month (non-fixed categories, expenses only)
+	variableSpent := int64(0)
+	for cat, amt := range thisMonth.ByCategory {
+		if !FixedCategories[cat] && amt < 0 {
+			variableSpent += -amt
 		}
 	}
 
-	// budget data: map category name -> budget cents
-	catBudgets := make(map[string]int64)
-	catColors := make(map[string]string)
-	for _, c := range cats {
-		if c.BudgetCents > 0 {
-			catBudgets[c.Name] = c.BudgetCents
-		}
-		catColors[c.Name] = c.Color
+	availableToSpend := disposableIncome - variableSpent
+	if availableToSpend < 0 {
+		availableToSpend = 0
 	}
 
-	render(w, dashboardTmpl, map[string]interface{}{
-		"UserID":             a.UserID,
-		"Email":              a.Email,
-		"Title":              "Dashboard",
-		"Route":              "dashboard",
-		"IsOwner":            true,
-		"ThisMonth":          thisMonth,
-		"LastMonth":          lastMonth,
-		"RecentTxns":         recent,
-		"BalanceTrend":       balPoints,
-		"ThisMonthIncome":    thisMonthIncome,
-		"ThisMonthExpense":   thisMonthExpense,
-		"CategoryBudgets":    catBudgets,
-		"CategoryColors":     catColors,
+	// month progress
+	daysInMonth := time.Date(now.Year(), now.Month()+1, 0, 0, 0, 0, 0, now.Location()).Day()
+	monthProgressPct := int(float64(now.Day()) / float64(daysInMonth) * 100)
+
+	// % of disposable already spent
+	monthSpentPct := 0
+	if disposableIncome > 0 {
+		monthSpentPct = int(float64(variableSpent) / float64(disposableIncome) * 100)
+		if monthSpentPct > 100 {
+			monthSpentPct = 100
+		}
+	}
+
+	// safety buffer = 2 weeks of average daily variable spend over last month
+	lastMonthVariableSpent := int64(0)
+	for cat, amt := range lastMonth.ByCategory {
+		if !FixedCategories[cat] && amt < 0 {
+			lastMonthVariableSpent += -amt
+		}
+	}
+	safetyBuffer := lastMonthVariableSpent / 2
+
+	// bank should be = upcoming fixed costs (not yet paid this month) + safety buffer
+	fixedPaidThisMonth := int64(0)
+	for cat, amt := range thisMonth.ByCategory {
+		if FixedCategories[cat] && amt < 0 {
+			fixedPaidThisMonth += -amt
+		}
+	}
+	bankShouldBe := (totalFixedCents - fixedPaidThisMonth) + safetyBuffer
+
+	// savings rate
+	savingsRatePct := 0
+	if thisMonthIncome > 0 {
+		saved := thisMonthIncome - thisMonthExpense
+		if saved > 0 {
+			savingsRatePct = int(float64(saved) / float64(thisMonthIncome) * 100)
+		}
+	}
+	lastMonthSavingsRatePct := 0
+	if lastMonthIncome > 0 && lastMonthSavings > 0 {
+		lastMonthSavingsRatePct = int(float64(lastMonthSavings) / float64(lastMonthIncome) * 100)
+	}
+
+	// portfolio snapshot (best-effort, ignore errors)
+	var portfolioValueCents, portfolioPCLCents int64
+	var portfolioHoldings []Holding
+	if trades, err := h.store.getTrades(ctx, a.UserID); err == nil && len(trades) > 0 {
+		if prices, err := fetchPricesByISIN(uniqueISINs(trades)); err == nil {
+			pr := aggregatePortfolio(computeHoldings(trades, prices))
+			portfolioValueCents = pr.TotalVal
+			portfolioPCLCents = pr.TotalPCL
+			portfolioHoldings = pr.Holdings
+		}
+	}
+
+	render(w, dashboardTmpl, &DashboardData{
+		UserID:                  a.UserID,
+		Email:                   a.Email,
+		Title:                   "Dashboard",
+		Route:                   "dashboard",
+		IsOwner:                 true,
+		ThisMonth:               thisMonth,
+		LastMonth:               lastMonth,
+		RecentTxns:              recent,
+		BalanceTrend:            balPoints,
+		ThisMonthIncome:         thisMonthIncome,
+		ThisMonthExpense:        thisMonthExpense,
+		CategoryBudgets:         catBudgets,
+		CategoryColors:          catColors,
+		AvailableToSpend:        availableToSpend,
+		DisposableIncome:        disposableIncome,
+		MonthProgressPct:        monthProgressPct,
+		MonthSpentPct:           monthSpentPct,
+		RecurringExpenses:       recurringExpenses,
+		BankShouldBe:            bankShouldBe,
+		SafetyBufferCents:       safetyBuffer,
+		SavingsRatePct:          savingsRatePct,
+		LastMonthSavingsRatePct: lastMonthSavingsRatePct,
+		PortfolioValueCents:     portfolioValueCents,
+		PortfolioPCLCents:       portfolioPCLCents,
+		PortfolioHoldings:       portfolioHoldings,
 	})
 }
 
@@ -1226,4 +1339,13 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 
 func sortStrings(s []string) {
 	sort.Strings(s)
+}
+
+func appendIfMissing(s []string, v string) []string {
+	for _, x := range s {
+		if x == v {
+			return s
+		}
+	}
+	return append(s, v)
 }

@@ -1,217 +1,218 @@
 {{define "content"}}
 {{$d := .}}
-{{$change := sub $d.ThisMonth.TotalCents $d.LastMonth.TotalCents}}
 
 <div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:8px;">
   <h1>Dashboard</h1>
   <span class="text-muted">{{if $d.Email}}{{$d.Email}}{{end}}</span>
 </div>
 
-<!-- KPI cards -->
-<div class="grid">
-  <div class="card value-card animate-on-scroll">
-    <h2>Net This Month</h2>
-    <div class="value {{if lt $d.ThisMonth.TotalCents 0}}negative{{else}}positive{{end}} animate-counter"
-         data-target="{{$d.ThisMonth.TotalCents}}" data-prefix="€">€0.00</div>
+<!-- HERO: available to spend -->
+<div class="card animate-on-scroll" style="margin-bottom:16px; padding:24px 28px;">
+  <div style="font-size:12px; color:var(--text2); text-transform:uppercase; letter-spacing:.5px; margin-bottom:10px; display:flex; align-items:center; gap:8px;">
+    Available to spend this month
+    <span style="font-size:11px; background:var(--bg3); color:var(--text3); padding:2px 8px; border-radius:99px; font-weight:400; text-transform:none; letter-spacing:0;">
+      income − fixed costs − spent so far
+    </span>
   </div>
-  <div class="card value-card animate-on-scroll">
-    <h2>Income</h2>
-    <div class="value positive animate-counter"
-         data-target="{{$d.ThisMonthIncome}}" data-prefix="€">€0.00</div>
+
+  <div style="display:flex; align-items:baseline; gap:20px; flex-wrap:wrap; margin-bottom:16px;">
+    <div class="animate-counter {{if lt $d.AvailableToSpend 0}}negative{{else}}positive{{end}}"
+         style="font-size:42px; font-weight:500; letter-spacing:-1.5px; line-height:1;"
+         data-target="{{$d.AvailableToSpend}}" data-prefix="€">€0.00</div>
+    <div style="font-size:13px; color:var(--text2);">
+      of <span style="color:var(--text); font-weight:500;" class="animate-counter" data-target="{{$d.DisposableIncome}}" data-prefix="€">€0.00</span> disposable
+      &nbsp;·&nbsp; <span style="color:var(--text2);">{{$d.MonthSpentPct}}% used</span>
+    </div>
   </div>
-  <div class="card value-card animate-on-scroll">
-    <h2>Expenses</h2>
-    <div class="value negative animate-counter"
-         data-target="{{$d.ThisMonthExpense}}" data-prefix="€">€0.00</div>
+
+  <div style="background:var(--bg3); border-radius:99px; height:6px; overflow:hidden; margin-bottom:6px;">
+    <div style="height:100%; border-radius:99px; width:{{$d.MonthSpentPct}}%;
+         background:{{if gt $d.MonthSpentPct 90}}var(--red){{else if gt $d.MonthSpentPct 70}}#f59e0b{{else}}var(--green){{end}};
+         transition:width 1s ease;"></div>
   </div>
-  <div class="card value-card animate-on-scroll">
-    <h2>vs Last Month</h2>
-    <div class="value {{if lt $change 0}}negative{{else}}positive{{end}} animate-counter"
-         data-target="{{$change}}" data-prefix="€">€0.00</div>
+  <div style="display:flex; justify-content:space-between;">
+    <span style="font-size:11px; color:var(--text3);">Month progress: {{$d.MonthProgressPct}}%</span>
+    <span style="font-size:11px; color:var(--text3);">Spent: {{$d.MonthSpentPct}}%</span>
   </div>
 </div>
 
-<!-- Charts -->
+<!-- 3 diagnostic cards -->
+<div class="grid" style="margin-bottom:16px;">
+
+  <div class="card value-card animate-on-scroll">
+    <h2>Bank balance should be</h2>
+    <div class="value animate-counter" data-target="{{$d.BankShouldBe}}" data-prefix="€" style="color:var(--text);">€0.00</div>
+    <p style="font-size:12px; color:var(--text3); margin-top:6px;">upcoming fixed + safety buffer</p>
+  </div>
+
+  <div class="card value-card animate-on-scroll">
+    <h2>Savings rate</h2>
+    <div class="value {{if gt $d.SavingsRatePct 0}}positive{{else}}negative{{end}}">{{$d.SavingsRatePct}}%</div>
+    {{if $d.LastMonthSavingsRatePct}}
+    <p style="font-size:12px; margin-top:6px; {{if gt $d.SavingsRatePct $d.LastMonthSavingsRatePct}}color:var(--green){{else}}color:var(--red){{end}};">
+      {{if gt $d.SavingsRatePct $d.LastMonthSavingsRatePct}}↑{{else}}↓{{end}} vs last month ({{$d.LastMonthSavingsRatePct}}%)
+    </p>
+    {{end}}
+  </div>
+
+  <div class="card value-card animate-on-scroll">
+    <h2>Portfolio today</h2>
+    {{if $d.PortfolioValueCents}}
+    <div class="value animate-counter" data-target="{{$d.PortfolioValueCents}}" data-prefix="€" style="color:var(--text);">€0.00</div>
+    <p style="font-size:12px; margin-top:6px; {{if ge $d.PortfolioPCLCents 0}}color:var(--green){{else}}color:var(--red){{end}};">
+      {{if ge $d.PortfolioPCLCents 0}}+{{else}}−{{end}}€{{cents (centsAbs $d.PortfolioPCLCents)}} total P&L
+    </p>
+    {{else}}
+    <div class="value" style="color:var(--text3); font-size:18px;">No trades yet</div>
+    <p style="font-size:12px; color:var(--text3); margin-top:6px;"><a href="/import" style="color:var(--accent);">Import trades →</a></p>
+    {{end}}
+  </div>
+
+</div>
+
+<!-- Bank math + stocks -->
+<div class="grid-2" style="margin-bottom:16px;">
+
+  <div class="card animate-on-scroll">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <h2>What should be in your bank</h2>
+      <span style="font-size:11px; color:var(--text3);">right now</span>
+    </div>
+    {{if $d.RecurringExpenses}}
+    <div style="display:flex; flex-direction:column;">
+      {{range $d.RecurringExpenses}}
+      {{$color := index $d.CategoryColors .Category}}
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid var(--border);">
+        <span style="font-size:13px; color:var(--text2); display:flex; align-items:center; gap:7px;">
+          {{if $color}}<span style="width:7px;height:7px;border-radius:50%;background:{{$color}};display:inline-block;"></span>{{end}}
+          {{.Category}}
+        </span>
+        <span style="font-size:13px; font-weight:500; color:var(--red);">− €{{cents .MonthlyCents}}</span>
+      </div>
+      {{end}}
+      {{if $d.SafetyBufferCents}}
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid var(--border);">
+        <span style="font-size:13px; color:var(--text2);">Safety buffer (2 weeks)</span>
+        <span style="font-size:13px; font-weight:500; color:var(--red);">− €{{cents $d.SafetyBufferCents}}</span>
+      </div>
+      {{end}}
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 0 0 0;">
+        <span style="font-size:13px; font-weight:500; color:var(--text);">Minimum recommended</span>
+        <span class="animate-counter positive" style="font-size:16px; font-weight:600;"
+              data-target="{{$d.BankShouldBe}}" data-prefix="€">€0.00</span>
+      </div>
+    </div>
+    {{else}}
+    <div class="empty-state" style="padding:24px;">
+      <p>No recurring expenses detected yet.<br>Import a few months of transactions.</p>
+    </div>
+    {{end}}
+  </div>
+
+  <div class="card animate-on-scroll">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <h2>Stocks at a glance</h2>
+      <a href="/portfolio" style="font-size:12px; color:var(--text3);">→ portfolio</a>
+    </div>
+    {{if $d.PortfolioHoldings}}
+    <div style="display:flex; flex-direction:column;">
+      {{range $d.PortfolioHoldings}}
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--border);">
+        <div>
+          <div style="font-size:13px; font-weight:600; color:var(--text);">{{.Name}}</div>
+          <div style="font-size:11px; color:var(--text3);">{{.ISIN}} · {{printf "%.2f" .SharesOwned}} shares</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:13px; font-weight:500; color:var(--text);">€{{cents .CurrentValueCents}}</div>
+          <div style="font-size:12px; {{if ge .UnrealizedPCLCents 0}}color:var(--green){{else}}color:var(--red){{end}};">
+            {{pctSign .UnrealizedPCLPct}}{{printf "%.1f" .UnrealizedPCLPct}}%
+          </div>
+        </div>
+      </div>
+      {{end}}
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 0 0 0;">
+        <span style="font-size:13px; font-weight:500; color:var(--text);">Total</span>
+        <span class="animate-counter" style="font-size:15px; font-weight:600; {{if ge $d.PortfolioPCLCents 0}}color:var(--green){{else}}color:var(--red){{end}};"
+              data-target="{{$d.PortfolioValueCents}}" data-prefix="€">€0.00</span>
+      </div>
+    </div>
+    {{else}}
+    <div class="empty-state" style="padding:24px;">
+      <p>No holdings yet.<br><a href="/import" style="color:var(--accent);">Import trades →</a></p>
+    </div>
+    {{end}}
+  </div>
+
+</div>
+
+<!-- Budget health + recent activity -->
 <div class="grid-2">
+
+  {{if $d.CategoryBudgets}}
   <div class="card animate-on-scroll">
-    <h2>Spending by Category — This Month</h2>
-    {{if $d.ThisMonth.ByCategory}}
-    <div style="position:relative; padding-top:8px;">
-      <canvas id="thisMonthChart" height="220"></canvas>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <h2>Budget health</h2>
+      <a href="/categories" style="font-size:12px; color:var(--text3);">→ categories</a>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      {{range $cat, $budget := $d.CategoryBudgets}}
+      {{$spent := index $d.ThisMonth.ByCategory $cat}}
+      {{$spentAbs := centsAbs $spent}}
+      {{$color := index $d.CategoryColors $cat}}
+      {{$over := isOver $spentAbs $budget}}
+      {{$pct := clampPct $spentAbs $budget}}
+      <div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+          <span style="font-size:12px; color:var(--text2); display:flex; align-items:center; gap:6px;">
+            {{if $color}}<span style="width:7px;height:7px;border-radius:50%;background:{{$color}};display:inline-block;"></span>{{end}}
+            {{$cat}}
+          </span>
+          <span style="font-size:11px; {{if $over}}color:var(--red); font-weight:600;{{else}}color:var(--text3);{{end}}">
+            {{$pct}}%{{if $over}} ⚠{{end}}
+          </span>
+        </div>
+        <div style="background:var(--bg3); border-radius:99px; height:5px; overflow:hidden;">
+          <div style="height:100%; border-radius:99px; width:{{$pct}}%;
+               background:{{if $over}}var(--red){{else if $color}}{{$color}}{{else}}var(--accent){{end}};
+               transition:width 1s ease;"></div>
+        </div>
+      </div>
+      {{end}}
+    </div>
+  </div>
+  {{end}}
+
+  <div class="card animate-on-scroll">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <h2>Recent activity</h2>
+      <a href="/transactions" style="font-size:12px; color:var(--text3);">→ all transactions</a>
+    </div>
+    {{if $d.RecentTxns}}
+    <div style="display:flex; flex-direction:column;">
+      {{range $d.RecentTxns}}
+      {{$color := index $d.CategoryColors .Category}}
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--border);">
+        <div style="display:flex; align-items:center; gap:10px; min-width:0;">
+          <div style="width:8px; height:8px; border-radius:50%; flex-shrink:0;
+               background:{{if $color}}{{$color}}{{else}}var(--text3){{end}};"></div>
+          <div style="min-width:0;">
+            <div style="font-size:13px; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;">{{.Description}}</div>
+            <div style="font-size:11px; color:var(--text3);">{{dateShort .Date}}</div>
+          </div>
+        </div>
+        <div style="font-size:13px; font-weight:500; white-space:nowrap; margin-left:12px;
+             {{if lt .AmountCents 0}}color:var(--red){{else}}color:var(--green){{end}};">
+          {{if lt .AmountCents 0}}−{{else}}+{{end}}€{{cents (centsAbs .AmountCents)}}
+        </div>
+      </div>
+      {{end}}
     </div>
     {{else}}
-    <div class="empty-state" style="padding:32px;">No spending data this month.</div>
-    {{end}}
-  </div>
-  <div class="card animate-on-scroll">
-    <h2>Balance Trend — 90 Days</h2>
-    {{if $d.BalanceTrend}}
-    <div style="position:relative; padding-top:8px;">
-      <canvas id="balanceChart" height="220"></canvas>
-    </div>
-    {{else}}
-    <div class="empty-state" style="padding:32px;">No transactions yet. <a href="/import" style="color:var(--accent);">Import some!</a></div>
-    {{end}}
-  </div>
-</div>
-
-<!-- Budget progress -->
-{{if $d.CategoryBudgets}}
-<div class="card animate-on-scroll">
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
-    <h2>Budget vs Actual — This Month</h2>
-    <a href="/categories" class="btn btn-outline btn-sm">Manage budgets</a>
-  </div>
-  <div style="display:flex; flex-direction:column; gap:16px;">
-    {{range $cat, $budget := $d.CategoryBudgets}}
-    {{$spent := index $d.ThisMonth.ByCategory $cat}}
-    {{$spentAbs := centsAbs $spent}}
-    {{$color := index $d.CategoryColors $cat}}
-    {{$over := isOver $spentAbs $budget}}
-    {{$pct := clampPct $spentAbs $budget}}
-    <div>
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:7px;">
-        <span style="font-size:13.5px; font-weight:500; display:flex; align-items:center; gap:7px;">
-          {{if $color}}<span style="width:9px;height:9px;border-radius:50%;background:{{$color}};display:inline-block;box-shadow:0 0 6px {{$color}}66;"></span>{{end}}
-          {{$cat}}
-        </span>
-        <span style="font-size:12.5px; {{if $over}}color:var(--red);font-weight:600;{{else}}color:var(--text2);{{end}}">
-          €{{cents $spentAbs}} / €{{cents $budget}}
-          {{if $over}}&nbsp;⚠ over budget{{end}}
-        </span>
-      </div>
-      <div style="background:var(--bg3); border-radius:8px; height:7px; overflow:hidden;">
-        <div style="height:100%; border-radius:8px; width:{{$pct}}%; transition:width 1s ease;
-             background:{{if $over}}var(--red){{else if $color}}{{$color}}{{else}}var(--accent){{end}};
-             box-shadow:{{if $over}}0 0 8px var(--red){{else if $color}}0 0 6px {{$color}}88{{else}}0 0 6px var(--accent-glow){{end}};"></div>
-      </div>
+    <div class="empty-state" style="padding:24px;">
+      No transactions yet. <a href="/import" style="color:var(--accent);">Import some!</a>
     </div>
     {{end}}
   </div>
+
 </div>
-{{end}}
-
-<!-- Recent transactions -->
-<div class="card animate-on-scroll">
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-    <h2>Recent Transactions</h2>
-    <a href="/transactions" class="btn btn-outline btn-sm">View all</a>
-  </div>
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Description</th>
-          <th>Category</th>
-          <th class="text-right">Amount</th>
-        </tr>
-      </thead>
-      <tbody>
-        {{range $d.RecentTxns}}
-        {{$color := index $d.CategoryColors .Category}}
-        <tr>
-          <td style="white-space:nowrap; color:var(--text2);">{{dateShort .Date}}</td>
-          <td style="max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{.Description}}</td>
-          <td>
-            <span class="badge" style="
-              background:{{if $color}}{{$color}}18{{else}}var(--bg3){{end}};
-              color:{{if $color}}{{$color}}{{else}}var(--text2){{end}};
-              border:1px solid {{if $color}}{{$color}}33{{else}}var(--border2){{end}};">
-              {{if $color}}<span class="category-dot" style="background:{{$color}};box-shadow:0 0 4px {{$color}}88;"></span>{{end}}
-              {{.Category}}
-            </span>
-          </td>
-          <td class="cents {{if lt .AmountCents 0}}negative{{else}}positive{{end}}" style="font-weight:600; white-space:nowrap;">
-            {{if lt .AmountCents 0}}−{{else}}+{{end}}€{{cents (centsAbs .AmountCents)}}
-          </td>
-        </tr>
-        {{else}}
-        <tr>
-          <td colspan="4" class="text-center text-muted" style="padding:36px;">
-            No transactions yet. <a href="/import" style="color:var(--accent);">Import some!</a>
-          </td>
-        </tr>
-        {{end}}
-      </tbody>
-    </table>
-  </div>
-</div>
-
-<script>
-const catColors = { {{range $k,$v := $d.CategoryColors}}"{{$k}}":"{{$v}}",{{end}} };
-const isDark = () => document.documentElement.getAttribute('data-theme') === 'dark';
-
-function gridColor() { return isDark() ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)'; }
-function textColor() { return isDark() ? '#5c6585' : '#8a92b0'; }
-
-{{if $d.ThisMonth.ByCategory}}
-const catLabels = {{jsonKeys $d.ThisMonth.ByCategory}};
-const catData   = {{jsonVals $d.ThisMonth.ByCategory}};
-const resolvedColors = catLabels.map(k => catColors[k] || '#6979f8');
-
-new Chart(document.getElementById('thisMonthChart'), {
-  type: 'bar',
-  data: {
-    labels: catLabels,
-    datasets: [{
-      data: catData.map(v => Math.abs(v) / 100),
-      backgroundColor: resolvedColors.map(c => c + '99'),
-      borderColor: resolvedColors,
-      borderWidth: 1.5,
-      borderRadius: 6,
-      borderSkipped: false,
-    }]
-  },
-  options: {
-    responsive: true,
-    animation: { duration: 900, easing: 'easeOutQuart' },
-    plugins: { legend: { display: false } },
-    scales: {
-      y: { beginAtZero: true, grid: { color: gridColor() }, ticks: { color: textColor(), callback: v => '€' + v } },
-      x: { grid: { display: false }, ticks: { color: textColor() } }
-    }
-  }
-});
-{{end}}
-
-{{if $d.BalanceTrend}}
-const ctx  = document.getElementById('balanceChart').getContext('2d');
-const grad = ctx.createLinearGradient(0, 0, 0, 260);
-grad.addColorStop(0,   'rgba(105,121,248,0.30)');
-grad.addColorStop(0.6, 'rgba(105,121,248,0.08)');
-grad.addColorStop(1,   'rgba(105,121,248,0.00)');
-
-new Chart(ctx, {
-  type: 'line',
-  data: {
-    labels: [{{range $d.BalanceTrend}}"{{dateShort .Date}}",{{end}}],
-    datasets: [{
-      label: 'Balance (€)',
-      data: [{{range $d.BalanceTrend}}{{div .Cents 100}},{{end}}],
-      borderColor: '#6979f8',
-      backgroundColor: grad,
-      fill: true,
-      tension: 0.42,
-      pointRadius: 0,
-      pointHoverRadius: 5,
-      pointBackgroundColor: '#fff',
-      pointBorderColor: '#6979f8',
-      pointBorderWidth: 2,
-      borderWidth: 2.5,
-    }]
-  },
-  options: {
-    responsive: true,
-    animation: { duration: 1100, easing: 'easeOutQuart' },
-    plugins: { legend: { display: false } },
-    scales: {
-      y: { beginAtZero: false, grid: { color: gridColor() }, ticks: { color: textColor(), callback: v => '€' + v } },
-      x: { grid: { display: false }, ticks: { color: textColor(), maxTicksLimit: 7 } }
-    },
-    interaction: { intersect: false, mode: 'index' }
-  }
-});
-{{end}}
-</script>
 {{end}}

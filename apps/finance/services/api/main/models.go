@@ -104,6 +104,19 @@ type CSVImportPreview struct {
 	Total     int            `json:"total"`
 }
 
+// FixedCategories are treated as recurring committed costs, not variable spend.
+var FixedCategories = map[string]bool{
+	"Housing":       true,
+	"Utilities":     true,
+	"Subscriptions": true,
+	"Investments":   true,
+}
+
+type RecurringExpense struct {
+	Category    string
+	MonthlyCents int64
+}
+
 type DashboardData struct {
 	UserID        string
 	Email         string
@@ -114,6 +127,28 @@ type DashboardData struct {
 	LastMonth     *PeriodSummary
 	RecentTxns    []Transaction
 	BalanceTrend  []BalancePoint
+
+	// Phase 1 fields
+	ThisMonthIncome    int64
+	ThisMonthExpense   int64
+	CategoryBudgets    map[string]int64
+	CategoryColors     map[string]string
+
+	AvailableToSpend   int64  // income − fixed − variable budgets spent so far
+	DisposableIncome   int64  // income − fixed recurring costs
+	MonthProgressPct   int    // % of month elapsed
+	MonthSpentPct      int    // % of disposable already spent
+
+	RecurringExpenses  []RecurringExpense
+	BankShouldBe       int64  // sum of upcoming fixed costs + safety buffer
+	SafetyBufferCents  int64
+
+	SavingsRatePct     int    // savings / income * 100 this month
+	LastMonthSavingsRatePct int
+
+	PortfolioValueCents int64
+	PortfolioPCLCents   int64
+	PortfolioHoldings   []Holding
 }
 
 type PeriodSummary struct {
