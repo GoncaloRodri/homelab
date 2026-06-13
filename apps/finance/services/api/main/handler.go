@@ -117,6 +117,7 @@ var (
 	sharingTmpl     = parseTmpl("templates/base.html", "templates/sharing.html")
 	goalsTmpl       = parseTmpl("templates/base.html", "templates/goals.html")
 	networthTmpl    = parseTmpl("templates/base.html", "templates/networth.html")
+	simulatorTmpl   = parseTmpl("templates/base.html", "templates/simulator.html")
 )
 
 type authInfo struct {
@@ -1545,6 +1546,136 @@ func parseFloat(s string) float64 {
 	return f
 }
 
+func (h *Handler) Simulator(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	a := getAuth(r)
+
+	txns, _ := h.store.getTransactions(ctx, a.UserID, bson.M{})
+	goals, _ := h.store.getGoals(ctx, a.UserID)
+
+	now := time.Now()
+	thisStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+
+	// this month income + fixed costs
+	thisMonthIncome := int64(0)
+	totalFixed := int64(0)
+	fixedByMonth := make(map[string]map[int]int64)
+	threeAgo := thisStart.AddDate(0, -3, 0)
+	monthlySavings := make(map[string]struct{ income, saved int64 })
+
+	for _, t := range txns {
+		mk := t.Date.Format("2006-01")
+		if t.Date.Before(thisStart) {
+			// savings history: accumulate per month
+			ms := monthlySavings[mk]
+			if t.AmountCents > 0 {
+				ms.income += t.AmountCents
+			}
+			ms.saved += t.AmountCents
+			monthlySavings[mk] = ms
+
+			// fixed category detection over last 3 months
+			if !t.Date.Before(threeAgo) && FixedCategories[t.Category] && t.AmountCents < 0 {
+				mo := int(t.Date.Month())
+				if fixedByMonth[t.Category] == nil {
+					fixedByMonth[t.Category] = make(map[int]int64)
+				}
+				fixedByMonth[t.Category][mo] += -t.AmountCents
+			}
+		} else {
+			if t.AmountCents > 0 {
+				thisMonthIncome += t.AmountCents
+			}
+		}
+	}
+
+	// avg monthly fixed from last 3 months
+	for _, byMo := range fixedByMonth {
+		total := int64(0)
+		for _, v := range byMo {
+			total += v
+		}
+		totalFixed += total / int64(len(byMo))
+	}
+
+	// committed goal monthly totals
+	goalsCents := int64(0)
+	var simGoals []SimulatorGoal
+	for _, g := range goals {
+		remaining := g.TargetCents - g.SavedCents
+		if remaining <= 0 {
+			continue
+		}
+		ml := int64(monthsBetween(now, g.Deadline))
+		if ml < 1 {
+			ml = 1
+		}
+		monthly := remaining / ml
+		if g.Committed {
+			goalsCents += monthly
+		}
+		simGoals = append(simGoals, SimulatorGoal{
+			Name:         g.Name,
+			MonthlyCents: monthly,
+			MonthsLeft:   ml,
+			Committed:    g.Committed,
+		})
+	}
+
+	disposable := thisMonthIncome - totalFixed - goalsCents
+
+	// average monthly savings over last 3 complete months
+	var avgSavings int64
+	count := 0
+	for _, ms := range monthlySavings {
+		if ms.income > 0 && ms.saved > 0 {
+			avgSavings += ms.saved
+			count++
+		}
+	}
+	if count > 0 {
+		avgSavings /= int64(count)
+	}
+
+	// savings rate history — sorted months
+	var monthKeys []string
+	for mk := range monthlySavings {
+		monthKeys = append(monthKeys, mk)
+	}
+	sortStrings(monthKeys)
+	var history []SavingsPoint
+	for _, mk := range monthKeys {
+		ms := monthlySavings[mk]
+		if ms.income <= 0 {
+			continue
+		}
+		rate := int(float64(ms.saved) / float64(ms.income) * 100)
+		if rate < -100 {
+			rate = -100
+		}
+		history = append(history, SavingsPoint{
+			Month:       mk,
+			IncomeCents: ms.income,
+			SavedCents:  ms.saved,
+			RatePct:     rate,
+		})
+	}
+
+	render(w, simulatorTmpl, &SimulatorData{
+		UserID:          a.UserID,
+		Email:           a.Email,
+		Title:           "What If",
+		Route:           "simulator",
+		IncomeCents:     thisMonthIncome,
+		FixedCents:      totalFixed,
+		GoalsCents:      goalsCents,
+		DisposableCents: disposable,
+		AvgSavingsCents: avgSavings,
+		Goals:           simGoals,
+		SavingsHistory:  history,
+	})
+}
+
 func (h *Handler) NetWorth(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	a := getAuth(r)
@@ -1653,6 +1784,7 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /goals", h.Goals)
 	mux.HandleFunc("POST /goals", h.Goals)
 	mux.HandleFunc("GET /networth", h.NetWorth)
+	mux.HandleFunc("GET /simulator", h.Simulator)
 	mux.HandleFunc("GET /sharing", h.Sharing)
 	mux.HandleFunc("POST /sharing", h.Sharing)
 	mux.HandleFunc("DELETE /sharing/{viewer_id}", h.Sharing)
