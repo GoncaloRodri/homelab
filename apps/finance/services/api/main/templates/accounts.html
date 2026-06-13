@@ -1,14 +1,15 @@
 {{define "content"}}
 {{$d := .}}
-<h1 style="margin-bottom: 24px;">Accounts</h1>
+<h1 style="margin-bottom:24px;">Accounts</h1>
 
-<div class="card">
-  <form method="POST" class="flex flex-wrap" style="gap: 12px; align-items: end;">
-    <div class="form-group" style="margin-bottom: 0; flex: 1;">
+<div class="card animate-on-scroll">
+  <h2 style="margin-bottom:16px;">Add Account</h2>
+  <form method="POST" class="flex flex-wrap" style="gap:10px; align-items:flex-end;">
+    <div class="form-group" style="margin-bottom:0; flex:1; min-width:180px;">
       <label>Account Name</label>
-      <input type="text" name="name" placeholder="e.g. CGD Current Account" required>
+      <input type="text" name="name" placeholder="e.g. CGD Checking" required>
     </div>
-    <div class="form-group" style="margin-bottom: 0; flex: 1;">
+    <div class="form-group" style="margin-bottom:0; min-width:160px;">
       <label>Type</label>
       <select name="type">
         <option value="checking">Checking</option>
@@ -17,27 +18,41 @@
         <option value="securities">Securities</option>
       </select>
     </div>
-    <button type="submit" class="btn btn-primary">Add Account</button>
+    <button type="submit" class="btn btn-primary">Add</button>
   </form>
 </div>
 
-<div class="card">
+<div class="card animate-on-scroll">
   <div class="table-wrap">
     <table>
       <thead>
-        <tr><th>Name</th><th>Type</th><th></th></tr>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th></th>
+        </tr>
       </thead>
       <tbody>
         {{range $d.Accounts}}
-        <tr>
-          <td>{{.Name}}</td>
-          <td><span class="badge">{{.Type}}</span></td>
+        <tr id="acct-row-{{.ID}}">
+          <td style="font-weight:500;">{{.Name}}</td>
           <td>
+            {{$icon := "🏦"}}
+            {{if eq .Type "savings"}}{{$icon = "🏧"}}{{end}}
+            {{if eq .Type "credit"}}{{$icon = "💳"}}{{end}}
+            {{if eq .Type "securities"}}{{$icon = "📈"}}{{end}}
+            <span class="badge" style="background:var(--bg3); color:var(--text2); border:1px solid var(--border2);">
+              {{$icon}} {{.Type}}
+            </span>
+          </td>
+          <td class="text-right">
             <button class="btn btn-danger btn-sm" onclick="delAccount('{{.ID}}')">Delete</button>
           </td>
         </tr>
         {{else}}
-        <tr><td colspan="3" class="text-center text-muted">No accounts yet.</td></tr>
+        <tr>
+          <td colspan="3" class="text-center text-muted" style="padding:36px;">No accounts yet.</td>
+        </tr>
         {{end}}
       </tbody>
     </table>
@@ -47,7 +62,9 @@
 <script>
 function delAccount(id) {
   if (!confirm('Delete this account?')) return;
-  fetch('/accounts/' + id, {method: 'DELETE'}).then(() => location.reload());
+  fetch('/accounts/' + id, {method: 'DELETE'}).then(r => {
+    if (r.ok) document.getElementById('acct-row-' + id).remove();
+  });
 }
 </script>
 {{end}}

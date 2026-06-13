@@ -4,43 +4,54 @@
 
 <div class="card animate-on-scroll">
   <h2>12-Month Spend by Category</h2>
-  <canvas id="reportChart" height="300"></canvas>
+  <div style="padding-top:8px;">
+    <canvas id="reportChart" height="280"></canvas>
+  </div>
 </div>
 
-<div class="card table-wrap animate-on-scroll" style="overflow-x:auto;">
-  <table>
-    <thead>
-      <tr>
-        <th>Month</th>
-        {{range $cat, $_ := $d.CategoryNames}}
-        <th class="text-right" style="white-space:nowrap;">
+<div class="card animate-on-scroll" style="overflow-x:auto;">
+  <h2 style="margin-bottom:14px;">Breakdown by Month</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Month</th>
+          {{range $cat, $_ := $d.CategoryNames}}
           {{$color := index $d.CategoryColors $cat}}
-          {{if $color}}<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:{{$color}};margin-right:4px;vertical-align:middle;"></span>{{end}}{{$cat}}
-        </th>
-        {{end}}
-        <th class="text-right">Total</th>
-      </tr>
-    </thead>
-    <tbody>
-      {{range $row := $d.MonthlyData}}
-      <tr>
-        <td><strong>{{$row.Month}}</strong></td>
-        {{range $cat, $_ := $d.CategoryNames}}
-        <td class="cents">
-          {{$v := index $row.Totals $cat}}
-          {{if $v}}<span class="{{if lt $v 0}}negative{{else}}positive{{end}}">€{{cents $v}}</span>{{else}}<span class="text-muted">—</span>{{end}}
-        </td>
-        {{end}}
+          <th class="text-right" style="white-space:nowrap;">
+            {{if $color}}<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:{{$color}};margin-right:4px;vertical-align:middle;box-shadow:0 0 4px {{$color}}88;"></span>{{end}}{{$cat}}
+          </th>
+          {{end}}
+          <th class="text-right">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{range $row := $d.MonthlyData}}
         {{$total := sub 0 0}}
         {{range $_, $v := $row.Totals}}{{$total = add $total $v}}{{end}}
-        <td class="cents"><strong class="{{if lt $total 0}}negative{{else}}positive{{end}}">€{{cents $total}}</strong></td>
-      </tr>
-      {{end}}
-    </tbody>
-  </table>
+        <tr>
+          <td style="font-weight:600; white-space:nowrap;">{{$row.Month}}</td>
+          {{range $cat, $_ := $d.CategoryNames}}
+          {{$v := index $row.Totals $cat}}
+          <td class="cents">
+            {{if $v}}<span class="{{if lt $v 0}}negative{{else}}positive{{end}}">€{{cents $v}}</span>{{else}}<span class="text-muted">—</span>{{end}}
+          </td>
+          {{end}}
+          <td class="cents" style="font-weight:600;">
+            <span class="{{if lt $total 0}}negative{{else}}positive{{end}}">€{{cents $total}}</span>
+          </td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
 </div>
 
 <script>
+const isDark = () => document.documentElement.getAttribute('data-theme') === 'dark';
+const gridC  = () => isDark() ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)';
+const textC  = () => isDark() ? '#5c6585' : '#8a92b0';
+
 new Chart(document.getElementById('reportChart'), {
   type: 'bar',
   data: {
@@ -51,24 +62,24 @@ new Chart(document.getElementById('reportChart'), {
       {
         label: '{{$cat}}',
         data: [{{range $d.MonthlyData}}{{$v := index .Totals $cat}}{{if $v}}{{abs $v | div 100}}{{else}}0{{end}},{{end}}],
-        backgroundColor: '{{index $colors $cat}}',
+        backgroundColor: '{{index $colors $cat}}cc',
         borderColor: '{{index $colors $cat}}',
         borderWidth: 0,
-        borderRadius: 2,
+        borderRadius: 3,
       },
       {{end}}
     ]
   },
   options: {
     responsive: true,
-    animation: { duration: 1000, easing: 'easeOutQuart' },
+    animation: { duration: 900, easing: 'easeOutQuart' },
     plugins: {
-      legend: { position: 'bottom', labels: { boxWidth: 12, padding: 16 } },
+      legend: { position: 'bottom', labels: { boxWidth: 11, padding: 14, color: textC(), usePointStyle: true, pointStyle: 'circle' } },
       tooltip: { mode: 'index', intersect: false }
     },
     scales: {
-      x: { stacked: true, grid: { display: false } },
-      y: { stacked: true, beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { callback: v => '€' + v } }
+      x: { stacked: true, grid: { display: false }, ticks: { color: textC() } },
+      y: { stacked: true, beginAtZero: true, grid: { color: gridC() }, ticks: { color: textC(), callback: v => '€' + v } }
     }
   }
 });
