@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"embed"
 	"encoding/json"
 	"fmt"
@@ -150,8 +151,37 @@ func render(w http.ResponseWriter, tmpl *template.Template, data interface{}) {
 	}
 }
 
+type storeIface interface {
+	getAccounts(ctx context.Context, userID string) ([]Account, error)
+	getAccount(ctx context.Context, id string) (*Account, error)
+	createAccount(ctx context.Context, a *Account) error
+	deleteAccount(ctx context.Context, id, userID string) error
+	getCategories(ctx context.Context, userID string) ([]Category, error)
+	createCategory(ctx context.Context, c *Category) error
+	updateCategory(ctx context.Context, c *Category) error
+	deleteCategory(ctx context.Context, id, userID string) error
+	getTransactions(ctx context.Context, userID string, filter bson.M) ([]Transaction, error)
+	getTransaction(ctx context.Context, id, userID string) (*Transaction, error)
+	createTransactions(ctx context.Context, txns []Transaction) error
+	updateTransaction(ctx context.Context, id, userID string, update bson.M) error
+	deleteTransaction(ctx context.Context, id, userID string) error
+	aggregateTransactions(ctx context.Context, userID string, pipeline bson.A) ([]bson.M, error)
+	getTrades(ctx context.Context, userID string) ([]Trade, error)
+	createTrades(ctx context.Context, trades []Trade) error
+	deleteTrade(ctx context.Context, id, userID string) error
+	getPermissions(ctx context.Context, ownerID string) ([]Permission, error)
+	getGrantedViewers(ctx context.Context, viewerID string) ([]Permission, error)
+	createPermission(ctx context.Context, p *Permission) error
+	deletePermission(ctx context.Context, ownerID, viewerID string) error
+	getGoals(ctx context.Context, userID string) ([]Goal, error)
+	createGoal(ctx context.Context, g *Goal) error
+	updateGoal(ctx context.Context, id, userID string, update bson.M) error
+	deleteGoal(ctx context.Context, id, userID string) error
+	seedCategories(ctx context.Context, userID string) error
+}
+
 type Handler struct {
-	store *Store
+	store storeIface
 }
 
 func NewHandler(store *Store) *Handler {
