@@ -146,9 +146,10 @@ type DashboardData struct {
 	SavingsRatePct     int    // savings / income * 100 this month
 	LastMonthSavingsRatePct int
 
-	PortfolioValueCents int64
-	PortfolioPCLCents   int64
-	PortfolioHoldings   []Holding
+	PortfolioValueCents      int64
+	PortfolioPCLCents        int64
+	PortfolioHoldings        []Holding
+	PortfolioPricesAvailable bool
 }
 
 type PeriodSummary struct {

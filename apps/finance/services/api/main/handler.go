@@ -223,7 +223,8 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 	for _, c := range cats {
 		catNames[c.Name] = c.Name
 		catColors[c.Name] = c.Color
-		if c.BudgetCents > 0 {
+		// exclude fixed categories from budget health — they're committed costs, not variable spend
+		if c.BudgetCents > 0 && !FixedCategories[c.Name] {
 			catBudgets[c.Name] = c.BudgetCents
 		}
 	}
@@ -379,15 +380,30 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 		lastMonthSavingsRatePct = int(float64(lastMonthSavings) / float64(lastMonthIncome) * 100)
 	}
 
-	// portfolio snapshot (best-effort, ignore errors)
+	// portfolio snapshot — degrade to cost basis if live prices are unavailable
 	var portfolioValueCents, portfolioPCLCents int64
 	var portfolioHoldings []Holding
+	var portfolioPricesAvailable bool
 	if trades, err := h.store.getTrades(ctx, a.UserID); err == nil && len(trades) > 0 {
-		if prices, err := fetchPricesByISIN(uniqueISINs(trades)); err == nil {
-			pr := aggregatePortfolio(computeHoldings(trades, prices))
+		prices, _ := fetchPricesByISIN(uniqueISINs(trades))
+		holdings := computeHoldings(trades, prices)
+		pr := aggregatePortfolio(holdings)
+		portfolioHoldings = pr.Holdings
+
+		// check whether any prices came back
+		for _, p := range prices {
+			if p > 0 {
+				portfolioPricesAvailable = true
+				break
+			}
+		}
+
+		if portfolioPricesAvailable {
 			portfolioValueCents = pr.TotalVal
 			portfolioPCLCents = pr.TotalPCL
-			portfolioHoldings = pr.Holdings
+		} else {
+			// fall back to cost basis so the card is still useful
+			portfolioValueCents = pr.TotalCost
 		}
 	}
 
@@ -414,9 +430,10 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 		SafetyBufferCents:       safetyBuffer,
 		SavingsRatePct:          savingsRatePct,
 		LastMonthSavingsRatePct: lastMonthSavingsRatePct,
-		PortfolioValueCents:     portfolioValueCents,
-		PortfolioPCLCents:       portfolioPCLCents,
-		PortfolioHoldings:       portfolioHoldings,
+		PortfolioValueCents:          portfolioValueCents,
+		PortfolioPCLCents:            portfolioPCLCents,
+		PortfolioHoldings:            portfolioHoldings,
+		PortfolioPricesAvailable:     portfolioPricesAvailable,
 	})
 }
 
