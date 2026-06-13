@@ -154,6 +154,8 @@ type DashboardData struct {
 	PortfolioPricesAvailable bool
 
 	NetWorthCents int64
+
+	Alerts []Alert
 }
 
 type PeriodSummary struct {
@@ -217,6 +219,19 @@ type SharingData struct {
 type SharingUser struct {
 	ID    string
 	Email string
+}
+
+type AlertLevel string
+
+const (
+	AlertWarn  AlertLevel = "warn"
+	AlertDanger AlertLevel = "danger"
+	AlertInfo  AlertLevel = "info"
+)
+
+type Alert struct {
+	Level   AlertLevel
+	Message string
 }
 
 type SimulatorGoal struct {
