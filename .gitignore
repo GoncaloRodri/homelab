@@ -1,7 +1,7 @@
 skaffold.yaml
 
 # terraform
-*.tfstate
+*.tfstate*
 .terraform
 
 # node
