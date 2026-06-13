@@ -1,67 +1,83 @@
 {{define "content"}}
 {{$d := .}}
-<h1 style="margin-bottom: 24px;">Portfolio</h1>
+<h1 style="margin-bottom:24px;">Portfolio</h1>
 
 {{if $d.Holdings}}
+
 <div class="grid">
-  <div class="card value-card">
+  <div class="card value-card animate-on-scroll">
     <h2>Total Value</h2>
-    <div class="value {{if ge $d.TotalPCLCents 0}}positive{{else}}negative{{end}}">
-      €{{cents $d.TotalValueCents}}
-    </div>
+    <div class="value {{if ge $d.TotalPCLCents 0}}positive{{else}}negative{{end}} animate-counter"
+         data-target="{{$d.TotalValueCents}}" data-prefix="€">€0.00</div>
   </div>
-  <div class="card value-card">
+  <div class="card value-card animate-on-scroll">
     <h2>Total Cost</h2>
-    <div class="value">€{{cents $d.TotalCostCents}}</div>
+    <div class="value animate-counter" data-target="{{$d.TotalCostCents}}" data-prefix="€"
+         style="color:var(--text);">€0.00</div>
   </div>
-  <div class="card value-card">
-    <h2>Unrealized P&L</h2>
-    <div class="value {{if ge $d.TotalPCLCents 0}}positive{{else}}negative{{end}}">
-      {{pctSign $d.TotalPCLPct}}€{{cents $d.TotalPCLCents}}
-      ({{pctSign $d.TotalPCLPct}}{{printf "%.2f" $d.TotalPCLPct}}%)
+  <div class="card value-card animate-on-scroll">
+    <h2>Unrealized P&amp;L</h2>
+    <div class="value {{if ge $d.TotalPCLCents 0}}positive{{else}}negative{{end}} animate-counter"
+         data-target="{{$d.TotalPCLCents}}" data-prefix="€">€0.00</div>
+    <p style="font-size:13px; margin-top:6px; color:{{if eq (pctSign $d.TotalPCLPct) "+"}}var(--green){{else}}var(--red){{end}};">
+      {{pctSign $d.TotalPCLPct}}{{printf "%.2f" $d.TotalPCLPct}}%
+    </p>
+  </div>
+</div>
+
+<div class="grid-2" style="align-items:start;">
+  <!-- Allocation donut -->
+  <div class="card animate-on-scroll">
+    <h2 style="margin-bottom:16px;">Allocation</h2>
+    <div id="allocation3d" style="width:100%; height:380px; position:relative;"></div>
+  </div>
+
+  <!-- Holdings table -->
+  <div class="card animate-on-scroll">
+    <h2 style="margin-bottom:14px;">Holdings</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Asset</th>
+            <th class="text-right">Shares</th>
+            <th class="text-right">Avg Cost</th>
+            <th class="text-right">Price</th>
+            <th class="text-right">Value</th>
+            <th class="text-right">P&amp;L</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{range $i, $h := $d.Holdings}}
+          <tr>
+            <td>
+              <div style="font-weight:600; font-size:13.5px;">{{.Name}}</div>
+              <div class="text-muted" style="font-size:11.5px; margin-top:1px;">{{.ISIN}}</div>
+            </td>
+            <td class="cents" style="font-size:13px; color:var(--text2);">{{printf "%.4f" .SharesOwned}}</td>
+            <td class="cents" style="font-size:13px;">€{{cents .AvgEntryCents}}</td>
+            <td class="cents" style="font-size:13px;">€{{cents .CurrentPriceCents}}</td>
+            <td class="cents" style="font-weight:600;">€{{cents .CurrentValueCents}}</td>
+            <td class="cents">
+              <div class="{{if ge .UnrealizedPCLCents 0}}positive{{else}}negative{{end}}" style="font-weight:600; font-size:13px;">
+                {{pctSign .UnrealizedPCLPct}}{{printf "%.2f" .UnrealizedPCLPct}}%
+              </div>
+              <div class="{{if ge .UnrealizedPCLCents 0}}positive{{else}}negative{{end}}" style="font-size:11.5px; opacity:0.8;">
+                {{if ge .UnrealizedPCLCents 0}}+{{else}}−{{end}}€{{cents (centsAbs .UnrealizedPCLCents)}}
+              </div>
+            </td>
+
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+
+    <div style="margin-top:16px; padding-top:14px; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+      <span class="text-muted">Add trades via</span>
+      <a href="/import" class="btn btn-outline btn-sm">Import CSV</a>
     </div>
   </div>
-</div>
-
-<div class="card">
-  <h2>Allocation</h2>
-  <div style="max-width: 500px; margin: 0 auto; position: relative;">
-    <canvas id="allocationChart2d" height="300" style="display:none;"></canvas>
-    <div id="allocation3d" style="width:100%; height:400px;"></div>
-  </div>
-</div>
-
-<div class="card table-wrap">
-  <table>
-    <thead>
-      <tr>
-        <th>Stock</th>
-        <th>Shares</th>
-        <th class="text-right">Avg Entry</th>
-        <th class="text-right">Current Price</th>
-        <th class="text-right">Value</th>
-        <th class="text-right">P&L</th>
-        <th class="text-right">Return</th>
-      </tr>
-    </thead>
-    <tbody>
-      {{range $i, $h := $d.Holdings}}
-      <tr>
-        <td><strong>{{.Name}}</strong><br><span class="text-muted">{{.ISIN}}</span></td>
-        <td>{{printf "%.4f" .SharesOwned}}</td>
-        <td class="cents">€{{cents .AvgEntryCents}}</td>
-        <td class="cents">€{{cents .CurrentPriceCents}}</td>
-        <td class="cents">€{{cents .CurrentValueCents}}</td>
-        <td class="cents {{if ge .UnrealizedPCLCents 0}}positive{{else}}negative{{end}}">
-          €{{cents .UnrealizedPCLCents}}
-        </td>
-        <td class="cents {{if ge .UnrealizedPCLPct 0}}positive{{else}}negative{{end}}">
-          {{pctSign .UnrealizedPCLPct}}{{printf "%.2f" .UnrealizedPCLPct}}%
-        </td>
-      </tr>
-      {{end}}
-    </tbody>
-  </table>
 </div>
 
 <script type="importmap">
@@ -76,191 +92,133 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-const colors = ['#FF6384','#36A2EB','#FFCE56','#4BC0C0','#9966FF','#FF9F40','#C9CBCF','#00E676','#651FFF','#FF6F00','#E91E63','#607D8B','#3F51B5','#9E9E9E'];
+const palette = [
+  '#6979f8','#f87171','#fbbf24','#34d399','#a78bfa',
+  '#f472b6','#38bdf8','#fb923c','#4ade80','#e879f9',
+];
 
 const holdings = [
-  {{range $d.Holdings}}
-  { name: "{{.Name}}", value: {{.CurrentValueCents}} },
-  {{end}}
+  {{range $d.Holdings}}{ name: "{{.Name}}", value: {{.CurrentValueCents}} },{{end}}
 ];
 
 const total = holdings.reduce((s, h) => s + h.value, 0);
-if (total > 0) {
-  const container = document.getElementById('allocation3d');
-  const w = container.clientWidth;
-  const h = 400;
+if (total <= 0) return;
 
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 100);
-  camera.position.set(0, 4, 8);
-  camera.lookAt(0, 0, 0);
+const container = document.getElementById('allocation3d');
+const W = container.clientWidth, H = 380;
 
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setSize(w, h);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.shadowMap.enabled = true;
-  container.appendChild(renderer.domElement);
+const scene    = new THREE.Scene();
+const camera   = new THREE.PerspectiveCamera(42, W / H, 0.1, 100);
+camera.position.set(0, 5, 9);
+camera.lookAt(0, 0, 0);
 
-  const controls = new OrbitControls(camera, renderer.domElement);
-  controls.enableDamping = true;
-  controls.dampingFactor = 0.08;
-  controls.autoRotate = true;
-  controls.autoRotateSpeed = 1.5;
-  controls.minDistance = 4;
-  controls.maxDistance = 15;
-  controls.target.set(0, 0, 0);
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setSize(W, H);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+container.appendChild(renderer.domElement);
 
-  const group = new THREE.Group();
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping   = true;
+controls.dampingFactor   = 0.07;
+controls.autoRotate      = true;
+controls.autoRotateSpeed = 1.2;
+controls.minDistance     = 5;
+controls.maxDistance     = 16;
 
-  const innerRadius = 1.2;
-  const outerRadius = 2.8;
-  const depth = 0.6;
-  let angle = 0;
+// tooltip
+const tip = Object.assign(document.createElement('div'), {
+  style: 'position:absolute;background:rgba(15,17,23,0.92);color:#e8eaf6;padding:7px 13px;border-radius:8px;font-size:13px;pointer-events:none;opacity:0;transition:opacity .15s;z-index:10;border:1px solid rgba(255,255,255,0.08);backdrop-filter:blur(8px);'
+});
+container.appendChild(tip);
 
-  const tooltip = document.createElement('div');
-  tooltip.style.cssText = 'position:absolute;background:rgba(0,0,0,0.8);color:#fff;padding:6px 12px;border-radius:6px;font-size:13px;pointer-events:none;opacity:0;transition:opacity 0.2s;z-index:10;';
-  container.appendChild(tooltip);
+const group = new THREE.Group();
+const IR = 1.3, OR = 3.0, D = 0.55;
+let angle = 0, hovered = null;
 
-  const raycaster = new THREE.Raycaster();
-  const pointer = new THREE.Vector2();
-  let hovered = null;
+const raycaster = new THREE.Raycaster();
+const pointer   = new THREE.Vector2();
+const meshes    = [];
 
-  holdings.forEach((h, i) => {
-    const arcAngle = (h.value / total) * Math.PI * 2;
-    const color = colors[i % colors.length];
+holdings.forEach((h, i) => {
+  const arc   = (h.value / total) * Math.PI * 2;
+  const color = palette[i % palette.length];
+  const mid   = angle + arc / 2;
 
-    const shape = new THREE.Shape();
-    const segments = 32;
-    const startAngle = angle;
-    const endAngle = angle + arcAngle;
+  const shape = new THREE.Shape();
+  shape.moveTo(IR, 0);
+  shape.absarc(0, 0, OR, angle, angle + arc, false);
+  shape.absarc(0, 0, IR, angle + arc, angle, true);
+  shape.closePath();
 
-    shape.moveTo(innerRadius, 0);
-    shape.absarc(0, 0, outerRadius, startAngle, endAngle, false);
-    shape.absarc(0, 0, innerRadius, endAngle, startAngle, true);
-    shape.closePath();
-
-    const extrudeSettings = {
-      depth: depth,
-      bevelEnabled: true,
-      bevelThickness: 0.08,
-      bevelSize: 0.04,
-      bevelSegments: 8,
-    };
-
-    const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-    const material = new THREE.MeshPhysicalMaterial({
-      color: color,
-      metalness: 0.2,
-      roughness: 0.3,
-      clearcoat: 0.1,
-      side: THREE.DoubleSide,
-    });
-    const mesh = new THREE.Mesh(geometry, material);
-    mesh.rotation.x = -Math.PI / 2;
-    mesh.position.y = -depth / 2;
-    mesh.userData = { holding: h };
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
-    group.add(mesh);
-
-    const edgeGeo = new THREE.EdgesGeometry(geometry);
-    const edgeMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.15 });
-    const edge = new THREE.LineSegments(edgeGeo, edgeMat);
-    edge.rotation.x = -Math.PI / 2;
-    edge.position.y = -depth / 2;
-    group.add(edge);
-
-    angle = endAngle;
+  const geo = new THREE.ExtrudeGeometry(shape, {
+    depth: D, bevelEnabled: true, bevelThickness: 0.07, bevelSize: 0.04, bevelSegments: 6,
   });
-
-  scene.add(group);
-
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-  scene.add(ambientLight);
-
-  const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
-  dirLight.position.set(5, 10, 7);
-  dirLight.castShadow = true;
-  scene.add(dirLight);
-
-  const backLight = new THREE.DirectionalLight(0xffffff, 0.4);
-  backLight.position.set(-5, 0, -5);
-  scene.add(backLight);
-
-  const floorGeo = new THREE.RingGeometry(1.5, 3.5, 64);
-  const floorMat = new THREE.MeshPhysicalMaterial({
-    color: 0x1a237e,
-    transparent: true,
-    opacity: 0.06,
-    side: THREE.DoubleSide,
-    roughness: 0.8,
-    metalness: 0.1,
+  const mat = new THREE.MeshPhysicalMaterial({
+    color, metalness: 0.15, roughness: 0.35, clearcoat: 0.15, side: THREE.DoubleSide,
   });
-  const floor = new THREE.Mesh(floorGeo, floorMat);
-  floor.rotation.x = -Math.PI / 2;
-  floor.position.y = -depth / 2 - 0.01;
-  scene.add(floor);
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.rotation.x = -Math.PI / 2;
+  mesh.position.y = -D / 2;
+  mesh.userData = { holding: h, baseY: -D / 2, color, pct: (h.value / total * 100).toFixed(1) };
+  mesh.castShadow = true;
+  group.add(mesh);
+  meshes.push(mesh);
 
-  function onPointerMove(event) {
-    const rect = renderer.domElement.getBoundingClientRect();
-    pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-    pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+  angle += arc;
+});
+scene.add(group);
 
-    raycaster.setFromCamera(pointer, camera);
-    const intersects = raycaster.intersectObjects(group.children);
+scene.add(Object.assign(new THREE.AmbientLight(0xffffff, 0.55)));
+const dir = new THREE.DirectionalLight(0xffffff, 1.1);
+dir.position.set(5, 10, 7); dir.castShadow = true; scene.add(dir);
+const fill = new THREE.DirectionalLight(0x8b9ffc, 0.4);
+fill.position.set(-5, 2, -5); scene.add(fill);
 
-    if (intersects.length > 0) {
-      const hit = intersects[0].object;
-      if (hit.userData.holding) {
-        const h = hit.userData.holding;
-        const pct = ((h.value / total) * 100).toFixed(1);
-        tooltip.textContent = `${h.name}: €${(h.value / 100).toFixed(2)} (${pct}%)`;
-        tooltip.style.opacity = '1';
-        tooltip.style.left = (event.clientX - rect.left + 12) + 'px';
-        tooltip.style.top = (event.clientY - rect.top - 10) + 'px';
-
-        if (hovered !== hit) {
-          if (hovered) {
-            hovered.material.opacity = 1;
-            hovered.material.needsUpdate = true;
-          }
-          hit.material.opacity = 0.85;
-          hit.material.needsUpdate = true;
-          hovered = hit;
-        }
-        return;
-      }
+renderer.domElement.addEventListener('pointermove', e => {
+  const rect = renderer.domElement.getBoundingClientRect();
+  pointer.x =  ((e.clientX - rect.left) / rect.width)  * 2 - 1;
+  pointer.y = -((e.clientY - rect.top)  / rect.height) * 2 + 1;
+  raycaster.setFromCamera(pointer, camera);
+  const hits = raycaster.intersectObjects(meshes);
+  if (hits.length && hits[0].object.userData.holding) {
+    const m = hits[0].object;
+    const h = m.userData.holding;
+    tip.textContent = `${h.name}: €${(h.value/100).toLocaleString('pt-PT',{minimumFractionDigits:2})} (${m.userData.pct}%)`;
+    tip.style.opacity = '1';
+    tip.style.left = (e.clientX - rect.left + 14) + 'px';
+    tip.style.top  = (e.clientY - rect.top  - 10) + 'px';
+    if (hovered !== m) {
+      if (hovered) { hovered.position.y = hovered.userData.baseY; }
+      m.position.y = m.userData.baseY + 0.25;
+      hovered = m;
     }
-    tooltip.style.opacity = '0';
-    if (hovered) {
-      hovered.material.opacity = 1;
-      hovered.material.needsUpdate = true;
-      hovered = null;
-    }
+  } else {
+    tip.style.opacity = '0';
+    if (hovered) { hovered.position.y = hovered.userData.baseY; hovered = null; }
   }
+});
 
-  renderer.domElement.addEventListener('pointermove', onPointerMove);
+(function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
+})();
 
-  function animate() {
-    requestAnimationFrame(animate);
-    controls.update();
-    renderer.render(scene, camera);
-  }
-  animate();
-
-  function resize() {
-    const w2 = container.clientWidth;
-    camera.aspect = w2 / h;
-    camera.updateProjectionMatrix();
-    renderer.setSize(w2, h);
-  }
-  window.addEventListener('resize', resize);
-}
+window.addEventListener('resize', () => {
+  const w2 = container.clientWidth;
+  camera.aspect = w2 / H;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w2, H);
+});
 </script>
+
 {{else}}
-<div class="card empty-state">
-  <h3>No trades imported yet</h3>
-  <p>Go to <a href="/import">Import</a> and upload your Trade Republic securities CSV.</p>
+<div class="card empty-state animate-on-scroll">
+  <div style="font-size:48px; margin-bottom:16px;">📈</div>
+  <h3>No trades yet</h3>
+  <p style="margin-bottom:20px;">Import your Trade Republic securities CSV to see your portfolio.</p>
+  <a href="/import" class="btn btn-primary">Import Trades</a>
 </div>
 {{end}}
 {{end}}

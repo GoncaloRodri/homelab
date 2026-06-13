@@ -32,6 +32,9 @@ func main() {
 	defer db.Close(ctx)
 
 	store := NewStore(db)
+
+	go SeedAdmin(ctx, store)
+
 	handler := NewHandler(store)
 
 	mux := http.NewServeMux()
