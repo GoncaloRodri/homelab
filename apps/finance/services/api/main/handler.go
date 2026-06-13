@@ -324,6 +324,27 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 	// disposable income = income - fixed recurring
 	disposableIncome := thisMonthIncome - totalFixedCents
 
+	// deduct committed goal contributions from disposable
+	committedGoalsCents := int64(0)
+	if goals, err := h.store.getGoals(ctx, a.UserID); err == nil {
+		now2 := time.Now()
+		for _, g := range goals {
+			if !g.Committed {
+				continue
+			}
+			remaining := g.TargetCents - g.SavedCents
+			if remaining <= 0 {
+				continue
+			}
+			ml := int64(monthsBetween(now2, g.Deadline))
+			if ml < 1 {
+				ml = 1
+			}
+			committedGoalsCents += remaining / ml
+		}
+	}
+	disposableIncome -= committedGoalsCents
+
 	// variable spend so far this month (non-fixed categories, expenses only)
 	variableSpent := int64(0)
 	for cat, amt := range thisMonth.ByCategory {
@@ -1347,6 +1368,13 @@ func (h *Handler) Goals(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		if action == "commit" || action == "uncommit" {
+			id := r.FormValue("id")
+			h.store.updateGoal(ctx, id, a.UserID, bson.M{"committed": action == "commit"})
+			http.Redirect(w, r, "/goals", http.StatusSeeOther)
+			return
+		}
+
 		// create goal
 		name := r.FormValue("name")
 		goalType := GoalType(r.FormValue("type"))
@@ -1454,14 +1482,42 @@ func (h *Handler) Goals(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
+	// sum committed goal contributions and detect conflicts
+	committedTotal := int64(0)
+	for _, p := range plans {
+		if p.Committed {
+			committedTotal += p.MonthlyCents
+		}
+	}
+	remainingDisposable := disposable - committedTotal
+
+	conflictWarning := ""
+	if committedTotal > disposable {
+		// find which committed goals are in conflict
+		var conflictNames []string
+		for _, p := range plans {
+			if p.Committed {
+				conflictNames = append(conflictNames, p.Name)
+			}
+		}
+		conflictWarning = fmt.Sprintf(
+			"Your committed goals require €%.0f/month but your disposable income is €%.0f/month. Consider pushing back a deadline or removing a goal.",
+			float64(committedTotal)/100, float64(disposable)/100,
+		)
+		_ = conflictNames
+	}
+
 	render(w, goalsTmpl, &GoalsData{
-		UserID:            a.UserID,
-		Email:             a.Email,
-		Title:             "Goals",
-		Route:             "goals",
-		Goals:             plans,
-		AvgMonthlySavings: avgMonthlySavings,
-		DisposableIncome:  disposable,
+		UserID:                a.UserID,
+		Email:                 a.Email,
+		Title:                 "Goals",
+		Route:                 "goals",
+		Goals:                 plans,
+		AvgMonthlySavings:     avgMonthlySavings,
+		DisposableIncome:      disposable,
+		CommittedMonthlyCents: committedTotal,
+		RemainingDisposable:   remainingDisposable,
+		ConflictWarning:       conflictWarning,
 	})
 }
 
