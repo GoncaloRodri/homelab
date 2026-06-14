@@ -1,0 +1,90 @@
+{{define "content"}}
+{{$d := .}}
+
+<div style="max-width:520px; margin:0 auto;">
+  <div style="font-size:12px; color:var(--text3); margin-bottom:4px;">
+    <a href="/orgs" style="color:var(--text3); text-decoration:none;">Organisations</a> /
+    <a href="/orgs/{{$d.Org.Slug}}" style="color:var(--text3); text-decoration:none;">{{$d.Org.Name}}</a> /
+    <a href="/orgs/{{$d.Org.Slug}}/members" style="color:var(--text3); text-decoration:none;">Members</a> /
+  </div>
+  <h1 style="margin-bottom:24px;">Invite member</h1>
+
+  {{if $d.Link}}
+  <!-- Success state: show the generated link -->
+  <div class="card" style="border-color:var(--accent);">
+    <div style="font-size:13px; font-weight:600; color:var(--green); margin-bottom:12px;">✓ Invite created</div>
+    <p style="font-size:13px; color:var(--text2); margin-bottom:14px;">
+      Copy this link and send it to the invitee. It expires in 7 days.<br>
+      <span style="font-size:11px; color:var(--text3);">(Email delivery coming in a future update.)</span>
+    </p>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <input id="invite-link" class="form-input" type="text" value="{{$d.Link}}" readonly
+             style="font-size:12px; font-family:monospace; flex:1;">
+      <button onclick="copyLink()" class="btn btn-primary btn-sm" id="copy-btn">Copy</button>
+    </div>
+    <div style="margin-top:20px; display:flex; gap:8px;">
+      <a href="/orgs/{{$d.Org.Slug}}/invite" class="btn btn-outline btn-sm">Invite another</a>
+      <a href="/orgs/{{$d.Org.Slug}}/members" class="btn btn-outline btn-sm">Back to members</a>
+    </div>
+  </div>
+  <script>
+  function copyLink() {
+    const inp = document.getElementById('invite-link');
+    inp.select();
+    navigator.clipboard.writeText(inp.value).then(() => {
+      const btn = document.getElementById('copy-btn');
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy', 2000);
+    });
+  }
+  </script>
+  {{else}}
+
+  {{if $d.Error}}
+  <div class="error" style="margin-bottom:16px; padding:12px 16px; background:var(--red-dim); border-radius:var(--radius-sm);">{{$d.Error}}</div>
+  {{end}}
+
+  <div class="card">
+    <form method="post" action="/orgs/{{$d.Org.Slug}}/invite">
+      <div style="margin-bottom:16px;">
+        <label class="form-label">Email address</label>
+        <input class="form-input" type="email" name="email" placeholder="colleague@example.com" required autofocus>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <label class="form-label">Role</label>
+        <select class="form-input" name="role">
+          <option value="member">Member — submit requests, manage own team events</option>
+          <option value="viewer">Viewer — read-only access to own team</option>
+          <option value="finance">Finance — approve requests, manage ledger</option>
+          <option value="admin">Admin — full control</option>
+        </select>
+        <div style="font-size:11px; color:var(--text3); margin-top:5px;">
+          All financial approvals are handled by finance/admin regardless of team.
+        </div>
+      </div>
+
+      {{if $d.Teams}}
+      <div style="margin-bottom:20px;">
+        <label class="form-label">Team assignment <span style="color:var(--text3); font-weight:400;">(optional — leave blank for org-wide access)</span></label>
+        <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
+          {{range $d.Teams}}
+          <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:13px;">
+            <input type="checkbox" name="team_ids" value="{{.ID}}"
+                   style="width:15px; height:15px; accent-color:var(--accent);">
+            <span>{{.Name}}</span>
+            {{if eq (print .Type) "guest"}}
+            <span style="font-size:10px; padding:2px 7px; border-radius:20px; background:rgba(251,191,36,0.1); color:#fbbf24;">guest</span>
+            {{end}}
+          </label>
+          {{end}}
+        </div>
+      </div>
+      {{end}}
+
+      <button type="submit" class="btn btn-primary" style="width:100%;">Generate invite link</button>
+    </form>
+  </div>
+  {{end}}
+</div>
+{{end}}
