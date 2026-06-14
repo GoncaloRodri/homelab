@@ -1,0 +1,140 @@
+{{define "content"}}
+{{$d := .}}
+
+<!-- Breadcrumb + actions -->
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:12px;">
+  <div>
+    <div style="font-size:12px; color:var(--text3); margin-bottom:4px;"><a href="/orgs" style="color:var(--text3); text-decoration:none;">Organisations</a> /</div>
+    <h1>{{$d.Org.Name}}</h1>
+  </div>
+  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+    <a href="/orgs/{{$d.Org.Slug}}/teams"   class="btn btn-outline btn-sm">Teams</a>
+    <a href="/orgs/{{$d.Org.Slug}}/members" class="btn btn-outline btn-sm">Members</a>
+    {{if eq $d.MyRole "admin"}}
+    <a href="/orgs/{{$d.Org.Slug}}/invite"  class="btn btn-primary btn-sm">+ Invite</a>
+    {{end}}
+  </div>
+</div>
+
+<!-- Stats row -->
+<div class="grid" style="margin-bottom:24px;">
+  <div class="card value-card animate-on-scroll">
+    <h2>Teams</h2>
+    <div class="value" style="color:var(--text);">{{len $d.Teams}}</div>
+  </div>
+  <div class="card value-card animate-on-scroll">
+    <h2>Members</h2>
+    <div class="value" style="color:var(--text);">{{len $d.Members}}</div>
+  </div>
+  <div class="card value-card animate-on-scroll">
+    <h2>Fiscal years</h2>
+    <div class="value" style="color:var(--text);">{{len $d.FiscalYears}}</div>
+  </div>
+</div>
+
+<!-- Active fiscal year banner -->
+{{if $d.ActiveYear}}
+<div class="card animate-on-scroll" style="margin-bottom:24px; border-color:var(--accent); background:linear-gradient(135deg, var(--bg2), var(--bg3));">
+  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+    <div>
+      <div style="font-size:11px; font-weight:700; letter-spacing:.07em; color:var(--accent); margin-bottom:4px;">ACTIVE YEAR</div>
+      <div style="font-size:20px; font-weight:700;">{{$d.ActiveYear.Label}}</div>
+      <div style="font-size:12px; color:var(--text3); margin-top:4px;">
+        {{dateShort $d.ActiveYear.StartDate}} — {{dateShort $d.ActiveYear.EndDate}}
+      </div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <a href="/orgs/{{$d.Org.Slug}}/years/{{$d.ActiveYear.ID}}/events" class="btn btn-outline btn-sm">Events</a>
+      <a href="/orgs/{{$d.Org.Slug}}/years/{{$d.ActiveYear.ID}}/requests" class="btn btn-outline btn-sm">Requests</a>
+      <a href="/orgs/{{$d.Org.Slug}}/years/{{$d.ActiveYear.ID}}/ledger" class="btn btn-outline btn-sm">Ledger</a>
+    </div>
+  </div>
+</div>
+{{end}}
+
+<!-- Fiscal years list -->
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+  <h2>Fiscal years</h2>
+  {{if eq $d.MyRole "admin"}}
+  <button onclick="document.getElementById('new-year-modal').style.display='flex'" class="btn btn-outline btn-sm">+ New year</button>
+  {{end}}
+</div>
+
+{{if $d.FiscalYears}}
+<div class="card animate-on-scroll" style="padding:0; overflow:hidden;">
+  <table>
+    <thead>
+      <tr>
+        <th>Label</th>
+        <th>Period</th>
+        <th>Status</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {{range $d.FiscalYears}}
+      <tr>
+        <td style="font-weight:600;">{{.Label}}</td>
+        <td style="color:var(--text2); font-size:13px;">{{dateShort .StartDate}} — {{dateShort .EndDate}}</td>
+        <td>
+          {{if eq (print .Status) "active"}}
+            <span style="font-size:11px; font-weight:700; padding:3px 9px; border-radius:20px; background:rgba(74,222,128,0.12); color:var(--green);">active</span>
+          {{else if eq (print .Status) "closed"}}
+            <span style="font-size:11px; font-weight:700; padding:3px 9px; border-radius:20px; background:var(--bg3); color:var(--text3);">closed</span>
+          {{else}}
+            <span style="font-size:11px; font-weight:700; padding:3px 9px; border-radius:20px; background:rgba(251,191,36,0.1); color:#fbbf24;">draft</span>
+          {{end}}
+        </td>
+        <td style="text-align:right;">
+          <a href="/orgs/{{$d.Org.Slug}}/years/{{.ID}}/events" class="btn btn-outline btn-sm">View</a>
+          {{if and (eq (print .Status) "draft") (eq (print $d.MyRole) "admin")}}
+          <form method="post" action="/orgs/{{$d.Org.Slug}}/years/{{.ID}}/activate" style="display:inline;" onsubmit="return confirm('Activate this fiscal year? All events must be approved first.')">
+            <button class="btn btn-primary btn-sm">Activate</button>
+          </form>
+          {{end}}
+        </td>
+      </tr>
+      {{end}}
+    </tbody>
+  </table>
+</div>
+{{else}}
+<div class="card empty-state animate-on-scroll">
+  <div style="font-size:36px; margin-bottom:12px;">📅</div>
+  <h3>No fiscal years yet</h3>
+  <p style="margin-bottom:16px;">Create a fiscal year to start planning events and budgets.</p>
+  {{if eq $d.MyRole "admin"}}
+  <button onclick="document.getElementById('new-year-modal').style.display='flex'" class="btn btn-primary">Create fiscal year</button>
+  {{end}}
+</div>
+{{end}}
+
+<!-- New fiscal year modal -->
+{{if eq $d.MyRole "admin"}}
+<div id="new-year-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:500; align-items:center; justify-content:center;">
+  <div class="card" style="width:100%; max-width:420px; margin:16px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+      <h2>New fiscal year</h2>
+      <button onclick="document.getElementById('new-year-modal').style.display='none'" style="background:none; border:none; color:var(--text3); font-size:20px; cursor:pointer;">×</button>
+    </div>
+    <form method="post" action="/orgs/{{$d.Org.Slug}}/years">
+      <div style="margin-bottom:14px;">
+        <label class="form-label">Label</label>
+        <input class="form-input" type="text" name="label" placeholder="2025" required>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;">
+        <div>
+          <label class="form-label">Start date</label>
+          <input class="form-input" type="date" name="start_date" required>
+        </div>
+        <div>
+          <label class="form-label">End date</label>
+          <input class="form-input" type="date" name="end_date" required>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;">Create</button>
+    </form>
+  </div>
+</div>
+{{end}}
+{{end}}

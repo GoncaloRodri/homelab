@@ -1,0 +1,90 @@
+{{define "content"}}
+{{$d := .}}
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:12px;">
+  <div>
+    <div style="font-size:12px; color:var(--text3); margin-bottom:4px;">
+      <a href="/orgs" style="color:var(--text3); text-decoration:none;">Organisations</a> /
+      <a href="/orgs/{{$d.Org.Slug}}" style="color:var(--text3); text-decoration:none;">{{$d.Org.Name}}</a> /
+    </div>
+    <h1>Teams</h1>
+  </div>
+  {{if eq $d.MyRole "admin"}}
+  <button onclick="document.getElementById('new-team-modal').style.display='flex'" class="btn btn-primary">+ New team</button>
+  {{end}}
+</div>
+
+{{if $d.Teams}}
+<div class="card animate-on-scroll" style="padding:0; overflow:hidden;">
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Members</th>
+        {{if eq $d.MyRole "admin"}}<th></th>{{end}}
+      </tr>
+    </thead>
+    <tbody>
+      {{range $t := $d.Teams}}
+      {{$count := 0}}
+      {{range $d.Members}}{{range .TeamIDs}}{{if eq . $t.ID}}{{$count = add $count 1}}{{end}}{{end}}{{end}}
+      <tr>
+        <td style="font-weight:600;">{{$t.Name}}</td>
+        <td>
+          {{if eq (print $t.Type) "guest"}}
+            <span style="font-size:11px; font-weight:600; padding:3px 9px; border-radius:20px; background:rgba(251,191,36,0.1); color:#fbbf24;">guest</span>
+          {{else}}
+            <span style="font-size:11px; font-weight:600; padding:3px 9px; border-radius:20px; background:var(--accent-glow); color:var(--accent2);">internal</span>
+          {{end}}
+        </td>
+        <td style="color:var(--text2);">{{$count}}</td>
+        {{if eq $d.MyRole "admin"}}
+        <td style="text-align:right;">
+          <form method="post" action="/orgs/{{$d.Org.Slug}}/teams/{{$t.ID}}/delete" style="display:inline;"
+                onsubmit="return confirm('Delete team {{$t.Name}}? Members will lose team assignment.')">
+            <button class="btn btn-outline btn-sm" style="color:var(--red); border-color:var(--red);">Delete</button>
+          </form>
+        </td>
+        {{end}}
+      </tr>
+      {{end}}
+    </tbody>
+  </table>
+</div>
+{{else}}
+<div class="card empty-state animate-on-scroll">
+  <div style="font-size:36px; margin-bottom:12px;">👥</div>
+  <h3>No teams yet</h3>
+  <p style="margin-bottom:16px;">Teams group members and own events. Guest teams have scoped visibility.</p>
+  {{if eq $d.MyRole "admin"}}
+  <button onclick="document.getElementById('new-team-modal').style.display='flex'" class="btn btn-primary">Create first team</button>
+  {{end}}
+</div>
+{{end}}
+
+{{if eq $d.MyRole "admin"}}
+<div id="new-team-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:500; align-items:center; justify-content:center;">
+  <div class="card" style="width:100%; max-width:400px; margin:16px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+      <h2>New team</h2>
+      <button onclick="document.getElementById('new-team-modal').style.display='none'" style="background:none; border:none; color:var(--text3); font-size:20px; cursor:pointer;">×</button>
+    </div>
+    <form method="post" action="/orgs/{{$d.Org.Slug}}/teams">
+      <div style="margin-bottom:14px;">
+        <label class="form-label">Team name</label>
+        <input class="form-input" type="text" name="name" placeholder="Marketing" required autofocus>
+      </div>
+      <div style="margin-bottom:20px;">
+        <label class="form-label">Type</label>
+        <select class="form-input" name="type">
+          <option value="internal">Internal — full org visibility</option>
+          <option value="guest">Guest — sees own team data only</option>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;">Create team</button>
+    </form>
+  </div>
+</div>
+{{end}}
+{{end}}
