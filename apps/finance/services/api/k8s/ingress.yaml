@@ -20,13 +20,15 @@ spec:
                   name: http
 ---
 # Public homepage — no auth middleware so unauthenticated visitors can reach it.
-# Traefik picks the most-specific match: this Exact rule wins for GET /,
-# the Prefix rule above catches everything else (still protected by forward-auth).
+# Traefik ranks routers by rule-string length; PathPrefix(`/`) beats Path(`/`)
+# by default, so we set an explicit higher priority here to win for exact /.
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: api-public
   namespace: finance
+  annotations:
+    traefik.ingress.kubernetes.io/router.priority: "100"
 spec:
   ingressClassName: traefik
   rules:

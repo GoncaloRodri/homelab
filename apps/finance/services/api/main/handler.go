@@ -150,8 +150,17 @@ func parseTmpl(files ...string) *template.Template {
 	}).ParseFS(templateFS, files...))
 }
 
+// parseStandalone parses a single template file that has no {{define}} blocks.
+// parseTmpl roots on "", but ParseFS stores content under the base filename,
+// so Execute() would run the empty root. Here we root on the base filename so
+// Execute() runs the actual content.
+func parseStandalone(file string) *template.Template {
+	name := file[strings.LastIndex(file, "/")+1:]
+	return template.Must(template.New(name).ParseFS(templateFS, file))
+}
+
 var (
-	homepageTmpl    = parseTmpl("templates/homepage.html")
+	homepageTmpl    = parseStandalone("templates/homepage.html")
 	baseTmpl        = parseTmpl("templates/base.html")
 	dashboardTmpl   = parseTmpl("templates/base.html", "templates/dashboard.html")
 	txnsTmpl        = parseTmpl("templates/base.html", "templates/transactions.html")
