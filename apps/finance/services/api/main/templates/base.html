@@ -570,11 +570,11 @@
 </head>
 <body>
   <nav class="nav">
-    <a href="/" class="nav-brand">
+    <a href="/dashboard" class="nav-brand">
       <div class="nav-brand-icon">₣</div>
-      Finance
+      Personal
     </a>
-    <a href="/"             class="{{if eq .Route "dashboard"}}active{{end}}">Dashboard</a>
+    <a href="/dashboard"    class="{{if eq .Route "dashboard"}}active{{end}}">Dashboard</a>
     <a href="/transactions" class="{{if eq .Route "transactions"}}active{{end}}">Transactions</a>
     <a href="/portfolio"    class="{{if eq .Route "portfolio"}}active{{end}}">Portfolio</a>
     <a href="/goals"        class="{{if eq .Route "goals"}}active{{end}}">Goals</a>
@@ -595,7 +595,6 @@
     </div>
 
     <a href="/people"       class="{{if eq .Route "people"}}active{{end}}">People</a>
-    <a href="/orgs"         class="{{if eq .Route "orgs"}}active{{end}}">Organisations</a>
 
     {{$settingsActive := or (eq .Route "settings") (eq .Route "auto-import")}}
     <div class="nav-group">
@@ -609,6 +608,7 @@
       </div>
     </div>
     <div class="nav-spacer"></div>
+    <a href="/orgs" style="font-size:12px; color:var(--text3); padding:5px 9px; border:1px solid var(--border); border-radius:var(--radius-sm); text-decoration:none; transition:all 0.18s;" onmouseover="this.style.color='var(--text2)';this.style.borderColor='var(--border2)'" onmouseout="this.style.color='var(--text3)';this.style.borderColor='var(--border)'">🏢 Business</a>
     <span class="nav-email">{{.Email}}</span>
     <button class="theme-btn" id="theme-toggle" title="Toggle dark/light mode">🌙</button>
     <button class="nav-hamburger" id="nav-hamburger" aria-label="Menu">
@@ -618,12 +618,11 @@
 
   <!-- Mobile drawer -->
   <div class="nav-drawer" id="nav-drawer">
-    <a href="/"             class="{{if eq .Route "dashboard"}}active{{end}}">Dashboard</a>
+    <a href="/dashboard"    class="{{if eq .Route "dashboard"}}active{{end}}">Dashboard</a>
     <a href="/transactions" class="{{if eq .Route "transactions"}}active{{end}}">Transactions</a>
     <a href="/portfolio"    class="{{if eq .Route "portfolio"}}active{{end}}">Portfolio</a>
     <a href="/goals"        class="{{if eq .Route "goals"}}active{{end}}">Goals</a>
     <a href="/people"       class="{{if eq .Route "people"}}active{{end}}">People</a>
-    <a href="/orgs"         class="{{if eq .Route "orgs"}}active{{end}}">Organisations</a>
     <hr>
     <span class="nav-drawer-section-label">Analysis</span>
     <a href="/reports"     class="{{if eq .Route "reports"}}active{{end}}">Reports</a>
@@ -636,6 +635,9 @@
     <a href="/settings?tab=accounts" class="{{if eq .Route "settings"}}active{{end}}">Accounts &amp; Categories</a>
     <a href="/import"                class="{{if eq .Route "import"}}active{{end}}">Import CSV</a>
     <a href="/auto-import"           class="{{if eq .Route "auto-import"}}active{{end}}">Import Guide</a>
+    <hr>
+    <a href="/orgs">🏢 Business</a>
+    <a href="/">← Hub</a>
   </div>
 
   <div class="container">
