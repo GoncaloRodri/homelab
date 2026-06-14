@@ -527,3 +527,64 @@ func (s *Store) updateTxRequest(ctx context.Context, reqID, orgID string, update
 	)
 	return err
 }
+
+// ── Ledger ────────────────────────────────────────────────────────────────────
+
+func (s *Store) getLedgerEntries(ctx context.Context, orgID, fiscalYearID string, extra bson.M) ([]OrgLedgerEntry, error) {
+	ctx, span := mongo.StartSpan(ctx, "Store.getLedgerEntries")
+	defer span.End()
+
+	filter := bson.M{"org_id": orgID}
+	if fiscalYearID != "" {
+		filter["fiscal_year_id"] = fiscalYearID
+	}
+	for k, v := range extra {
+		filter[k] = v
+	}
+	cur, err := s.orgLedger().Find(ctx, filter, options.Find().SetSort(bson.D{{Key: "date", Value: -1}}))
+	if err != nil {
+		return nil, err
+	}
+	var entries []OrgLedgerEntry
+	if err := cur.All(ctx, &entries); err != nil {
+		return nil, err
+	}
+	return entries, nil
+}
+
+func (s *Store) createLedgerEntry(ctx context.Context, e *OrgLedgerEntry) error {
+	ctx, span := mongo.StartSpan(ctx, "Store.createLedgerEntry")
+	defer span.End()
+	_, err := s.orgLedger().InsertOne(ctx, e)
+	return err
+}
+
+func (s *Store) updateLedgerEntry(ctx context.Context, id, orgID string, update bson.M) error {
+	ctx, span := mongo.StartSpan(ctx, "Store.updateLedgerEntry")
+	defer span.End()
+	_, err := s.orgLedger().UpdateOne(ctx, bson.M{"_id": id, "org_id": orgID}, bson.M{"$set": update})
+	return err
+}
+
+// ── Attachments ───────────────────────────────────────────────────────────────
+
+func (s *Store) getAttachments(ctx context.Context, requestID, orgID string) ([]OrgAttachment, error) {
+	ctx, span := mongo.StartSpan(ctx, "Store.getAttachments")
+	defer span.End()
+	cur, err := s.orgAttachments().Find(ctx, bson.M{"request_id": requestID, "org_id": orgID})
+	if err != nil {
+		return nil, err
+	}
+	var attachments []OrgAttachment
+	if err := cur.All(ctx, &attachments); err != nil {
+		return nil, err
+	}
+	return attachments, nil
+}
+
+func (s *Store) createAttachment(ctx context.Context, a *OrgAttachment) error {
+	ctx, span := mongo.StartSpan(ctx, "Store.createAttachment")
+	defer span.End()
+	_, err := s.orgAttachments().InsertOne(ctx, a)
+	return err
+}

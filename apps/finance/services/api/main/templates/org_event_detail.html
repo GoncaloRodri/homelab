@@ -1,0 +1,332 @@
+{{define "content"}}
+{{$d := .}}
+
+{{$isNew := eq $d.Event.ID ""}}
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:12px;">
+  <div>
+    <div style="font-size:12px; color:var(--text3); margin-bottom:4px;">
+      <a href="/orgs" style="color:var(--text3); text-decoration:none;">Orgs</a> /
+      <a href="/orgs/{{$d.Org.Slug}}" style="color:var(--text3); text-decoration:none;">{{$d.Org.Name}}</a> /
+      <a href="/orgs/{{$d.Org.Slug}}/years/{{$d.FiscalYear.ID}}/events" style="color:var(--text3); text-decoration:none;">Events</a> /
+      {{if $isNew}}New event{{else}}{{$d.Event.Name}}{{end}}
+    </div>
+    <h1>{{if $isNew}}New event{{else}}{{$d.Event.Name}}{{end}}</h1>
+  </div>
+  {{if not $isNew}}
+  <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+    {{if eq (print $d.Event.Status) "approved"}}
+      <span style="font-size:12px; font-weight:700; padding:4px 12px; border-radius:20px; background:rgba(74,222,128,0.12); color:var(--green);">✓ Approved</span>
+    {{else if eq (print $d.Event.Status) "review"}}
+      <span style="font-size:12px; font-weight:700; padding:4px 12px; border-radius:20px; background:rgba(251,191,36,0.1); color:#fbbf24;">Under review</span>
+    {{else if eq (print $d.Event.Status) "rejected"}}
+      <span style="font-size:12px; font-weight:700; padding:4px 12px; border-radius:20px; background:rgba(239,68,68,0.12); color:var(--red);">Rejected</span>
+    {{else}}
+      <span style="font-size:12px; font-weight:700; padding:4px 12px; border-radius:20px; background:var(--bg3); color:var(--text3);">Draft</span>
+    {{end}}
+
+    {{if eq (print $d.Event.Status) "draft"}}
+      <button onclick="document.getElementById('edit-modal').style.display='flex'" class="btn btn-outline btn-sm">Edit</button>
+      <form method="post" action="/orgs/{{$d.Org.Slug}}/years/{{$d.FiscalYear.ID}}/events/{{$d.Event.ID}}/submit" style="display:inline;">
+        <button class="btn btn-primary btn-sm" onclick="return confirm('Submit this event for review?')">Submit for review</button>
+      </form>
+      <form method="post" action="/orgs/{{$d.Org.Slug}}/years/{{$d.FiscalYear.ID}}/events/{{$d.Event.ID}}/delete" style="display:inline;">
+        <button class="btn btn-sm" style="color:var(--red); background:transparent; border:1px solid var(--red);" onclick="return confirm('Delete this event?')">Delete</button>
+      </form>
+    {{else if eq (print $d.Event.Status) "review"}}
+      <button onclick="document.getElementById('edit-modal').style.display='flex'" class="btn btn-outline btn-sm">Edit</button>
+    {{end}}
+
+    {{if and (or (eq (print $d.MyRole) "admin") (eq (print $d.MyRole) "finance")) (eq (print $d.Event.Status) "review")}}
+    <button onclick="document.getElementById('review-modal').style.display='flex'" class="btn btn-primary btn-sm">Review</button>
+    {{end}}
+  </div>
+  {{end}}
+</div>
+
+{{if $isNew}}
+<!-- New event form -->
+<div class="card animate-on-scroll" style="max-width:640px;">
+  <form method="post" action="/orgs/{{$d.Org.Slug}}/years/{{$d.FiscalYear.ID}}/events/new">
+    <div style="margin-bottom:16px;">
+      <label class="form-label">Event name</label>
+      <input class="form-input" type="text" name="name" placeholder="Annual conference" required autofocus>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
+      <div>
+        <label class="form-label">Start date</label>
+        <input class="form-input" type="date" name="date_start" required>
+      </div>
+      <div>
+        <label class="form-label">End date</label>
+        <input class="form-input" type="date" name="date_end" required>
+      </div>
+    </div>
+    <div style="margin-bottom:16px;">
+      <label class="form-label">Description</label>
+      <textarea class="form-input" name="description" rows="3" placeholder="What is this event about?"></textarea>
+    </div>
+    <div style="margin-bottom:16px;">
+      <label class="form-label">Goals</label>
+      <textarea class="form-input" name="goals" rows="2" placeholder="What should we achieve?"></textarea>
+    </div>
+    {{if $d.Teams}}
+    <div style="margin-bottom:20px;">
+      <label class="form-label">Teams</label>
+      <div style="display:flex; flex-wrap:wrap; gap:8px;">
+        {{range $d.Teams}}
+        <label style="display:flex; align-items:center; gap:6px; cursor:pointer; padding:6px 10px; border-radius:var(--radius-sm); border:1px solid var(--border); font-size:13px;">
+          <input type="checkbox" name="team_ids" value="{{.ID}}"> {{.Name}}
+        </label>
+        {{end}}
+      </div>
+    </div>
+    {{end}}
+    <div style="display:flex; gap:10px;">
+      <button type="submit" class="btn btn-primary">Create event</button>
+      <a href="/orgs/{{$d.Org.Slug}}/years/{{$d.FiscalYear.ID}}/events" class="btn btn-outline">Cancel</a>
+    </div>
+  </form>
+</div>
+
+{{else}}
+<!-- Event detail -->
+<div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:24px;">
+  <div class="card value-card animate-on-scroll">
+    <h2>Planned income</h2>
+    <div class="value" style="color:var(--green);">{{cents $d.TotalIncome}}</div>
+  </div>
+  <div class="card value-card animate-on-scroll">
+    <h2>Planned expense</h2>
+    <div class="value" style="color:var(--red);">{{cents $d.TotalExpense}}</div>
+  </div>
+  <div class="card value-card animate-on-scroll">
+    <h2>Net</h2>
+    <div class="value" style="color:var(--accent2);">{{cents (sub $d.TotalIncome $d.TotalExpense)}}</div>
+  </div>
+</div>
+
+<div style="display:grid; grid-template-columns:2fr 1fr; gap:20px;">
+  <div>
+    <!-- Description card -->
+    <div class="card animate-on-scroll" style="margin-bottom:20px;">
+      <h2 style="margin-bottom:12px;">Details</h2>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; font-size:13px; margin-bottom:14px;">
+        <div>
+          <div style="color:var(--text3); font-size:11px; font-weight:700; letter-spacing:.06em; margin-bottom:4px;">PERIOD</div>
+          <div>{{dateShort $d.Event.DateStart}} — {{dateShort $d.Event.DateEnd}}</div>
+        </div>
+        <div>
+          <div style="color:var(--text3); font-size:11px; font-weight:700; letter-spacing:.06em; margin-bottom:4px;">TEAMS</div>
+          <div>{{if $d.EventTeams}}{{range $d.EventTeams}}<span style="display:inline-block; padding:1px 6px; border-radius:4px; background:var(--bg3); margin-right:3px; font-size:11px;">{{.Name}}</span>{{end}}{{else}}—{{end}}</div>
+        </div>
+      </div>
+      {{if $d.Event.Description}}
+      <div style="margin-bottom:10px;">
+        <div style="color:var(--text3); font-size:11px; font-weight:700; letter-spacing:.06em; margin-bottom:6px;">DESCRIPTION</div>
+        <p style="font-size:13px; color:var(--text2); line-height:1.6;">{{$d.Event.Description}}</p>
+      </div>
+      {{end}}
+      {{if $d.Event.Goals}}
+      <div>
+        <div style="color:var(--text3); font-size:11px; font-weight:700; letter-spacing:.06em; margin-bottom:6px;">GOALS</div>
+        <p style="font-size:13px; color:var(--text2); line-height:1.6;">{{$d.Event.Goals}}</p>
+      </div>
+      {{end}}
+    </div>
+
+    <!-- Budget lines -->
+    <div class="card animate-on-scroll" style="margin-bottom:20px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h2>Budget lines</h2>
+        {{if ne (print $d.Event.Status) "approved"}}
+        <button onclick="document.getElementById('budget-modal').style.display='flex'" class="btn btn-outline btn-sm">+ Add line</button>
+        {{end}}
+      </div>
+      {{if $d.BudgetLines}}
+      <table>
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Description</th>
+            <th>Type</th>
+            <th style="text-align:right;">Amount</th>
+            {{if ne (print $d.Event.Status) "approved"}}<th></th>{{end}}
+          </tr>
+        </thead>
+        <tbody>
+          {{range $d.BudgetLines}}
+          <tr>
+            <td style="font-size:13px; font-weight:600;">{{.Category}}</td>
+            <td style="font-size:12px; color:var(--text2);">{{.Description}}</td>
+            <td>
+              {{if eq (print .Type) "income"}}
+              <span style="font-size:11px; font-weight:700; color:var(--green);">income</span>
+              {{else}}
+              <span style="font-size:11px; font-weight:700; color:var(--red);">expense</span>
+              {{end}}
+            </td>
+            <td style="text-align:right; font-size:13px;">{{cents .PlannedCents}}</td>
+            {{if ne (print $d.Event.Status) "approved"}}
+            <td style="text-align:right;">
+              <form method="post" action="/orgs/{{$d.Org.Slug}}/years/{{$d.FiscalYear.ID}}/events/{{$d.Event.ID}}/budget/{{.ID}}/delete" style="display:inline;">
+                <button class="btn btn-sm" style="color:var(--red); background:transparent; border:none; padding:2px 6px;" onclick="return confirm('Remove this budget line?')">×</button>
+              </form>
+            </td>
+            {{end}}
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+      {{else}}
+      <p style="color:var(--text3); font-size:13px;">No budget lines yet. Add income and expense lines to plan this event's finances.</p>
+      {{end}}
+    </div>
+
+    <!-- Comments -->
+    <div class="card animate-on-scroll">
+      <h2 style="margin-bottom:16px;">Comments</h2>
+      {{if $d.Comments}}
+      <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:16px;">
+        {{range $d.Comments}}
+        <div style="padding:12px 14px; border-radius:var(--radius-sm); background:var(--bg3); border-left:3px solid
+          {{if eq (print .Kind) "feedback"}}var(--accent2){{else}}var(--accent){{end}};">
+          <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+            <span style="font-size:12px; font-weight:600;">{{.UserEmail}}</span>
+            <span style="font-size:11px; color:var(--text3);">{{dateShort .CreatedAt}} · {{.Kind}}</span>
+          </div>
+          <p style="font-size:13px; color:var(--text2); line-height:1.5; margin:0;">{{.Body}}</p>
+        </div>
+        {{end}}
+      </div>
+      {{end}}
+
+      {{if and (eq (print $d.FiscalYear.Status) "closed") (ne (print $d.MyRole) "viewer")}}
+      <form method="post" action="/orgs/{{$d.Org.Slug}}/years/{{$d.FiscalYear.ID}}/events/{{$d.Event.ID}}/feedback">
+        <div style="margin-bottom:10px;">
+          <label class="form-label">Post-mortem feedback</label>
+          <textarea class="form-input" name="comment" rows="3" placeholder="What went well? What could improve?" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-outline btn-sm">Add feedback</button>
+      </form>
+      {{end}}
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div>
+    <div class="card animate-on-scroll" style="margin-bottom:16px;">
+      <h2 style="margin-bottom:12px; font-size:14px;">Quick actions</h2>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <a href="/orgs/{{$d.Org.Slug}}/requests/new?event_id={{$d.Event.ID}}" class="btn btn-outline btn-sm" style="text-align:center;">
+          + New request
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit modal -->
+<div id="edit-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:500; align-items:center; justify-content:center; padding:16px;">
+  <div class="card" style="width:100%; max-width:520px; max-height:80vh; overflow-y:auto;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+      <h2>Edit event</h2>
+      <button onclick="document.getElementById('edit-modal').style.display='none'" style="background:none; border:none; color:var(--text3); font-size:20px; cursor:pointer;">×</button>
+    </div>
+    <form method="post" action="/orgs/{{$d.Org.Slug}}/years/{{$d.FiscalYear.ID}}/events/{{$d.Event.ID}}/edit">
+      <div style="margin-bottom:14px;">
+        <label class="form-label">Name</label>
+        <input class="form-input" type="text" name="name" value="{{$d.Event.Name}}" required>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">
+        <div>
+          <label class="form-label">Start date</label>
+          <input class="form-input" type="date" name="date_start" value="{{$d.Event.DateStart | dateInput}}" required>
+        </div>
+        <div>
+          <label class="form-label">End date</label>
+          <input class="form-input" type="date" name="date_end" value="{{$d.Event.DateEnd | dateInput}}" required>
+        </div>
+      </div>
+      <div style="margin-bottom:14px;">
+        <label class="form-label">Description</label>
+        <textarea class="form-input" name="description" rows="3">{{$d.Event.Description}}</textarea>
+      </div>
+      <div style="margin-bottom:14px;">
+        <label class="form-label">Goals</label>
+        <textarea class="form-input" name="goals" rows="2">{{$d.Event.Goals}}</textarea>
+      </div>
+      {{if $d.Teams}}
+      <div style="margin-bottom:20px;">
+        <label class="form-label">Teams</label>
+        <div style="display:flex; flex-wrap:wrap; gap:8px;">
+          {{range $d.Teams}}
+          <label style="display:flex; align-items:center; gap:6px; cursor:pointer; padding:6px 10px; border-radius:var(--radius-sm); border:1px solid var(--border); font-size:13px;">
+            <input type="checkbox" name="team_ids" value="{{.ID}}"
+              {{range $d.EventTeams}}{{if eq .ID $.ID}}checked{{end}}{{end}}> {{.Name}}
+          </label>
+          {{end}}
+        </div>
+      </div>
+      {{end}}
+      <button type="submit" class="btn btn-primary" style="width:100%;">Save changes</button>
+    </form>
+  </div>
+</div>
+
+<!-- Add budget line modal -->
+<div id="budget-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:500; align-items:center; justify-content:center; padding:16px;">
+  <div class="card" style="width:100%; max-width:400px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+      <h2>Add budget line</h2>
+      <button onclick="document.getElementById('budget-modal').style.display='none'" style="background:none; border:none; color:var(--text3); font-size:20px; cursor:pointer;">×</button>
+    </div>
+    <form method="post" action="/orgs/{{$d.Org.Slug}}/years/{{$d.FiscalYear.ID}}/events/{{$d.Event.ID}}/budget">
+      <div style="margin-bottom:14px;">
+        <label class="form-label">Type</label>
+        <select class="form-input" name="type">
+          <option value="expense">Expense</option>
+          <option value="income">Income</option>
+        </select>
+      </div>
+      <div style="margin-bottom:14px;">
+        <label class="form-label">Category</label>
+        <input class="form-input" type="text" name="category" placeholder="Catering, Transport, Tickets…" required>
+      </div>
+      <div style="margin-bottom:14px;">
+        <label class="form-label">Planned amount (€)</label>
+        <input class="form-input" type="text" name="amount" placeholder="500.00" required>
+      </div>
+      <div style="margin-bottom:20px;">
+        <label class="form-label">Description</label>
+        <input class="form-input" type="text" name="description" placeholder="Optional details">
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;">Add line</button>
+    </form>
+  </div>
+</div>
+
+<!-- Admin review modal -->
+{{if and (or (eq (print $d.MyRole) "admin") (eq (print $d.MyRole) "finance")) (eq (print $d.Event.Status) "review")}}
+<div id="review-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:500; align-items:center; justify-content:center; padding:16px;">
+  <div class="card" style="width:100%; max-width:440px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+      <h2>Review event</h2>
+      <button onclick="document.getElementById('review-modal').style.display='none'" style="background:none; border:none; color:var(--text3); font-size:20px; cursor:pointer;">×</button>
+    </div>
+    <form method="post" action="/orgs/{{$d.Org.Slug}}/years/{{$d.FiscalYear.ID}}/events/{{$d.Event.ID}}/review">
+      <div style="margin-bottom:16px;">
+        <label class="form-label">Comment (optional)</label>
+        <textarea class="form-input" name="comment" rows="3" placeholder="Leave feedback or request changes…"></textarea>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button type="submit" name="action" value="approve" class="btn btn-primary" style="flex:1;" onclick="return confirm('Approve this event?')">Approve</button>
+        <button type="submit" name="action" value="comment" class="btn btn-outline" style="flex:1;">Comment only</button>
+        <button type="submit" name="action" value="reject" class="btn btn-sm" style="flex:1; color:var(--red); background:transparent; border:1px solid var(--red);" onclick="return confirm('Reject this event?')">Reject</button>
+      </div>
+    </form>
+  </div>
+</div>
+{{end}}
+
+{{end}}{{end}}

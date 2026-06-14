@@ -1,0 +1,75 @@
+{{define "content"}}
+{{$d := .}}
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:12px;">
+  <div>
+    <div style="font-size:12px; color:var(--text3); margin-bottom:4px;">
+      <a href="/orgs" style="color:var(--text3); text-decoration:none;">Orgs</a> /
+      <a href="/orgs/{{$d.Org.Slug}}" style="color:var(--text3); text-decoration:none;">{{$d.Org.Name}}</a> / Requests
+    </div>
+    <h1>Transaction Requests</h1>
+  </div>
+  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+    <a href="/orgs/{{$d.Org.Slug}}/ledger" class="btn btn-outline btn-sm">Ledger</a>
+    <a href="/orgs/{{$d.Org.Slug}}/requests/new" class="btn btn-primary btn-sm">+ New request</a>
+  </div>
+</div>
+
+<!-- Status filter tabs -->
+{{$cur := $d.StatusFilter}}
+<div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:20px; font-size:12px; font-weight:600;">
+  <a href="?"style="padding:5px 12px; border-radius:20px; text-decoration:none; {{if eq $cur ""}}background:var(--accent);color:#000;{{else}}background:var(--bg3);color:var(--text3);{{end}}">All</a>
+  <a href="?status=draft" style="padding:5px 12px; border-radius:20px; text-decoration:none; {{if eq $cur "draft"}}background:var(--accent);color:#000;{{else}}background:var(--bg3);color:var(--text3);{{end}}">draft</a>
+  <a href="?status=submitted" style="padding:5px 12px; border-radius:20px; text-decoration:none; {{if eq $cur "submitted"}}background:var(--accent);color:#000;{{else}}background:var(--bg3);color:var(--text3);{{end}}">submitted</a>
+  <a href="?status=under_review" style="padding:5px 12px; border-radius:20px; text-decoration:none; {{if eq $cur "under_review"}}background:var(--accent);color:#000;{{else}}background:var(--bg3);color:var(--text3);{{end}}">under_review</a>
+  <a href="?status=info_requested" style="padding:5px 12px; border-radius:20px; text-decoration:none; {{if eq $cur "info_requested"}}background:var(--accent);color:#000;{{else}}background:var(--bg3);color:var(--text3);{{end}}">info_requested</a>
+  <a href="?status=approved" style="padding:5px 12px; border-radius:20px; text-decoration:none; {{if eq $cur "approved"}}background:var(--accent);color:#000;{{else}}background:var(--bg3);color:var(--text3);{{end}}">approved</a>
+  <a href="?status=rejected" style="padding:5px 12px; border-radius:20px; text-decoration:none; {{if eq $cur "rejected"}}background:var(--accent);color:#000;{{else}}background:var(--bg3);color:var(--text3);{{end}}">rejected</a>
+  <a href="?status=paid" style="padding:5px 12px; border-radius:20px; text-decoration:none; {{if eq $cur "paid"}}background:var(--accent);color:#000;{{else}}background:var(--bg3);color:var(--text3);{{end}}">paid</a>
+  <a href="?status=ordered" style="padding:5px 12px; border-radius:20px; text-decoration:none; {{if eq $cur "ordered"}}background:var(--accent);color:#000;{{else}}background:var(--bg3);color:var(--text3);{{end}}">ordered</a>
+  <a href="?status=settled" style="padding:5px 12px; border-radius:20px; text-decoration:none; {{if eq $cur "settled"}}background:var(--accent);color:#000;{{else}}background:var(--bg3);color:var(--text3);{{end}}">settled</a>
+</div>
+
+{{if $d.Requests}}
+<div class="card animate-on-scroll" style="padding:0; overflow:hidden;">
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+        <th>By</th>
+        <th style="text-align:right;">Amount</th>
+        <th>Status</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {{range $d.Requests}}
+      {{$status := .CurrentStatus}}
+      <tr>
+        <td>
+          <span style="font-size:11px; font-weight:700; padding:2px 7px; border-radius:4px; background:var(--bg3); color:var(--text2);">{{.Type}}</span>
+        </td>
+        <td style="max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13px;">{{.Description}}</td>
+        <td style="font-size:12px; color:var(--text3);">{{.SubmitterEmail}}</td>
+        <td style="text-align:right; font-size:13px; font-weight:600;">{{cents .AmountCents}}</td>
+        <td>
+          <span style="font-size:11px; font-weight:700; padding:2px 8px; border-radius:20px; background:{{statusColor (print $status)}};">{{$status}}</span>
+        </td>
+        <td style="text-align:right;">
+          <a href="/orgs/{{$d.Org.Slug}}/requests/{{.ID}}" class="btn btn-outline btn-sm">View</a>
+        </td>
+      </tr>
+      {{end}}
+    </tbody>
+  </table>
+</div>
+{{else}}
+<div class="card empty-state animate-on-scroll">
+  <div style="font-size:36px; margin-bottom:12px;">📋</div>
+  <h3>No requests{{if $d.StatusFilter}} with status "{{$d.StatusFilter}}"{{end}}</h3>
+  <p style="margin-bottom:16px;">Submit transaction requests to track expenses, income, and transfers.</p>
+  <a href="/orgs/{{$d.Org.Slug}}/requests/new" class="btn btn-primary">New request</a>
+</div>
+{{end}}
+{{end}}

@@ -1,0 +1,311 @@
+{{define "content"}}
+{{$d := .}}
+{{$req := $d.Request}}
+{{$isNew := eq $req.ID ""}}
+{{$status := $req.CurrentStatus}}
+{{$isManager := or (eq (print $d.MyRole) "admin") (eq (print $d.MyRole) "finance")}}
+{{$isOwner := eq $req.SubmittedBy $d.UserID}}
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:12px;">
+  <div>
+    <div style="font-size:12px; color:var(--text3); margin-bottom:4px;">
+      <a href="/orgs" style="color:var(--text3); text-decoration:none;">Orgs</a> /
+      <a href="/orgs/{{$d.Org.Slug}}" style="color:var(--text3); text-decoration:none;">{{$d.Org.Name}}</a> /
+      <a href="/orgs/{{$d.Org.Slug}}/requests" style="color:var(--text3); text-decoration:none;">Requests</a> /
+      {{if $isNew}}New{{else}}{{$req.Type}}{{end}}
+    </div>
+    <h1>{{if $isNew}}New Request{{else}}{{$req.Type}} Request{{end}}</h1>
+  </div>
+  {{if not $isNew}}
+  <span style="font-size:12px; font-weight:700; padding:4px 14px; border-radius:20px; background:{{statusColor (print $status)}};">{{$status}}</span>
+  {{end}}
+</div>
+
+{{if $isNew}}
+<!-- ── New request form ──────────────────────────────────────────────────── -->
+<div class="card animate-on-scroll" style="max-width:600px;">
+  <form method="post" action="/orgs/{{$d.Org.Slug}}/requests/new" id="req-form">
+    <div style="margin-bottom:16px;">
+      <label class="form-label">Request type</label>
+      <select class="form-input" name="type" id="req-type" onchange="showFields(this.value)" required>
+        <option value="">— choose —</option>
+        <option value="reimbursement">Reimbursement — you already paid, want money back</option>
+        <option value="purchase_order">Purchase Order — request to buy something</option>
+        <option value="cash_advance">Cash Advance — get cash upfront to spend</option>
+        <option value="income">Income — record an expected or received payment</option>
+        <option value="budget_transfer">Budget Transfer — move budget between lines</option>
+      </select>
+    </div>
+    <div style="margin-bottom:16px;">
+      <label class="form-label">Description</label>
+      <textarea class="form-input" name="description" rows="2" placeholder="Brief description of this request" required></textarea>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
+      <div>
+        <label class="form-label">Amount (€)</label>
+        <input class="form-input" type="text" name="amount" placeholder="0.00" required>
+      </div>
+      <div id="field-due-date" style="display:none;">
+        <label class="form-label">Due date</label>
+        <input class="form-input" type="date" name="due_date">
+      </div>
+    </div>
+    <div id="field-vendor" style="display:none; margin-bottom:16px;">
+      <label class="form-label">Vendor / supplier</label>
+      <input class="form-input" type="text" name="vendor" placeholder="Company or person name">
+    </div>
+    <div id="field-payer" style="display:none; margin-bottom:16px;">
+      <label class="form-label">Payer name</label>
+      <input class="form-input" type="text" name="payer_name" placeholder="Who is expected to pay">
+    </div>
+    <div id="field-payment-method" style="display:none; margin-bottom:16px;">
+      <label class="form-label">Payment method</label>
+      <select class="form-input" name="payment_method">
+        <option value="bank_transfer">Bank transfer</option>
+        <option value="cash">Cash</option>
+        <option value="card">Card</option>
+        <option value="mbway">MBWay</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;">
+      <div>
+        <label class="form-label">Event (optional)</label>
+        <select class="form-input" name="event_id">
+          <option value="">— none —</option>
+          {{if $d.FiscalYear}}{{end}}
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Team (optional)</label>
+        <select class="form-input" name="team_id">
+          <option value="">— none —</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex; gap:10px;">
+      <button type="submit" class="btn btn-primary">Create request</button>
+      <a href="/orgs/{{$d.Org.Slug}}/requests" class="btn btn-outline">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<script type="module">
+function showFields(type) {
+  const show = (id, val) => document.getElementById(id).style.display = val ? 'block' : 'none';
+  show('field-vendor',         ['reimbursement','purchase_order'].includes(type));
+  show('field-payer',          type === 'income');
+  show('field-payment-method', ['reimbursement','cash_advance'].includes(type));
+  show('field-due-date',       ['purchase_order','income'].includes(type));
+}
+window.showFields = showFields;
+</script>
+
+{{else}}
+<!-- ── Request detail ────────────────────────────────────────────────────── -->
+<div style="display:grid; grid-template-columns:2fr 1fr; gap:20px;">
+  <div>
+    <!-- Details card -->
+    <div class="card animate-on-scroll" style="margin-bottom:20px;">
+      <h2 style="margin-bottom:16px;">Details</h2>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; font-size:13px;">
+        <div>
+          <div style="color:var(--text3); font-size:11px; font-weight:700; letter-spacing:.06em; margin-bottom:4px;">AMOUNT</div>
+          <div style="font-size:20px; font-weight:700; color:var(--accent2);">{{cents $req.AmountCents}}</div>
+        </div>
+        <div>
+          <div style="color:var(--text3); font-size:11px; font-weight:700; letter-spacing:.06em; margin-bottom:4px;">SUBMITTED BY</div>
+          <div>{{$req.SubmitterEmail}}</div>
+        </div>
+        {{if $req.Vendor}}
+        <div>
+          <div style="color:var(--text3); font-size:11px; font-weight:700; letter-spacing:.06em; margin-bottom:4px;">VENDOR</div>
+          <div>{{$req.Vendor}}</div>
+        </div>
+        {{end}}
+        {{if $req.PaymentMethod}}
+        <div>
+          <div style="color:var(--text3); font-size:11px; font-weight:700; letter-spacing:.06em; margin-bottom:4px;">PAYMENT METHOD</div>
+          <div>{{$req.PaymentMethod}}</div>
+        </div>
+        {{end}}
+        {{if $d.Event}}
+        <div>
+          <div style="color:var(--text3); font-size:11px; font-weight:700; letter-spacing:.06em; margin-bottom:4px;">EVENT</div>
+          <div><a href="/orgs/{{$d.Org.Slug}}/years/{{$req.FiscalYearID}}/events/{{$req.EventID}}" style="color:var(--accent2); text-decoration:none;">{{$d.Event.Name}}</a></div>
+        </div>
+        {{end}}
+        {{if $d.Team}}
+        <div>
+          <div style="color:var(--text3); font-size:11px; font-weight:700; letter-spacing:.06em; margin-bottom:4px;">TEAM</div>
+          <div>{{$d.Team.Name}}</div>
+        </div>
+        {{end}}
+        <div style="grid-column:1/-1;">
+          <div style="color:var(--text3); font-size:11px; font-weight:700; letter-spacing:.06em; margin-bottom:4px;">DESCRIPTION</div>
+          <div style="color:var(--text2); line-height:1.6;">{{$req.Description}}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PO Delivery -->
+    {{if and (eq (print $req.Type) "purchase_order") (eq (print $status) "ordered")}}
+    <div class="card animate-on-scroll" style="margin-bottom:20px; border-color:#fbbf24;">
+      <h2 style="margin-bottom:14px;">Record Delivery</h2>
+      <form method="post" action="/orgs/{{$d.Org.Slug}}/requests/{{$req.ID}}/delivery">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
+          <div>
+            <label class="form-label">Actual amount (€)</label>
+            <input class="form-input" type="text" name="actual_amount" placeholder="{{cents $req.AmountCents}}" required>
+          </div>
+          <div>
+            <label class="form-label">Actual vendor</label>
+            <input class="form-input" type="text" name="actual_vendor" value="{{$req.Vendor}}">
+          </div>
+        </div>
+        <div style="margin-bottom:14px;">
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px;">
+            <input type="checkbox" name="store_changed" value="true"> Store/vendor changed from original
+          </label>
+        </div>
+        <div style="margin-bottom:16px;" id="change-note-wrap" style="display:none;">
+          <label class="form-label">Change note</label>
+          <input class="form-input" type="text" name="change_note" placeholder="What changed?">
+        </div>
+        <button type="submit" class="btn btn-primary">Confirm delivery</button>
+      </form>
+    </div>
+    {{end}}
+
+    {{if $req.Delivery}}
+    <div class="card animate-on-scroll" style="margin-bottom:20px;">
+      <h2 style="margin-bottom:12px;">Delivery record</h2>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:13px;">
+        <div><span style="color:var(--text3);">Actual amount:</span> {{cents $req.Delivery.ActualAmountCents}}</div>
+        <div><span style="color:var(--text3);">Vendor:</span> {{$req.Delivery.ActualVendor}}</div>
+        <div><span style="color:var(--text3);">Delivered:</span> {{dateShort $req.Delivery.DeliveredAt}}</div>
+        {{if $req.Delivery.StoreChanged}}<div style="grid-column:1/-1;"><span style="color:#fbbf24; font-size:11px; font-weight:700;">⚠ Store changed</span> — {{$req.Delivery.ChangeNote}}</div>{{end}}
+      </div>
+    </div>
+    {{end}}
+
+    <!-- Cash advance settlement -->
+    {{if and (eq (print $req.Type) "cash_advance") (or (eq (print $status) "disbursed") (eq (print $status) "settlement_due") (eq (print $status) "partial_settlement"))}}
+    <div class="card animate-on-scroll" style="margin-bottom:20px; border-color:#fbbf24;">
+      <h2 style="margin-bottom:14px;">Submit Settlement</h2>
+      <form method="post" action="/orgs/{{$d.Org.Slug}}/requests/{{$req.ID}}/settle">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
+          <div>
+            <label class="form-label">Amount spent (€)</label>
+            <input class="form-input" type="text" name="amount_spent" required>
+          </div>
+          <div>
+            <label class="form-label">Amount returned (€)</label>
+            <input class="form-input" type="text" name="amount_returned" placeholder="0.00">
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit settlement</button>
+      </form>
+    </div>
+    {{end}}
+
+    {{if $req.Settlement}}
+    <div class="card animate-on-scroll" style="margin-bottom:20px;">
+      <h2 style="margin-bottom:12px;">Settlement record</h2>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:13px;">
+        <div><span style="color:var(--text3);">Spent:</span> {{cents $req.Settlement.AmountSpentCents}}</div>
+        <div><span style="color:var(--text3);">Returned:</span> {{cents $req.Settlement.AmountReturnedCents}}</div>
+        <div><span style="color:var(--text3);">Settled at:</span> {{dateShort $req.Settlement.SettledAt}}</div>
+      </div>
+    </div>
+    {{end}}
+
+    <!-- Attachments -->
+    <div class="card animate-on-scroll" style="margin-bottom:20px;">
+      <h2 style="margin-bottom:12px;">Attachments</h2>
+      {{if $d.Attachments}}
+      <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px;">
+        {{range $d.Attachments}}
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:var(--bg3); border-radius:var(--radius-sm);">
+          <span style="font-size:13px;">{{.Filename}}</span>
+          <span style="font-size:11px; color:var(--text3);">{{.MimeType}}</span>
+        </div>
+        {{end}}
+      </div>
+      {{else}}
+      <p style="font-size:13px; color:var(--text3); margin-bottom:12px;">No attachments yet.</p>
+      {{end}}
+    </div>
+
+    <!-- Status log -->
+    <div class="card animate-on-scroll">
+      <h2 style="margin-bottom:14px;">Status history</h2>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        {{range $req.StatusLog}}
+        <div style="display:flex; gap:12px; align-items:flex-start;">
+          <div style="width:8px; height:8px; border-radius:50%; background:var(--accent); margin-top:5px; flex-shrink:0;"></div>
+          <div style="flex:1;">
+            <div style="display:flex; gap:8px; align-items:center; margin-bottom:2px;">
+              <span style="font-size:12px; font-weight:700; padding:1px 7px; border-radius:20px; background:{{statusColor (print .Status)}};">{{.Status}}</span>
+              <span style="font-size:11px; color:var(--text3);">{{dateShort .ChangedAt}} · {{.ChangedBy}}</span>
+            </div>
+            {{if .Comment}}<p style="font-size:13px; color:var(--text2); margin:4px 0 0; line-height:1.5;">{{.Comment}}</p>{{end}}
+          </div>
+        </div>
+        {{end}}
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar actions -->
+  <div>
+    <div class="card animate-on-scroll">
+      <h2 style="margin-bottom:14px; font-size:14px;">Actions</h2>
+      <form method="post" action="/orgs/{{$d.Org.Slug}}/requests/{{$req.ID}}/action" style="display:flex; flex-direction:column; gap:8px;">
+        <div>
+          <label class="form-label" style="font-size:11px;">Comment</label>
+          <textarea class="form-input" name="comment" rows="2" placeholder="Optional note…" style="font-size:12px;"></textarea>
+        </div>
+
+        {{if eq (print $status) "draft"}}
+          {{if $isOwner}}<button name="action" value="submit" class="btn btn-primary" style="width:100%;">Submit for review</button>{{end}}
+          <button name="action" value="cancel" class="btn btn-outline" style="width:100%; color:var(--red);" onclick="return confirm('Cancel this request?')">Cancel</button>
+        {{end}}
+        {{if eq (print $status) "submitted"}}
+          {{if $isManager}}<button name="action" value="review" class="btn btn-primary" style="width:100%;">Start review</button>{{end}}
+          <button name="action" value="cancel" class="btn btn-outline" style="width:100%; color:var(--red);" onclick="return confirm('Cancel?')">Cancel</button>
+        {{end}}
+        {{if eq (print $status) "info_requested"}}
+          {{if $isOwner}}<button name="action" value="submit" class="btn btn-primary" style="width:100%;">Resubmit</button>{{end}}
+        {{end}}
+        {{if eq (print $status) "under_review"}}
+          {{if $isManager}}
+          <button name="action" value="approve" class="btn btn-primary" style="width:100%;" onclick="return confirm('Approve?')">Approve</button>
+          <button name="action" value="request_info" class="btn btn-outline" style="width:100%;">Request info</button>
+          <button name="action" value="reject" class="btn btn-sm" style="width:100%; color:var(--red); background:transparent; border:1px solid var(--red);" onclick="return confirm('Reject?')">Reject</button>
+          {{end}}
+        {{end}}
+        {{if eq (print $status) "approved"}}
+          {{if $isManager}}
+            {{if eq (print $req.Type) "reimbursement"}}<button name="action" value="mark_paid" class="btn btn-primary" style="width:100%;">Mark as paid</button>{{end}}
+            {{if eq (print $req.Type) "purchase_order"}}<button name="action" value="mark_ordered" class="btn btn-primary" style="width:100%;">Mark as ordered</button>{{end}}
+            {{if eq (print $req.Type) "cash_advance"}}<button name="action" value="disburse" class="btn btn-primary" style="width:100%;">Disburse cash</button>{{end}}
+            {{if eq (print $req.Type) "income"}}<button name="action" value="mark_pending_payment" class="btn btn-primary" style="width:100%;">Mark pending payment</button>{{end}}
+            {{if eq (print $req.Type) "budget_transfer"}}<button name="action" value="done" class="btn btn-primary" style="width:100%;">Mark done</button>{{end}}
+          {{end}}
+        {{end}}
+        {{if eq (print $status) "disbursed"}}
+          {{if $isManager}}<button name="action" value="settlement_due" class="btn btn-outline" style="width:100%;">Request settlement</button>{{end}}
+        {{end}}
+        {{if eq (print $status) "pending_payment"}}
+          {{if $isManager}}<button name="action" value="mark_received" class="btn btn-primary" style="width:100%;">Mark as received</button>{{end}}
+        {{end}}
+        {{if or (eq (print $status) "paid") (eq (print $status) "delivered") (eq (print $status) "received") (eq (print $status) "settled")}}
+          {{if $isManager}}<button name="action" value="reconcile" class="btn btn-outline" style="width:100%;">Mark reconciled</button>{{end}}
+        {{end}}
+      </form>
+    </div>
+  </div>
+</div>
+{{end}}
+{{end}}
