@@ -319,17 +319,18 @@ type OrgWithRole struct {
 }
 
 type OrgHomeData struct {
-	UserID     string
-	Email      string
-	Title      string
-	Route      string
-	Org        Org
-	MyRole     OrgRole
-	MyTeamIDs  []string
+	UserID      string
+	Email       string
+	Title       string
+	Route       string
+	Org         Org
+	MyRole      OrgRole
+	MyTeamIDs   []string
 	FiscalYears []FiscalYear
-	ActiveYear *FiscalYear
-	Teams      []OrgTeam
-	Members    []OrgMember
+	ActiveYear  *FiscalYear
+	FiscalYear  FiscalYear // populated from ActiveYear for base_org.html nav
+	Teams       []OrgTeam
+	Members     []OrgMember
 }
 
 type OrgTeamsData struct {

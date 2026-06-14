@@ -180,11 +180,11 @@ func (h *Handler) OrgHome(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		render(w, orgHomeTmpl, &OrgHomeData{
+		d := &OrgHomeData{
 			UserID:      r.Header.Get("X-Auth-User-Id"),
 			Email:       r.Header.Get("X-Auth-Email"),
 			Title:       org.Name,
-			Route:       "orgs",
+			Route:       "org-home",
 			Org:         *org,
 			MyRole:      me.Role,
 			MyTeamIDs:   me.TeamIDs,
@@ -192,7 +192,11 @@ func (h *Handler) OrgHome(w http.ResponseWriter, r *http.Request) {
 			ActiveYear:  active,
 			Teams:       teams,
 			Members:     members,
-		})
+		}
+		if active != nil {
+			d.FiscalYear = *active
+		}
+		renderOrg(w, orgHomeTmpl, d)
 	})(w, r)
 }
 
@@ -204,11 +208,11 @@ func (h *Handler) OrgTeams(w http.ResponseWriter, r *http.Request) {
 		teams, _ := h.store.getTeams(ctx, org.ID)
 		members, _ := h.store.getMembers(ctx, org.ID)
 
-		render(w, orgTeamsTmpl, &OrgTeamsData{
+		renderOrg(w, orgTeamsTmpl, &OrgTeamsData{
 			UserID:  r.Header.Get("X-Auth-User-Id"),
 			Email:   r.Header.Get("X-Auth-Email"),
 			Title:   org.Name + " — Teams",
-			Route:   "orgs",
+			Route:   "org-teams",
 			Org:     *org,
 			MyRole:  me.Role,
 			Teams:   teams,
@@ -269,11 +273,11 @@ func (h *Handler) OrgMembers(w http.ResponseWriter, r *http.Request) {
 		teams, _ := h.store.getTeams(ctx, org.ID)
 		invites, _ := h.store.getInvites(ctx, org.ID)
 
-		render(w, orgMembersTmpl, &OrgMembersData{
+		renderOrg(w, orgMembersTmpl, &OrgMembersData{
 			UserID:  r.Header.Get("X-Auth-User-Id"),
 			Email:   r.Header.Get("X-Auth-Email"),
 			Title:   org.Name + " — Members",
-			Route:   "orgs",
+			Route:   "org-members",
 			Org:     *org,
 			MyRole:  me.Role,
 			Members: members,
@@ -325,11 +329,11 @@ func (h *Handler) OrgInviteNew(w http.ResponseWriter, r *http.Request) {
 		teams, _ := h.store.getTeams(ctx, org.ID)
 
 		if r.Method == http.MethodGet {
-			render(w, orgInviteTmpl, &OrgInviteData{
+			renderOrg(w, orgInviteTmpl, &OrgInviteData{
 				UserID: r.Header.Get("X-Auth-User-Id"),
 				Email:  r.Header.Get("X-Auth-Email"),
 				Title:  "Invite to " + org.Name,
-				Route:  "orgs",
+				Route:  "org-invite",
 				Org:    *org,
 				MyRole: me.Role,
 				Teams:  teams,
@@ -350,11 +354,11 @@ func (h *Handler) OrgInviteNew(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if errMsg != "" {
-			render(w, orgInviteTmpl, &OrgInviteData{
+			renderOrg(w, orgInviteTmpl, &OrgInviteData{
 				UserID: r.Header.Get("X-Auth-User-Id"),
 				Email:  r.Header.Get("X-Auth-Email"),
 				Title:  "Invite to " + org.Name,
-				Route:  "orgs",
+				Route:  "org-invite",
 				Org:    *org,
 				MyRole: me.Role,
 				Teams:  teams,
@@ -387,11 +391,11 @@ func (h *Handler) OrgInviteNew(w http.ResponseWriter, r *http.Request) {
 		}
 		link := fmt.Sprintf("%s://%s/join/%s", scheme, r.Host, token)
 
-		render(w, orgInviteTmpl, &OrgInviteData{
+		renderOrg(w, orgInviteTmpl, &OrgInviteData{
 			UserID: r.Header.Get("X-Auth-User-Id"),
 			Email:  r.Header.Get("X-Auth-Email"),
 			Title:  "Invite to " + org.Name,
-			Route:  "orgs",
+			Route:  "org-invite",
 			Org:    *org,
 			MyRole: me.Role,
 			Teams:  teams,
@@ -581,11 +585,11 @@ func (h *Handler) OrgEventList(w http.ResponseWriter, r *http.Request) {
 			})
 		}
 
-		render(w, orgEventsTmpl, &OrgEventsData{
+		renderOrg(w, orgEventsTmpl, &OrgEventsData{
 			UserID:     r.Header.Get("X-Auth-User-Id"),
 			Email:      r.Header.Get("X-Auth-Email"),
 			Title:      org.Name + " — Events",
-			Route:      "orgs",
+			Route:      "org-events",
 			Org:        *org,
 			MyRole:     me.Role,
 			FiscalYear: *year,
@@ -608,11 +612,11 @@ func (h *Handler) OrgEventNew(w http.ResponseWriter, r *http.Request) {
 		teams, _ := h.store.getTeams(ctx, org.ID)
 
 		if r.Method == http.MethodGet {
-			render(w, orgEventDetailTmpl, &OrgEventDetailData{
+			renderOrg(w, orgEventDetailTmpl, &OrgEventDetailData{
 				UserID:     r.Header.Get("X-Auth-User-Id"),
 				Email:      r.Header.Get("X-Auth-Email"),
 				Title:      "New Event",
-				Route:      "orgs",
+				Route:      "org-event-detail",
 				Org:        *org,
 				MyRole:     me.Role,
 				FiscalYear: *year,
@@ -699,11 +703,11 @@ func (h *Handler) OrgEventDetail(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		render(w, orgEventDetailTmpl, &OrgEventDetailData{
+		renderOrg(w, orgEventDetailTmpl, &OrgEventDetailData{
 			UserID:       r.Header.Get("X-Auth-User-Id"),
 			Email:        r.Header.Get("X-Auth-Email"),
 			Title:        ev.Name,
-			Route:        "orgs",
+			Route:        "org-event-detail",
 			Org:          *org,
 			MyRole:       me.Role,
 			FiscalYear:   *year,
@@ -1066,11 +1070,11 @@ func (h *Handler) OrgRequestList(w http.ResponseWriter, r *http.Request) {
 		events, _ := h.store.getEvents(ctx, org.ID, "")
 		teams, _ := h.store.getTeams(ctx, org.ID)
 
-		render(w, orgRequestsTmpl, &OrgRequestsData{
+		renderOrg(w, orgRequestsTmpl, &OrgRequestsData{
 			UserID:       r.Header.Get("X-Auth-User-Id"),
 			Email:        r.Header.Get("X-Auth-Email"),
 			Title:        org.Name + " — Requests",
-			Route:        "orgs",
+			Route:        "org-requests",
 			Org:          *org,
 			MyRole:       me.Role,
 			Requests:     requests,
@@ -1096,11 +1100,11 @@ func (h *Handler) OrgRequestNew(w http.ResponseWriter, r *http.Request) {
 		teams, _ := h.store.getTeams(ctx, org.ID)
 
 		if r.Method == http.MethodGet {
-			render(w, orgRequestDetailTmpl, &OrgRequestDetailData{
+			renderOrg(w, orgRequestDetailTmpl, &OrgRequestDetailData{
 				UserID:     r.Header.Get("X-Auth-User-Id"),
 				Email:      r.Header.Get("X-Auth-Email"),
 				Title:      "New Request",
-				Route:      "orgs",
+				Route:      "org-requests",
 				Org:        *org,
 				MyRole:     me.Role,
 				FiscalYear: activeYear,
@@ -1203,11 +1207,11 @@ func (h *Handler) OrgRequestDetail(w http.ResponseWriter, r *http.Request) {
 		}
 		attachments, _ := h.store.getAttachments(ctx, reqID, org.ID)
 
-		render(w, orgRequestDetailTmpl, &OrgRequestDetailData{
+		renderOrg(w, orgRequestDetailTmpl, &OrgRequestDetailData{
 			UserID:      r.Header.Get("X-Auth-User-Id"),
 			Email:       r.Header.Get("X-Auth-Email"),
 			Title:       string(req.Type) + " Request",
-			Route:       "orgs",
+			Route:       "org-requests",
 			Org:         *org,
 			MyRole:      me.Role,
 			Request:     *req,
@@ -1578,11 +1582,11 @@ func (h *Handler) OrgLedger(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		render(w, orgLedgerTmpl, &OrgLedgerData{
+		renderOrg(w, orgLedgerTmpl, &OrgLedgerData{
 			UserID:       r.Header.Get("X-Auth-User-Id"),
 			Email:        r.Header.Get("X-Auth-Email"),
 			Title:        org.Name + " — Ledger",
-			Route:        "orgs",
+			Route:        "org-ledger",
 			Org:          *org,
 			MyRole:       me.Role,
 			FiscalYear:   fy,
@@ -1603,11 +1607,11 @@ func (h *Handler) OrgBankImport(w http.ResponseWriter, r *http.Request) {
 		activeYear, _ := h.store.getActiveFiscalYear(ctx, org.ID)
 
 		if r.Method == http.MethodGet {
-			render(w, orgBankImportTmpl, &OrgBankImportData{
+			renderOrg(w, orgBankImportTmpl, &OrgBankImportData{
 				UserID:     r.Header.Get("X-Auth-User-Id"),
 				Email:      r.Header.Get("X-Auth-Email"),
 				Title:      org.Name + " — Bank Import",
-				Route:      "orgs",
+				Route:      "org-ledger",
 				Org:        *org,
 				MyRole:     me.Role,
 				FiscalYear: activeYear,
@@ -1628,9 +1632,9 @@ func (h *Handler) OrgBankImport(w http.ResponseWriter, r *http.Request) {
 
 		rows, err := parseBankCSV(file)
 		if err != nil {
-			render(w, orgBankImportTmpl, &OrgBankImportData{
+			renderOrg(w, orgBankImportTmpl, &OrgBankImportData{
 				UserID: r.Header.Get("X-Auth-User-Id"), Email: r.Header.Get("X-Auth-Email"),
-				Title: org.Name + " — Bank Import", Route: "orgs",
+				Title: org.Name + " — Bank Import", Route: "org-ledger",
 				Org: *org, MyRole: me.Role, FiscalYear: activeYear,
 				Error: "could not parse CSV: " + err.Error(),
 			})
@@ -1639,9 +1643,9 @@ func (h *Handler) OrgBankImport(w http.ResponseWriter, r *http.Request) {
 
 		if r.FormValue("confirm") != "1" {
 			// preview mode
-			render(w, orgBankImportTmpl, &OrgBankImportData{
+			renderOrg(w, orgBankImportTmpl, &OrgBankImportData{
 				UserID: r.Header.Get("X-Auth-User-Id"), Email: r.Header.Get("X-Auth-Email"),
-				Title: org.Name + " — Bank Import", Route: "orgs",
+				Title: org.Name + " — Bank Import", Route: "org-ledger",
 				Org: *org, MyRole: me.Role, FiscalYear: activeYear,
 				Rows: rows,
 			})
@@ -1674,9 +1678,9 @@ func (h *Handler) OrgBankImport(w http.ResponseWriter, r *http.Request) {
 				imported++
 			}
 		}
-		render(w, orgBankImportTmpl, &OrgBankImportData{
+		renderOrg(w, orgBankImportTmpl, &OrgBankImportData{
 			UserID: r.Header.Get("X-Auth-User-Id"), Email: r.Header.Get("X-Auth-Email"),
-			Title: org.Name + " — Bank Import", Route: "orgs",
+			Title: org.Name + " — Bank Import", Route: "org-ledger",
 			Org: *org, MyRole: me.Role, FiscalYear: fy,
 			Imported: imported,
 		})
@@ -1780,9 +1784,9 @@ func (h *Handler) OrgAnalysis(w http.ResponseWriter, r *http.Request) {
 			})
 		}
 
-		render(w, orgAnalysisTmpl, &OrgAnalysisData{
+		renderOrg(w, orgAnalysisTmpl, &OrgAnalysisData{
 			UserID: r.Header.Get("X-Auth-User-Id"), Email: r.Header.Get("X-Auth-Email"),
-			Title: org.Name + " — Analysis", Route: "orgs",
+			Title: org.Name + " — Analysis", Route: "org-analysis",
 			Org: *org, MyRole: me.Role, FiscalYear: *year, FiscalYears: years,
 			EventRows: eventRows, TeamRows: teamRows,
 			TotalPlannedIncome: totalPI, TotalActualIncome: totalAI,
@@ -1864,9 +1868,9 @@ func (h *Handler) OrgReport(w http.ResponseWriter, r *http.Request) {
 			})
 		}
 
-		render(w, orgReportTmpl, &OrgReportData{
+		renderOrg(w, orgReportTmpl, &OrgReportData{
 			UserID: r.Header.Get("X-Auth-User-Id"), Email: r.Header.Get("X-Auth-Email"),
-			Title: org.Name + " — " + year.Label + " Report", Route: "orgs",
+			Title: org.Name + " — " + year.Label + " Report", Route: "org-report",
 			Org: *org, MyRole: me.Role, FiscalYear: *year, FiscalYears: years,
 			EventReports:        eventReports,
 			TotalPlannedIncome:  totalPI, TotalActualIncome: totalAI,
