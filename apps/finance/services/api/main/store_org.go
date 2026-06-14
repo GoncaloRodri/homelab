@@ -406,6 +406,47 @@ func (s *Store) updateEvent(ctx context.Context, eventID, orgID string, update b
 	return err
 }
 
+func (s *Store) addGoalItem(ctx context.Context, eventID, orgID string, goal EventGoal) error {
+	ctx, span := mongo.StartSpan(ctx, "Store.addGoalItem")
+	defer span.End()
+	_, err := s.orgEvents().UpdateOne(ctx,
+		bson.M{"_id": eventID, "org_id": orgID},
+		bson.M{"$push": bson.M{"goal_items": goal}},
+	)
+	return err
+}
+
+func (s *Store) toggleGoalItem(ctx context.Context, eventID, orgID, goalID string, done bool, doneBy string) error {
+	ctx, span := mongo.StartSpan(ctx, "Store.toggleGoalItem")
+	defer span.End()
+	set := bson.M{
+		"goal_items.$[g].done":    done,
+		"goal_items.$[g].done_by": doneBy,
+	}
+	if done {
+		set["goal_items.$[g].done_at"] = time.Now()
+	} else {
+		set["goal_items.$[g].done_at"] = time.Time{}
+		set["goal_items.$[g].done_by"] = ""
+	}
+	_, err := s.orgEvents().UpdateOne(ctx,
+		bson.M{"_id": eventID, "org_id": orgID},
+		bson.M{"$set": set},
+		options.UpdateOne().SetArrayFilters([]any{bson.M{"g.id": goalID}}),
+	)
+	return err
+}
+
+func (s *Store) deleteGoalItem(ctx context.Context, eventID, orgID, goalID string) error {
+	ctx, span := mongo.StartSpan(ctx, "Store.deleteGoalItem")
+	defer span.End()
+	_, err := s.orgEvents().UpdateOne(ctx,
+		bson.M{"_id": eventID, "org_id": orgID},
+		bson.M{"$pull": bson.M{"goal_items": bson.M{"id": goalID}}},
+	)
+	return err
+}
+
 func (s *Store) deleteEvent(ctx context.Context, eventID, orgID string) error {
 	ctx, span := mongo.StartSpan(ctx, "Store.deleteEvent")
 	defer span.End()

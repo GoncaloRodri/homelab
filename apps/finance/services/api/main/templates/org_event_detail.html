@@ -127,12 +127,46 @@
         <p style="font-size:13px; color:var(--text2); line-height:1.6;">{{$d.Event.Description}}</p>
       </div>
       {{end}}
-      {{if $d.Event.Goals}}
       <div>
-        <div style="color:var(--text3); font-size:11px; font-weight:700; letter-spacing:.06em; margin-bottom:6px;">GOALS</div>
-        <p style="font-size:13px; color:var(--text2); line-height:1.6;">{{$d.Event.Goals}}</p>
+        <div style="color:var(--text3); font-size:11px; font-weight:700; letter-spacing:.06em; margin-bottom:8px;">GOALS</div>
+        {{if $d.Event.GoalItems}}
+        <ul style="list-style:none; padding:0; margin:0 0 10px;">
+          {{range $d.Event.GoalItems}}
+          {{$goal := .}}
+          <li style="display:flex; align-items:center; gap:8px; padding:5px 0; border-bottom:1px solid var(--border2);">
+            {{if eq (print $d.FiscalYear.Status) "active"}}
+            <form method="POST" action="/orgs/{{$d.Org.Slug}}/years/{{$d.FiscalYear.ID}}/events/{{$d.Event.ID}}/goals/{{$goal.ID}}/toggle" style="display:contents;">
+              {{if $goal.Done}}
+              <input type="hidden" name="done" value="0">
+              <button type="submit" style="background:none;border:none;cursor:pointer;padding:0;color:var(--accent);" title="Mark undone">✅</button>
+              {{else}}
+              <input type="hidden" name="done" value="1">
+              <button type="submit" style="background:none;border:none;cursor:pointer;padding:0;color:var(--text3);" title="Mark done">⬜</button>
+              {{end}}
+            </form>
+            {{else}}
+              {{if $goal.Done}}<span>✅</span>{{else}}<span style="color:var(--text3);">⬜</span>{{end}}
+            {{end}}
+            <span style="flex:1; font-size:13px; {{if $goal.Done}}text-decoration:line-through; color:var(--text3);{{end}}">{{$goal.Text}}</span>
+            {{if $goal.Done}}<span style="font-size:11px; color:var(--text3);">by {{$goal.DoneBy}}</span>{{end}}
+            {{if and (ne (print $d.Event.Status) "approved") (not $goal.Done)}}
+            <form method="POST" action="/orgs/{{$d.Org.Slug}}/years/{{$d.FiscalYear.ID}}/events/{{$d.Event.ID}}/goals/{{$goal.ID}}/delete">
+              <button type="submit" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--text3);" title="Remove goal">✕</button>
+            </form>
+            {{end}}
+          </li>
+          {{end}}
+        </ul>
+        {{else}}
+        <p style="font-size:13px; color:var(--text3); margin:0 0 10px;">No goals yet.</p>
+        {{end}}
+        {{if ne (print $d.Event.Status) "approved"}}
+        <form method="POST" action="/orgs/{{$d.Org.Slug}}/years/{{$d.FiscalYear.ID}}/events/{{$d.Event.ID}}/goals" style="display:flex; gap:8px;">
+          <input name="text" placeholder="Add a goal…" style="flex:1;" required>
+          <button type="submit" class="btn btn-outline btn-sm">Add</button>
+        </form>
+        {{end}}
       </div>
-      {{end}}
     </div>
 
     <!-- Budget lines -->

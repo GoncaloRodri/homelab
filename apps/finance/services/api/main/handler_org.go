@@ -891,6 +891,77 @@ func (h *Handler) OrgEventFeedback(w http.ResponseWriter, r *http.Request) {
 	})(w, r)
 }
 
+// ── Goal items ────────────────────────────────────────────────────────────────
+
+func (h *Handler) OrgGoalAdd(w http.ResponseWriter, r *http.Request) {
+	h.requireOrgMember(func(w http.ResponseWriter, r *http.Request, org *Org, me *OrgMember) {
+		ctx := r.Context()
+		yearID := r.PathValue("year_id")
+		eventID := r.PathValue("event_id")
+
+		text := strings.TrimSpace(r.FormValue("text"))
+		if text == "" {
+			http.Error(w, "goal text required", http.StatusBadRequest)
+			return
+		}
+		goal := EventGoal{
+			ID:   bson.NewObjectID().Hex(),
+			Text: text,
+		}
+		if err := h.store.addGoalItem(ctx, eventID, org.ID, goal); err != nil {
+			slog.Error("add goal item", "err", err)
+			http.Error(w, "could not add goal", http.StatusInternalServerError)
+			return
+		}
+		http.Redirect(w, r, "/orgs/"+org.Slug+"/years/"+yearID+"/events/"+eventID, http.StatusSeeOther)
+	})(w, r)
+}
+
+func (h *Handler) OrgGoalToggle(w http.ResponseWriter, r *http.Request) {
+	h.requireOrgMember(func(w http.ResponseWriter, r *http.Request, org *Org, me *OrgMember) {
+		ctx := r.Context()
+		yearID := r.PathValue("year_id")
+		eventID := r.PathValue("event_id")
+		goalID := r.PathValue("goal_id")
+
+		// Only allow toggling when fiscal year is active
+		year, err := h.store.getFiscalYear(ctx, yearID, org.ID)
+		if err != nil || year.Status != FiscalYearActive {
+			http.Error(w, "goals can only be checked during an active fiscal year", http.StatusConflict)
+			return
+		}
+
+		done := r.FormValue("done") == "1"
+		if err := h.store.toggleGoalItem(ctx, eventID, org.ID, goalID, done, me.ID); err != nil {
+			slog.Error("toggle goal item", "err", err)
+			http.Error(w, "could not update goal", http.StatusInternalServerError)
+			return
+		}
+		http.Redirect(w, r, "/orgs/"+org.Slug+"/years/"+yearID+"/events/"+eventID, http.StatusSeeOther)
+	})(w, r)
+}
+
+func (h *Handler) OrgGoalDelete(w http.ResponseWriter, r *http.Request) {
+	h.requireOrgMember(func(w http.ResponseWriter, r *http.Request, org *Org, me *OrgMember) {
+		ctx := r.Context()
+		yearID := r.PathValue("year_id")
+		eventID := r.PathValue("event_id")
+		goalID := r.PathValue("goal_id")
+
+		ev, err := h.store.getEvent(ctx, eventID, org.ID)
+		if err != nil {
+			http.Error(w, "event not found", http.StatusNotFound)
+			return
+		}
+		if ev.Status == EventApproved {
+			http.Error(w, "cannot remove goals from an approved event", http.StatusConflict)
+			return
+		}
+		_ = h.store.deleteGoalItem(ctx, eventID, org.ID, goalID)
+		http.Redirect(w, r, "/orgs/"+org.Slug+"/years/"+yearID+"/events/"+eventID, http.StatusSeeOther)
+	})(w, r)
+}
+
 // ── Budget lines ──────────────────────────────────────────────────────────────
 
 func (h *Handler) OrgBudgetLineCreate(w http.ResponseWriter, r *http.Request) {
@@ -1866,6 +1937,9 @@ func (h *Handler) RegisterOrgRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /orgs/{slug}/years/{year_id}/events/{event_id}/feedback",                h.OrgEventFeedback)
 	mux.HandleFunc("POST /orgs/{slug}/years/{year_id}/events/{event_id}/budget",                  h.OrgBudgetLineCreate)
 	mux.HandleFunc("POST /orgs/{slug}/years/{year_id}/events/{event_id}/budget/{line_id}/delete", h.OrgBudgetLineDelete)
+	mux.HandleFunc("POST /orgs/{slug}/years/{year_id}/events/{event_id}/goals",                   h.OrgGoalAdd)
+	mux.HandleFunc("POST /orgs/{slug}/years/{year_id}/events/{event_id}/goals/{goal_id}/toggle",  h.OrgGoalToggle)
+	mux.HandleFunc("POST /orgs/{slug}/years/{year_id}/events/{event_id}/goals/{goal_id}/delete",  h.OrgGoalDelete)
 
 	// Analysis & report
 	mux.HandleFunc("GET /orgs/{slug}/years/{year_id}/analysis", h.OrgAnalysis)

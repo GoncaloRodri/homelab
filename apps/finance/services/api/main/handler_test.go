@@ -207,6 +207,11 @@ func (m *mockStore) getEvent(_ context.Context, _, _ string) (*OrgEvent, error) 
 func (m *mockStore) createEvent(_ context.Context, _ *OrgEvent) error                  { return nil }
 func (m *mockStore) updateEvent(_ context.Context, _, _ string, _ bson.M) error        { return nil }
 func (m *mockStore) deleteEvent(_ context.Context, _, _ string) error                  { return nil }
+func (m *mockStore) addGoalItem(_ context.Context, _, _ string, _ EventGoal) error     { return nil }
+func (m *mockStore) toggleGoalItem(_ context.Context, _, _, _ string, _ bool, _ string) error {
+	return nil
+}
+func (m *mockStore) deleteGoalItem(_ context.Context, _, _, _ string) error            { return nil }
 func (m *mockStore) getBudgetLines(_ context.Context, _, _ string) ([]BudgetLine, error) { return nil, nil }
 func (m *mockStore) createBudgetLine(_ context.Context, _ *BudgetLine) error            { return nil }
 func (m *mockStore) deleteBudgetLine(_ context.Context, _, _ string) error              { return nil }
