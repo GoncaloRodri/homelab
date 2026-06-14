@@ -396,10 +396,66 @@
       cursor: pointer;
       font-family: inherit;
     }
+    /* Global catch-all: any bare input/select/textarea gets dark theme.
+       .form-group and .form-input rules above still win for their elements
+       due to specificity; this only fixes uncovered stragglers. */
+    input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=submit]):not([type=button]):not([type=reset]):not([type=hidden]):not([type=color]),
+    select,
+    textarea {
+      background: var(--bg2);
+      color: var(--text);
+      border-color: var(--border2);
+      font-family: inherit;
+    }
+    input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=submit]):not([type=button]):not([type=reset]):not([type=hidden]):not([type=color]):focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+    input::placeholder, textarea::placeholder { color: var(--text3); opacity: 0.7; }
+    select option { background: var(--bg2); color: var(--text); }
     input[type="color"] { padding: 4px; height: 38px; cursor: pointer; }
-    select option,
     .form-input option { background: var(--bg2); color: var(--text); }
     textarea.form-input { resize: vertical; min-height: 72px; line-height: 1.5; }
+
+    /* Team / org avatars */
+    .team-avatar {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      font-size: 17px;
+      line-height: 1;
+      flex-shrink: 0;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      user-select: none;
+    }
+    .team-avatar-sm {
+      width: 22px; height: 22px;
+      border-radius: 5px;
+      font-size: 12px;
+    }
+    .team-avatar-lg {
+      width: 48px; height: 48px;
+      border-radius: 12px;
+      font-size: 26px;
+    }
+    /* Emoji picker row */
+    .emoji-picker { display: flex; flex-wrap: wrap; gap: 6px; }
+    .emoji-opt {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      border: 2px solid transparent;
+      background: var(--bg3);
+      font-size: 18px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color 0.12s, background 0.12s;
+    }
+    .emoji-opt:hover { background: var(--surface2); }
+    .emoji-opt.selected { border-color: var(--accent); background: var(--accent-glow); }
 
     /* ── Badges ──────────────────────────────────────────────────────── */
     .badge {

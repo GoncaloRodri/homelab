@@ -78,7 +78,7 @@
       <div style="font-size:12px; color:var(--text3);">{{dateShort $ev.DateStart}} — {{dateShort $ev.DateEnd}}</div>
       {{if .Teams}}
       <div style="margin-top:6px;">
-        {{range .Teams}}<span style="display:inline-block; padding:1px 6px; border-radius:4px; background:var(--bg3); margin-right:3px; font-size:11px; color:var(--text2);">{{.Name}}</span>{{end}}
+        {{range .Teams}}<span style="display:inline-flex; align-items:center; gap:3px; padding:2px 7px; border-radius:4px; background:var(--bg3); margin-right:3px; font-size:11px; color:var(--text2);"><span style="font-size:13px;">{{if .Avatar}}{{.Avatar}}{{else}}👥{{end}}</span>{{.Name}}</span>{{end}}
       </div>
       {{end}}
     </div>
