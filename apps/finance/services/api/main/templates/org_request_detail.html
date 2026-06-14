@@ -73,13 +73,18 @@
         <label class="form-label">Event (optional)</label>
         <select class="form-input" name="event_id">
           <option value="">— none —</option>
-          {{if $d.FiscalYear}}{{end}}
+          {{range $d.NewEvents}}
+          <option value="{{.ID}}">{{.Name}}</option>
+          {{end}}
         </select>
       </div>
       <div>
         <label class="form-label">Team (optional)</label>
         <select class="form-input" name="team_id">
           <option value="">— none —</option>
+          {{range $d.NewTeams}}
+          <option value="{{.ID}}">{{.Name}}</option>
+          {{end}}
         </select>
       </div>
     </div>
@@ -224,17 +229,24 @@ window.showFields = showFields;
     <div class="card animate-on-scroll" style="margin-bottom:20px;">
       <h2 style="margin-bottom:12px;">Attachments</h2>
       {{if $d.Attachments}}
-      <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px;">
+      <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:14px;">
         {{range $d.Attachments}}
         <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:var(--bg3); border-radius:var(--radius-sm);">
-          <span style="font-size:13px;">{{.Filename}}</span>
+          <span style="font-size:13px;">📎 {{.Filename}}</span>
           <span style="font-size:11px; color:var(--text3);">{{.MimeType}}</span>
         </div>
         {{end}}
       </div>
       {{else}}
-      <p style="font-size:13px; color:var(--text3); margin-bottom:12px;">No attachments yet.</p>
+      <p style="font-size:13px; color:var(--text3); margin-bottom:14px;">No attachments yet.</p>
       {{end}}
+      {{if ne (print $status) "reconciled"}}{{if ne (print $status) "cancelled"}}{{if ne (print $status) "rejected"}}
+      <form method="post" action="/orgs/{{$d.Org.Slug}}/requests/{{$req.ID}}/upload" enctype="multipart/form-data"
+            style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <input type="file" name="file" class="form-input" style="flex:1; min-width:0; font-size:12px;" required>
+        <button type="submit" class="btn btn-outline btn-sm" style="white-space:nowrap;">Upload</button>
+      </form>
+      {{end}}{{end}}{{end}}
     </div>
 
     <!-- Status log -->

@@ -8,6 +8,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -1027,10 +1028,9 @@ func (h *Handler) OrgRequestNew(w http.ResponseWriter, r *http.Request) {
 				Org:        *org,
 				MyRole:     me.Role,
 				FiscalYear: activeYear,
-				// Use Request.ID="" to signal "new form" in template
+				NewEvents:  events,
+				NewTeams:   teams,
 			})
-			_ = events
-			_ = teams
 			return
 		}
 
@@ -1383,6 +1383,73 @@ func (h *Handler) OrgRequestSettle(w http.ResponseWriter, r *http.Request) {
 		}
 		entry := StatusLogEntry{Status: newStatus, ChangedBy: me.ID, ChangedAt: time.Now()}
 		_ = h.store.appendStatusLog(ctx, reqID, org.ID, entry)
+		http.Redirect(w, r, "/orgs/"+org.Slug+"/requests/"+reqID, http.StatusSeeOther)
+	})(w, r)
+}
+
+func (h *Handler) OrgRequestUpload(w http.ResponseWriter, r *http.Request) {
+	h.requireOrgMember(func(w http.ResponseWriter, r *http.Request, org *Org, me *OrgMember) {
+		ctx := r.Context()
+		reqID := r.PathValue("req_id")
+
+		if _, err := h.store.getTxRequest(ctx, reqID, org.ID); err != nil {
+			http.Error(w, "request not found", http.StatusNotFound)
+			return
+		}
+
+		if err := r.ParseMultipartForm(20 << 20); err != nil {
+			http.Error(w, "file too large (max 20 MB)", http.StatusBadRequest)
+			return
+		}
+		file, header, err := r.FormFile("file")
+		if err != nil {
+			http.Error(w, "file required", http.StatusBadRequest)
+			return
+		}
+		defer file.Close()
+
+		attachID := bson.NewObjectID().Hex()
+		dir := fmt.Sprintf("/data/org-files/%s/%s", org.ID, reqID)
+		if err := os.MkdirAll(dir, 0o750); err != nil {
+			slog.Error("mkdir attachment dir", "err", err)
+			http.Error(w, "storage error", http.StatusInternalServerError)
+			return
+		}
+		storagePath := fmt.Sprintf("%s/%s", dir, attachID)
+		dst, err := os.Create(storagePath)
+		if err != nil {
+			slog.Error("create attachment file", "err", err)
+			http.Error(w, "storage error", http.StatusInternalServerError)
+			return
+		}
+		defer dst.Close()
+		size, err := io.Copy(dst, file)
+		if err != nil {
+			slog.Error("write attachment file", "err", err)
+			http.Error(w, "storage error", http.StatusInternalServerError)
+			return
+		}
+
+		mime := header.Header.Get("Content-Type")
+		if mime == "" {
+			mime = "application/octet-stream"
+		}
+		attach := &OrgAttachment{
+			ID:          attachID,
+			OrgID:       org.ID,
+			RequestID:   reqID,
+			UploadedBy:  me.ID,
+			UploadedAt:  time.Now(),
+			Filename:    header.Filename,
+			MimeType:    mime,
+			SizeBytes:   size,
+			StoragePath: storagePath,
+		}
+		if err := h.store.createAttachment(ctx, attach); err != nil {
+			slog.Error("save attachment metadata", "err", err)
+			http.Error(w, "could not save attachment", http.StatusInternalServerError)
+			return
+		}
 		http.Redirect(w, r, "/orgs/"+org.Slug+"/requests/"+reqID, http.StatusSeeOther)
 	})(w, r)
 }
@@ -1807,6 +1874,7 @@ func (h *Handler) RegisterOrgRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /orgs/{slug}/requests/{req_id}/action",       h.OrgRequestAction)
 	mux.HandleFunc("POST /orgs/{slug}/requests/{req_id}/delivery",     h.OrgRequestDelivery)
 	mux.HandleFunc("POST /orgs/{slug}/requests/{req_id}/settle",       h.OrgRequestSettle)
+	mux.HandleFunc("POST /orgs/{slug}/requests/{req_id}/upload",       h.OrgRequestUpload)
 
 	// Ledger (literal "import" before potential wildcards)
 	mux.HandleFunc("GET /orgs/{slug}/ledger",         h.OrgLedger)

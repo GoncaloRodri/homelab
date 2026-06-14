@@ -421,6 +421,9 @@ type OrgRequestDetailData struct {
 	FiscalYear  *FiscalYear
 	Attachments []OrgAttachment
 	Error       string
+	// populated on new-request GET
+	NewEvents []OrgEvent
+	NewTeams  []OrgTeam
 }
 
 type OrgLedgerData struct {
