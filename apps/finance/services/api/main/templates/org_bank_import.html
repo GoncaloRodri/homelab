@@ -1,0 +1,89 @@
+{{define "content"}}
+{{$d := .}}
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:12px;">
+  <div>
+    <div style="font-size:12px; color:var(--text3); margin-bottom:4px;">
+      <a href="/orgs" style="color:var(--text3); text-decoration:none;">Orgs</a> /
+      <a href="/orgs/{{$d.Org.Slug}}" style="color:var(--text3); text-decoration:none;">{{$d.Org.Name}}</a> /
+      <a href="/orgs/{{$d.Org.Slug}}/ledger" style="color:var(--text3); text-decoration:none;">Ledger</a> / Import
+    </div>
+    <h1>Bank CSV Import</h1>
+  </div>
+</div>
+
+{{if $d.Imported}}
+<div class="card animate-on-scroll" style="border-color:var(--green); max-width:480px;">
+  <div style="font-size:36px; margin-bottom:12px;">✅</div>
+  <h2 style="color:var(--green); margin-bottom:8px;">Import complete</h2>
+  <p style="color:var(--text2); margin-bottom:16px;">{{$d.Imported}} entries imported into the ledger.</p>
+  <a href="/orgs/{{$d.Org.Slug}}/ledger" class="btn btn-primary">View ledger</a>
+</div>
+{{else if $d.Rows}}
+<!-- Preview before confirming -->
+<div class="card animate-on-scroll" style="margin-bottom:20px;">
+  <h2 style="margin-bottom:4px;">Preview — {{len $d.Rows}} rows</h2>
+  <p style="font-size:13px; color:var(--text3); margin-bottom:16px;">Review the parsed rows below, then confirm import.</p>
+  <div style="overflow-x:auto;">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Description</th>
+          <th style="text-align:right;">Amount</th>
+          <th>Reference</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{range $d.Rows}}
+        <tr>
+          <td style="font-size:12px; white-space:nowrap;">{{.Date}}</td>
+          <td style="font-size:13px; max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{.Description}}</td>
+          <td style="text-align:right; font-size:13px; font-weight:600; {{if ge .AmountCents 0}}color:var(--green);{{else}}color:var(--red);{{end}}">{{cents .AmountCents}}</td>
+          <td style="font-size:11px; color:var(--text3); font-family:monospace;">{{if .Reference}}{{.Reference}}{{else}}—{{end}}</td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+</div>
+<form method="post" action="/orgs/{{$d.Org.Slug}}/ledger/import" enctype="multipart/form-data" style="display:flex; gap:10px;">
+  <input type="hidden" name="confirm" value="1">
+  <button type="submit" class="btn btn-primary">Confirm import</button>
+  <a href="/orgs/{{$d.Org.Slug}}/ledger/import" class="btn btn-outline">Start over</a>
+</form>
+{{else}}
+<!-- Upload form -->
+{{if not $d.FiscalYear}}
+<div class="card animate-on-scroll" style="border-color:#fbbf24; max-width:480px;">
+  <p style="color:#fbbf24; font-size:13px;">⚠ No active fiscal year. Activate a fiscal year before importing bank transactions.</p>
+</div>
+{{end}}
+
+<div class="card animate-on-scroll" style="max-width:480px; {{if not $d.FiscalYear}}opacity:0.5; pointer-events:none;{{end}}">
+  <h2 style="margin-bottom:6px;">Upload bank statement</h2>
+  <p style="font-size:13px; color:var(--text3); margin-bottom:20px;">
+    CSV must have columns: <code>date</code>, <code>description</code>, <code>amount</code>.
+    Optionally: <code>reference</code>. Amounts use decimal notation (e.g. <code>-50.00</code>).
+  </p>
+  {{if $d.Error}}
+  <div style="padding:10px 14px; border-radius:var(--radius-sm); background:rgba(239,68,68,0.1); color:var(--red); font-size:13px; margin-bottom:16px;">{{$d.Error}}</div>
+  {{end}}
+  <form method="post" action="/orgs/{{$d.Org.Slug}}/ledger/import" enctype="multipart/form-data">
+    <div style="margin-bottom:20px;">
+      <label class="form-label">CSV file</label>
+      <input class="form-input" type="file" name="csv" accept=".csv,text/csv" required>
+    </div>
+    <button type="submit" class="btn btn-primary" style="width:100%;">Parse & preview</button>
+  </form>
+</div>
+
+<div class="card animate-on-scroll" style="max-width:480px; margin-top:16px; background:var(--bg3);">
+  <h3 style="font-size:13px; margin-bottom:8px; color:var(--text2);">Expected CSV format</h3>
+  <pre style="font-size:11px; color:var(--text3); line-height:1.6; overflow-x:auto;">date,description,amount,reference
+2025-01-15,Supermarket purchase,-45.20,REF001
+2025-01-16,Client payment received,1200.00,REF002
+2025-01-17,Office supplies,-89.99,REF003</pre>
+</div>
+{{end}}
+{{end}}

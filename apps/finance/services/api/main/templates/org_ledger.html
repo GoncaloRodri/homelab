@@ -1,0 +1,89 @@
+{{define "content"}}
+{{$d := .}}
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:12px;">
+  <div>
+    <div style="font-size:12px; color:var(--text3); margin-bottom:4px;">
+      <a href="/orgs" style="color:var(--text3); text-decoration:none;">Orgs</a> /
+      <a href="/orgs/{{$d.Org.Slug}}" style="color:var(--text3); text-decoration:none;">{{$d.Org.Name}}</a> / Ledger
+    </div>
+    <h1>Ledger</h1>
+  </div>
+  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+    <a href="/orgs/{{$d.Org.Slug}}/ledger/import" class="btn btn-outline btn-sm">Import bank CSV</a>
+  </div>
+</div>
+
+<!-- Year selector -->
+<div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:20px;">
+  {{range $d.FiscalYears}}
+  <a href="?year_id={{.ID}}" style="padding:5px 12px; border-radius:20px; text-decoration:none; font-size:12px; font-weight:600;
+    {{if and $d.FiscalYear (eq $d.FiscalYear.ID .ID)}}background:var(--accent);color:#000;{{else}}background:var(--bg3);color:var(--text3);{{end}}">
+    {{.Label}}
+  </a>
+  {{end}}
+</div>
+
+<!-- Summary cards -->
+<div style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:24px;">
+  <div class="card value-card animate-on-scroll">
+    <h2>Income</h2>
+    <div class="value" style="color:var(--green);">{{cents $d.TotalIncome}}</div>
+  </div>
+  <div class="card value-card animate-on-scroll">
+    <h2>Expenses</h2>
+    <div class="value" style="color:var(--red);">{{cents $d.TotalExpense}}</div>
+  </div>
+  <div class="card value-card animate-on-scroll">
+    <h2>Net</h2>
+    <div class="value" style="color:var(--accent2);">{{cents (sub $d.TotalIncome $d.TotalExpense)}}</div>
+  </div>
+</div>
+
+{{if $d.Entries}}
+<div class="card animate-on-scroll" style="padding:0; overflow:hidden;">
+  <table>
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Description</th>
+        <th>Event</th>
+        <th>Team</th>
+        <th style="text-align:right;">Amount</th>
+        <th>Bank ref</th>
+        <th>Reconciled</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{range $d.Entries}}
+      <tr>
+        <td style="font-size:12px; color:var(--text3); white-space:nowrap;">{{dateShort .Date}}</td>
+        <td style="font-size:13px; max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{.Description}}</td>
+        <td style="font-size:12px; color:var(--text3);">
+          {{if .EventID}}{{with index $d.Events .EventID}}{{.Name}}{{end}}{{else}}—{{end}}
+        </td>
+        <td style="font-size:12px; color:var(--text3);">
+          {{if .TeamID}}{{with index $d.Teams .TeamID}}{{.Name}}{{end}}{{else}}—{{end}}
+        </td>
+        <td style="text-align:right; font-size:13px; font-weight:600;
+          {{if ge .AmountCents 0}}color:var(--green);{{else}}color:var(--red);{{end}}">
+          {{cents .AmountCents}}
+        </td>
+        <td style="font-size:11px; color:var(--text3); font-family:monospace;">{{if .BankRef}}{{.BankRef}}{{else}}—{{end}}</td>
+        <td style="text-align:center;">
+          {{if .Reconciled}}<span style="color:var(--green);">✓</span>{{else}}<span style="color:var(--text3);">—</span>{{end}}
+        </td>
+      </tr>
+      {{end}}
+    </tbody>
+  </table>
+</div>
+{{else}}
+<div class="card empty-state animate-on-scroll">
+  <div style="font-size:36px; margin-bottom:12px;">📒</div>
+  <h3>No ledger entries</h3>
+  <p style="margin-bottom:16px;">Entries are created automatically when requests are approved, or via bank CSV import.</p>
+  <a href="/orgs/{{$d.Org.Slug}}/ledger/import" class="btn btn-primary">Import bank CSV</a>
+</div>
+{{end}}
+{{end}}

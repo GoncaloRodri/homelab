@@ -1,0 +1,123 @@
+{{define "content"}}
+{{$d := .}}
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:12px;">
+  <div>
+    <div style="font-size:12px; color:var(--text3); margin-bottom:4px;">
+      <a href="/orgs" style="color:var(--text3); text-decoration:none;">Orgs</a> /
+      <a href="/orgs/{{$d.Org.Slug}}" style="color:var(--text3); text-decoration:none;">{{$d.Org.Name}}</a> /
+      <a href="/orgs/{{$d.Org.Slug}}/years/{{$d.FiscalYear.ID}}/events" style="color:var(--text3); text-decoration:none;">{{$d.FiscalYear.Label}}</a> / Analysis
+    </div>
+    <h1>Plan vs Actual</h1>
+  </div>
+  <div style="display:flex; gap:8px;">
+    <a href="/orgs/{{$d.Org.Slug}}/years/{{$d.FiscalYear.ID}}/report" class="btn btn-outline btn-sm">Year-end report</a>
+  </div>
+</div>
+
+<!-- Year selector -->
+<div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:20px;">
+  {{range $d.FiscalYears}}
+  <a href="/orgs/{{$d.Org.Slug}}/years/{{.ID}}/analysis" style="padding:5px 12px; border-radius:20px; text-decoration:none; font-size:12px; font-weight:600;
+    {{if eq $d.FiscalYear.ID .ID}}background:var(--accent);color:#000;{{else}}background:var(--bg3);color:var(--text3);{{end}}">
+    {{.Label}}
+  </a>
+  {{end}}
+</div>
+
+<!-- Summary totals -->
+<div style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:28px;">
+  <div class="card value-card animate-on-scroll">
+    <h2>Planned income</h2>
+    <div class="value" style="color:var(--green); font-size:22px;">{{cents $d.TotalPlannedIncome}}</div>
+  </div>
+  <div class="card value-card animate-on-scroll">
+    <h2>Actual income</h2>
+    <div class="value" style="font-size:22px; color:{{varColor $d.TotalPlannedIncome $d.TotalActualIncome}};">{{cents $d.TotalActualIncome}}</div>
+    <div style="font-size:11px; color:var(--text3); margin-top:4px;">
+      {{if $d.TotalPlannedIncome}}{{cents (sub $d.TotalActualIncome $d.TotalPlannedIncome)}} vs plan{{end}}
+    </div>
+  </div>
+  <div class="card value-card animate-on-scroll">
+    <h2>Planned expense</h2>
+    <div class="value" style="color:var(--red); font-size:22px;">{{cents $d.TotalPlannedExpense}}</div>
+  </div>
+  <div class="card value-card animate-on-scroll">
+    <h2>Actual expense</h2>
+    <div class="value" style="font-size:22px; color:{{varColor $d.TotalPlannedExpense $d.TotalActualExpense}};">{{cents $d.TotalActualExpense}}</div>
+    <div style="font-size:11px; color:var(--text3); margin-top:4px;">
+      {{if $d.TotalPlannedExpense}}{{cents (sub $d.TotalActualExpense $d.TotalPlannedExpense)}} vs plan{{end}}
+    </div>
+  </div>
+</div>
+
+<!-- By event -->
+<h2 style="margin-bottom:12px;">By event</h2>
+{{if $d.EventRows}}
+<div class="card animate-on-scroll" style="padding:0; overflow:hidden; margin-bottom:28px;">
+  <table>
+    <thead>
+      <tr>
+        <th>Event</th>
+        <th style="text-align:right;">Planned income</th>
+        <th style="text-align:right;">Actual income</th>
+        <th style="text-align:right;">Planned expense</th>
+        <th style="text-align:right;">Actual expense</th>
+        <th style="text-align:right;">Variance</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{range $d.EventRows}}
+      {{$netPlan := sub .PlannedIncome .PlannedExpense}}
+      {{$netActual := sub .ActualIncome .ActualExpense}}
+      <tr>
+        <td style="font-weight:600;">
+          <a href="/orgs/{{$d.Org.Slug}}/years/{{$d.FiscalYear.ID}}/events/{{.Event.ID}}" style="color:var(--text); text-decoration:none;">{{.Event.Name}}</a>
+        </td>
+        <td style="text-align:right; color:var(--green); font-size:13px;">{{cents .PlannedIncome}}</td>
+        <td style="text-align:right; font-size:13px; color:{{varColor .PlannedIncome .ActualIncome}};">{{cents .ActualIncome}}</td>
+        <td style="text-align:right; color:var(--red); font-size:13px;">{{cents .PlannedExpense}}</td>
+        <td style="text-align:right; font-size:13px; color:{{varColor .PlannedExpense .ActualExpense}};">{{cents .ActualExpense}}</td>
+        <td style="text-align:right; font-size:13px; font-weight:600; color:{{if ge $netActual $netPlan}}var(--green){{else}}var(--red){{end}};">
+          {{cents (sub $netActual $netPlan)}}
+        </td>
+      </tr>
+      {{end}}
+    </tbody>
+  </table>
+</div>
+{{else}}
+<p style="color:var(--text3); font-size:13px; margin-bottom:28px;">No events in this fiscal year.</p>
+{{end}}
+
+<!-- By team -->
+<h2 style="margin-bottom:12px;">By team</h2>
+{{if $d.TeamRows}}
+<div class="card animate-on-scroll" style="padding:0; overflow:hidden;">
+  <table>
+    <thead>
+      <tr>
+        <th>Team</th>
+        <th style="text-align:right;">Planned income</th>
+        <th style="text-align:right;">Actual income</th>
+        <th style="text-align:right;">Planned expense</th>
+        <th style="text-align:right;">Actual expense</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{range $d.TeamRows}}
+      <tr>
+        <td style="font-weight:600;">{{.Team.Name}}</td>
+        <td style="text-align:right; color:var(--green); font-size:13px;">{{cents .PlannedIncome}}</td>
+        <td style="text-align:right; font-size:13px; color:{{varColor .PlannedIncome .ActualIncome}};">{{cents .ActualIncome}}</td>
+        <td style="text-align:right; color:var(--red); font-size:13px;">{{cents .PlannedExpense}}</td>
+        <td style="text-align:right; font-size:13px; color:{{varColor .PlannedExpense .ActualExpense}};">{{cents .ActualExpense}}</td>
+      </tr>
+      {{end}}
+    </tbody>
+  </table>
+</div>
+{{else}}
+<p style="color:var(--text3); font-size:13px;">No teams configured.</p>
+{{end}}
+{{end}}
