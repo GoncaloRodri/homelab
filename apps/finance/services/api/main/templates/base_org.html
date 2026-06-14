@@ -3,27 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{if .Title}}{{.Title}} — {{end}}Finance</title>
+  <title>{{if .Title}}{{.Title}} — {{end}}Business · Finance Hub</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
   <style>
-    /* ── Tokens ─────────────────────────────────────────────────────── */
+    /* ── Tokens (business purple theme) ─────────────────────────────── */
     :root {
-      --bg:          #080c10;
-      --bg2:         #0d1318;
-      --bg3:         #131c24;
-      --surface:     rgba(13, 22, 32, 0.88);
-      --surface2:    rgba(20, 32, 44, 0.75);
-      --border:      rgba(0,210,200,0.08);
-      --border2:     rgba(0,210,200,0.15);
-      --text:        #dff4f2;
-      --text2:       #7fb8b4;
-      --text3:       #3d6e6a;
-      --accent:      #00c9b8;
-      --accent2:     #33d9ca;
-      --accent-glow: rgba(0,201,184,0.22);
-      --green:       #00e5b0;
+      --bg:          #07080f;
+      --bg2:         #0d0f1c;
+      --bg3:         #121526;
+      --surface:     rgba(13, 15, 28, 0.88);
+      --surface2:    rgba(20, 22, 42, 0.75);
+      --border:      rgba(124,58,237,0.09);
+      --border2:     rgba(124,58,237,0.18);
+      --text:        #ede8ff;
+      --text2:       #9d8fc0;
+      --text3:       #4a3f6e;
+      --accent:      #7c3aed;
+      --accent2:     #a855f7;
+      --accent-glow: rgba(124,58,237,0.22);
+      --green:       #34d399;
       --red:         #f87171;
-      --green-dim:   rgba(0,229,176,0.12);
+      --green-dim:   rgba(52,211,153,0.12);
       --red-dim:     rgba(248,113,113,0.13);
       --shadow-sm:   0 1px 3px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.4);
       --shadow-md:   0 4px 16px rgba(0,0,0,0.6), 0 2px 6px rgba(0,0,0,0.4);
@@ -33,26 +33,26 @@
       --nav-h:       58px;
     }
     [data-theme="light"] {
-      --bg:          #edf6f5;
-      --bg2:         #dceeed;
-      --bg3:         #cae5e3;
+      --bg:          #f0eeff;
+      --bg2:         #e4dffd;
+      --bg3:         #d8d0fa;
       --surface:     rgba(255,255,255,0.92);
-      --surface2:    rgba(237,246,245,0.85);
-      --border:      rgba(0,150,140,0.1);
-      --border2:     rgba(0,150,140,0.18);
-      --text:        #0d2422;
-      --text2:       #2a6460;
-      --text3:       #6aadaa;
-      --accent:      #00897b;
-      --accent2:     #00a896;
-      --accent-glow: rgba(0,137,123,0.15);
-      --green:       #00796b;
+      --surface2:    rgba(237,235,255,0.85);
+      --border:      rgba(100,40,200,0.1);
+      --border2:     rgba(100,40,200,0.18);
+      --text:        #1a0d35;
+      --text2:       #4a2d8a;
+      --text3:       #9b7fcc;
+      --accent:      #6d28d9;
+      --accent2:     #7c3aed;
+      --accent-glow: rgba(109,40,217,0.15);
+      --green:       #059669;
       --red:         #dc2626;
-      --green-dim:   rgba(0,121,107,0.1);
+      --green-dim:   rgba(5,150,105,0.1);
       --red-dim:     rgba(220,38,38,0.1);
-      --shadow-sm:   0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
-      --shadow-md:   0 4px 16px rgba(0,0,0,0.09), 0 2px 6px rgba(0,0,0,0.05);
-      --shadow-lg:   0 12px 40px rgba(0,0,0,0.11), 0 4px 12px rgba(0,0,0,0.06);
+      --shadow-sm:   0 1px 3px rgba(0,0,0,0.07);
+      --shadow-md:   0 4px 16px rgba(0,0,0,0.09);
+      --shadow-lg:   0 12px 40px rgba(0,0,0,0.11);
     }
 
     /* ── Reset & base ────────────────────────────────────────────────── */
@@ -67,15 +67,13 @@
       -webkit-font-smoothing: antialiased;
       transition: background 0.3s ease, color 0.3s ease;
     }
-
-    /* Subtle grid texture overlay */
     body::before {
       content: '';
       position: fixed;
       inset: 0;
       background-image:
-        radial-gradient(ellipse 80% 60% at 20% 10%, rgba(0,201,184,0.07) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 50% at 80% 80%, rgba(0,150,140,0.04) 0%, transparent 55%);
+        radial-gradient(ellipse 80% 60% at 20% 10%, rgba(124,58,237,0.07) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 80% 80%, rgba(168,85,247,0.04) 0%, transparent 55%);
       pointer-events: none;
       z-index: 0;
     }
@@ -91,7 +89,7 @@
     /* ── Nav ─────────────────────────────────────────────────────────── */
     .nav {
       height: var(--nav-h);
-      background: rgba(15,17,23,0.85);
+      background: rgba(10,8,20,0.88);
       backdrop-filter: blur(16px) saturate(180%);
       -webkit-backdrop-filter: blur(16px) saturate(180%);
       border-bottom: 1px solid var(--border);
@@ -105,7 +103,7 @@
       box-shadow: 0 1px 0 var(--border), 0 4px 20px rgba(0,0,0,0.3);
     }
     [data-theme="light"] .nav {
-      background: rgba(240,242,248,0.88);
+      background: rgba(238,235,255,0.9);
       box-shadow: 0 1px 0 var(--border), 0 4px 20px rgba(0,0,0,0.08);
     }
     .nav-brand {
@@ -116,7 +114,7 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      margin-right: 16px;
+      margin-right: 4px;
       letter-spacing: -0.3px;
     }
     .nav-brand-icon {
@@ -127,7 +125,26 @@
       font-size: 14px;
       box-shadow: 0 2px 8px var(--accent-glow);
     }
-    .nav a:not(.nav-brand) {
+    .nav-divider {
+      width: 1px; height: 20px;
+      background: var(--border2);
+      margin: 0 8px;
+      flex-shrink: 0;
+    }
+    .nav-breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--text3);
+      text-decoration: none;
+      margin-right: 8px;
+    }
+    .nav-breadcrumb span {
+      color: var(--text);
+      font-weight: 600;
+    }
+    .nav a:not(.nav-brand):not(.nav-breadcrumb) {
       color: var(--text2);
       text-decoration: none;
       font-size: 13.5px;
@@ -137,9 +154,24 @@
       transition: all 0.18s ease;
       white-space: nowrap;
     }
-    .nav a:not(.nav-brand):hover { color: var(--text); background: var(--surface2); }
+    .nav a:not(.nav-brand):not(.nav-breadcrumb):hover { color: var(--text); background: var(--surface2); }
     .nav a.active { color: var(--accent2); background: var(--accent-glow); }
     .nav-spacer { flex: 1; }
+
+    .nav-hub {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--text3) !important;
+      font-size: 12px !important;
+      padding: 5px 9px !important;
+      border: 1px solid var(--border) !important;
+      border-radius: var(--radius-sm) !important;
+      text-decoration: none !important;
+      transition: all 0.18s ease !important;
+      margin-right: 4px;
+    }
+    .nav-hub:hover { color: var(--text2) !important; border-color: var(--border2) !important; background: var(--surface2) !important; }
 
     /* ── Nav dropdown ─────────────────────────────────────────────────── */
     .nav-group { position: relative; }
@@ -182,11 +214,7 @@
     .nav-dropdown a.active { color: var(--accent2); background: var(--accent-glow); }
     .nav-dropdown hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
 
-    .nav-email {
-      font-size: 12px;
-      color: var(--text3);
-      padding: 0 8px;
-    }
+    .nav-email { font-size: 12px; color: var(--text3); padding: 0 8px; }
     .theme-btn {
       width: 34px; height: 34px;
       border-radius: 9px;
@@ -207,12 +235,7 @@
       padding: 28px 24px 48px;
       animation: fadeUp 0.4s ease-out both;
     }
-    h1 {
-      font-size: 22px;
-      font-weight: 700;
-      color: var(--text);
-      letter-spacing: -0.4px;
-    }
+    h1 { font-size: 22px; font-weight: 700; color: var(--text); letter-spacing: -0.4px; }
 
     /* ── Cards ───────────────────────────────────────────────────────── */
     .card {
@@ -224,42 +247,22 @@
       box-shadow: var(--shadow-sm);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
-      transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+      transition: box-shadow 0.2s ease, border-color 0.2s ease;
     }
-    .card:hover {
-      box-shadow: var(--shadow-md);
-      border-color: var(--border2);
-    }
+    .card:hover { box-shadow: var(--shadow-md); border-color: var(--border2); }
     .card h2 {
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--text3);
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      margin-bottom: 10px;
+      font-size: 11px; font-weight: 600; color: var(--text3);
+      text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px;
     }
-    .card .value {
-      font-size: 30px;
-      font-weight: 700;
-      letter-spacing: -0.8px;
-      line-height: 1.1;
-    }
-
-    /* value cards with colored top accent */
+    .card .value { font-size: 30px; font-weight: 700; letter-spacing: -0.8px; line-height: 1.1; }
     .value-card { position: relative; overflow: hidden; }
     .value-card::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-radius: var(--radius);
+      content: ''; position: absolute; inset: 0; border-radius: var(--radius);
       background: linear-gradient(135deg, var(--accent-glow), transparent 60%);
       pointer-events: none;
     }
     .value-card::after {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 2px;
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
       background: linear-gradient(90deg, var(--accent), var(--accent2), transparent);
       border-radius: var(--radius) var(--radius) 0 0;
       background-size: 200% auto;
@@ -278,22 +281,11 @@
     .table-wrap { overflow-x: auto; border-radius: var(--radius-sm); }
     table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
     th {
-      text-align: left;
-      padding: 9px 12px;
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--text3);
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      border-bottom: 1px solid var(--border2);
-      white-space: nowrap;
+      text-align: left; padding: 9px 12px; font-size: 11px; font-weight: 600;
+      color: var(--text3); text-transform: uppercase; letter-spacing: 0.6px;
+      border-bottom: 1px solid var(--border2); white-space: nowrap;
     }
-    td {
-      padding: 10px 12px;
-      border-bottom: 1px solid var(--border);
-      color: var(--text);
-      vertical-align: middle;
-    }
+    td { padding: 10px 12px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
     tbody tr { transition: background 0.12s ease; }
     tbody tr:hover td { background: var(--surface2); }
     tbody tr:last-child td { border-bottom: none; }
@@ -302,16 +294,10 @@
     /* ── Buttons ─────────────────────────────────────────────────────── */
     .btn {
       display: inline-flex; align-items: center; gap: 5px;
-      padding: 8px 16px;
-      border-radius: var(--radius-sm);
-      font-size: 13.5px;
-      font-weight: 500;
-      border: none;
-      cursor: pointer;
-      text-decoration: none;
-      transition: all 0.18s ease;
-      white-space: nowrap;
-      line-height: 1;
+      padding: 8px 16px; border-radius: var(--radius-sm);
+      font-size: 13.5px; font-weight: 500;
+      border: none; cursor: pointer; text-decoration: none;
+      transition: all 0.18s ease; white-space: nowrap; line-height: 1;
     }
     .btn:hover { transform: translateY(-1px); }
     .btn:active { transform: translateY(0); }
@@ -321,98 +307,45 @@
       box-shadow: 0 2px 10px var(--accent-glow);
     }
     .btn-primary:hover { box-shadow: 0 4px 18px var(--accent-glow); }
-    .btn-danger {
-      background: var(--red-dim);
-      color: var(--red);
-      border: 1px solid rgba(248,113,113,0.2);
-    }
+    .btn-danger { background: var(--red-dim); color: var(--red); border: 1px solid rgba(248,113,113,0.2); }
     .btn-danger:hover { background: rgba(248,113,113,0.25); }
-    .btn-outline {
-      background: transparent;
-      border: 1px solid var(--border2);
-      color: var(--text2);
-    }
+    .btn-outline { background: transparent; border: 1px solid var(--border2); color: var(--text2); }
     .btn-outline:hover { background: var(--surface2); color: var(--text); border-color: var(--accent); }
     .btn-sm { padding: 4px 10px; font-size: 12px; border-radius: 6px; }
 
     /* ── Forms ───────────────────────────────────────────────────────── */
     .form-group { margin-bottom: 14px; }
     .form-group label {
-      display: block;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text2);
-      margin-bottom: 5px;
-      letter-spacing: 0.3px;
+      display: block; font-size: 12px; font-weight: 600;
+      color: var(--text2); margin-bottom: 5px; letter-spacing: 0.3px;
     }
     .form-label {
-      display: block;
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text3);
-      margin-bottom: 5px;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
+      display: block; font-size: 11px; font-weight: 700;
+      color: var(--text3); margin-bottom: 5px; letter-spacing: 0.05em; text-transform: uppercase;
     }
-    .form-group input,
-    .form-group select,
-    .form-group textarea,
-    .form-input {
-      width: 100%;
-      padding: 9px 12px;
-      border: 1px solid var(--border2);
-      border-radius: var(--radius-sm);
-      font-size: 13.5px;
-      background: var(--bg2);
-      color: var(--text);
+    .form-group input, .form-group select, .form-group textarea, .form-input {
+      width: 100%; padding: 9px 12px;
+      border: 1px solid var(--border2); border-radius: var(--radius-sm);
+      font-size: 13.5px; background: var(--bg2); color: var(--text);
       transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
-      outline: none;
-      box-sizing: border-box;
-      font-family: inherit;
+      outline: none; box-sizing: border-box; font-family: inherit;
     }
-    .form-group input:focus,
-    .form-group select:focus,
-    .form-group textarea:focus,
-    .form-input:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px var(--accent-glow);
-      background: var(--bg3);
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus, .form-input:focus {
+      border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); background: var(--bg3);
     }
-    .form-group input::placeholder,
-    .form-input::placeholder { color: var(--text3); opacity: 0.7; }
-    .form-input[type="file"] {
-      padding: 7px 10px;
-      cursor: pointer;
-      color: var(--text2);
-    }
+    .form-group input::placeholder, .form-input::placeholder { color: var(--text3); opacity: 0.7; }
+    .form-input[type="file"] { padding: 7px 10px; cursor: pointer; color: var(--text2); }
     .form-input[type="file"]::-webkit-file-upload-button {
-      background: var(--bg3);
-      border: 1px solid var(--border2);
-      border-radius: 4px;
-      color: var(--text2);
-      font-size: 12px;
-      padding: 4px 10px;
-      margin-right: 10px;
-      cursor: pointer;
-      font-family: inherit;
+      background: var(--bg3); border: 1px solid var(--border2); border-radius: 4px;
+      color: var(--text2); font-size: 12px; padding: 4px 10px; margin-right: 10px; cursor: pointer; font-family: inherit;
     }
-    /* Global catch-all: any bare input/select/textarea gets dark theme.
-       .form-group and .form-input rules above still win for their elements
-       due to specificity; this only fixes uncovered stragglers. */
     input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=submit]):not([type=button]):not([type=reset]):not([type=hidden]):not([type=color]),
-    select,
-    textarea {
-      background: var(--bg2);
-      color: var(--text);
-      border-color: var(--border2);
-      font-family: inherit;
+    select, textarea {
+      background: var(--bg2); color: var(--text); border-color: var(--border2); font-family: inherit;
     }
     input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=submit]):not([type=button]):not([type=reset]):not([type=hidden]):not([type=color]):focus,
-    select:focus,
-    textarea:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px var(--accent-glow);
+    select:focus, textarea:focus {
+      outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow);
     }
     input::placeholder, textarea::placeholder { color: var(--text3); opacity: 0.7; }
     select option { background: var(--bg2); color: var(--text); }
@@ -420,37 +353,18 @@
     .form-input option { background: var(--bg2); color: var(--text); }
     textarea.form-input { resize: vertical; min-height: 72px; line-height: 1.5; }
 
-    /* Team / org avatars */
+    /* Team avatars */
     .team-avatar {
       display: inline-flex; align-items: center; justify-content: center;
-      width: 32px; height: 32px;
-      border-radius: 8px;
-      font-size: 17px;
-      line-height: 1;
-      flex-shrink: 0;
-      background: var(--bg3);
-      border: 1px solid var(--border2);
-      user-select: none;
+      width: 32px; height: 32px; border-radius: 8px; font-size: 17px; line-height: 1;
+      flex-shrink: 0; background: var(--bg3); border: 1px solid var(--border2); user-select: none;
     }
-    .team-avatar-sm {
-      width: 22px; height: 22px;
-      border-radius: 5px;
-      font-size: 12px;
-    }
-    .team-avatar-lg {
-      width: 48px; height: 48px;
-      border-radius: 12px;
-      font-size: 26px;
-    }
-    /* Emoji picker row */
+    .team-avatar-sm { width: 22px; height: 22px; border-radius: 5px; font-size: 12px; }
+    .team-avatar-lg { width: 48px; height: 48px; border-radius: 12px; font-size: 26px; }
     .emoji-picker { display: flex; flex-wrap: wrap; gap: 6px; }
     .emoji-opt {
-      width: 36px; height: 36px;
-      border-radius: 8px;
-      border: 2px solid transparent;
-      background: var(--bg3);
-      font-size: 18px;
-      cursor: pointer;
+      width: 36px; height: 36px; border-radius: 8px; border: 2px solid transparent;
+      background: var(--bg3); font-size: 18px; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       transition: border-color 0.12s, background 0.12s;
     }
@@ -460,25 +374,15 @@
     /* ── Badges ──────────────────────────────────────────────────────── */
     .badge {
       display: inline-flex; align-items: center; gap: 5px;
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-size: 11.5px;
-      font-weight: 600;
-      letter-spacing: 0.2px;
+      padding: 3px 10px; border-radius: 20px;
+      font-size: 11.5px; font-weight: 600; letter-spacing: 0.2px;
     }
-    .category-dot {
-      width: 7px; height: 7px;
-      border-radius: 50%;
-      display: inline-block;
-      flex-shrink: 0;
-    }
+    .category-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
 
     /* ── Empty states ────────────────────────────────────────────────── */
-    .empty-state {
-      text-align: center;
-      padding: 52px 24px;
-      color: var(--text3);
-    }
+    .empty-state { text-align: center; padding: 52px 24px; }
+    .empty-state-icon { font-size: 44px; margin-bottom: 14px; opacity: 0.4; }
+    .empty-state p { font-size: 14px; color: var(--text3); }
     .empty-state h3 { font-size: 17px; color: var(--text2); margin-bottom: 8px; }
 
     /* ── Misc utils ──────────────────────────────────────────────────── */
@@ -493,6 +397,15 @@
     .error   { color: var(--red);   font-size: 13px; margin-bottom: 12px; }
     .success { color: var(--green); font-size: 13px; margin-bottom: 12px; }
 
+    /* ── Modals ──────────────────────────────────────────────────────── */
+    .modal-backdrop {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(4px); z-index: 500; align-items: center; justify-content: center;
+    }
+    .modal { background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius); padding: 28px; width: 100%; max-width: 480px; box-shadow: var(--shadow-lg); }
+    .modal h3 { font-size: 16px; font-weight: 700; margin-bottom: 18px; }
+    .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
     /* ── Scroll-reveal ───────────────────────────────────────────────── */
     .animate-on-scroll {
       opacity: 0; transform: translateY(18px);
@@ -504,63 +417,40 @@
     .animate-on-scroll:nth-child(4) { transition-delay: 0.21s; }
     .animate-on-scroll:nth-child(5) { transition-delay: 0.28s; }
 
-    /* ── Hamburger / mobile drawer ────────────────────────────────────── */
+    /* ── Hamburger / mobile ──────────────────────────────────────────── */
     .nav-hamburger {
-      display: none;
-      width: 36px; height: 36px;
-      border: none; background: none; cursor: pointer;
-      color: var(--text2);
+      display: none; width: 36px; height: 36px;
+      border: none; background: none; cursor: pointer; color: var(--text2);
       flex-direction: column; justify-content: center; align-items: center; gap: 5px;
-      border-radius: var(--radius-sm);
-      transition: background 0.18s;
+      border-radius: var(--radius-sm); transition: background 0.18s;
     }
     .nav-hamburger:hover { background: var(--surface2); }
-    .nav-hamburger span {
-      display: block; width: 20px; height: 2px;
-      background: currentColor; border-radius: 2px;
-      transition: transform 0.25s ease, opacity 0.25s ease;
-    }
+    .nav-hamburger span { display: block; width: 20px; height: 2px; background: currentColor; border-radius: 2px; transition: transform 0.25s ease, opacity 0.25s ease; }
     .nav-hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
     .nav-hamburger.open span:nth-child(2) { opacity: 0; }
     .nav-hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
-
     .nav-drawer {
-      display: none;
-      position: fixed; inset: var(--nav-h) 0 0 0;
-      background: var(--bg);
-      z-index: 199;
-      overflow-y: auto;
-      padding: 12px 16px 32px;
-      flex-direction: column; gap: 4px;
-      animation: slideIn 0.2s ease-out both;
+      display: none; position: fixed; inset: var(--nav-h) 0 0 0;
+      background: var(--bg); z-index: 199; overflow-y: auto;
+      padding: 12px 16px 32px; flex-direction: column; gap: 4px; animation: slideIn 0.2s ease-out both;
     }
     .nav-drawer.open { display: flex; }
     .nav-drawer a, .nav-drawer-section-label {
-      display: block;
-      padding: 11px 14px;
-      border-radius: var(--radius-sm);
-      font-size: 15px; font-weight: 500;
-      color: var(--text2); text-decoration: none;
-      transition: all 0.15s;
+      display: block; padding: 11px 14px; border-radius: var(--radius-sm);
+      font-size: 15px; font-weight: 500; color: var(--text2); text-decoration: none; transition: all 0.15s;
     }
     .nav-drawer a:hover { color: var(--text); background: var(--surface2); }
     .nav-drawer a.active { color: var(--accent2); background: var(--accent-glow); }
-    .nav-drawer-section-label {
-      font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
-      text-transform: uppercase; color: var(--text3);
-      padding-top: 16px; padding-bottom: 4px;
-    }
+    .nav-drawer-section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3); padding-top: 16px; padding-bottom: 4px; }
     .nav-drawer hr { border: none; border-top: 1px solid var(--border); margin: 8px 0; }
 
     /* ── Responsive ──────────────────────────────────────────────────── */
-    @media (max-width: 900px) {
-      .grid-2 { grid-template-columns: 1fr; }
-    }
+    @media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
     @media (max-width: 720px) {
       .nav-hamburger { display: flex; }
-      .nav > a:not(.nav-brand),
-      .nav > .nav-group,
-      .nav > .nav-spacer,
+      .nav > a:not(.nav-brand):not(.nav-hub),
+      .nav > .nav-group, .nav > .nav-spacer,
+      .nav > .nav-divider, .nav > .nav-breadcrumb,
       .nav-email { display: none; }
       .container { padding: 16px 12px 32px; }
       .grid { grid-template-columns: 1fr 1fr; }
@@ -570,45 +460,51 @@
 </head>
 <body>
   <nav class="nav">
-    <a href="/dashboard" class="nav-brand">
-      <div class="nav-brand-icon">₣</div>
-      Personal
+    <!-- Hub link -->
+    <a href="/" class="nav-hub">← Hub</a>
+
+    <!-- Brand -->
+    <a href="/orgs" class="nav-brand">
+      <div class="nav-brand-icon">🏢</div>
+      Business
     </a>
-    <a href="/dashboard"    class="{{if eq .Route "dashboard"}}active{{end}}">Dashboard</a>
-    <a href="/transactions" class="{{if eq .Route "transactions"}}active{{end}}">Transactions</a>
-    <a href="/portfolio"    class="{{if eq .Route "portfolio"}}active{{end}}">Portfolio</a>
-    <a href="/goals"        class="{{if eq .Route "goals"}}active{{end}}">Goals</a>
 
-    {{$analysisActive := or (eq .Route "reports") (eq .Route "projections") (eq .Route "networth") (eq .Route "simulator") (eq .Route "tax")}}
+    {{if .Org.Slug}}
+    <div class="nav-divider"></div>
+    <!-- Org breadcrumb -->
+    <a href="/orgs/{{.Org.Slug}}" class="nav-breadcrumb"><span>{{.Org.Name}}</span></a>
+    <div class="nav-divider"></div>
+
+    <!-- Org nav links -->
+    <a href="/orgs/{{.Org.Slug}}" class="{{if eq .Route "org-home"}}active{{end}}">Overview</a>
+    <a href="/orgs/{{.Org.Slug}}/requests" class="{{if eq .Route "org-requests"}}active{{end}}">Requests</a>
+    <a href="/orgs/{{.Org.Slug}}/ledger" class="{{if eq .Route "org-ledger"}}active{{end}}">Ledger</a>
+
+    {{with .FiscalYear}}{{if .ID}}
     <div class="nav-group">
-      <button class="nav-group-btn {{if $analysisActive}}active{{end}}">
-        Analysis <svg viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 1l4 4 4-4"/></svg>
+      <button class="nav-group-btn {{if or (eq $.Route "org-events") (eq $.Route "org-event-detail") (eq $.Route "org-analysis") (eq $.Route "org-report")}}active{{end}}">
+        Year <svg viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 1l4 4 4-4"/></svg>
       </button>
       <div class="nav-dropdown">
-        <a href="/reports"     class="{{if eq .Route "reports"}}active{{end}}">Reports</a>
-        <a href="/projections" class="{{if eq .Route "projections"}}active{{end}}">Projections</a>
-        <a href="/tax"         class="{{if eq .Route "tax"}}active{{end}}">Tax</a>
-        <hr>
-        <a href="/networth"    class="{{if eq .Route "networth"}}active{{end}}">Net Worth</a>
-        <a href="/simulator"   class="{{if eq .Route "simulator"}}active{{end}}">What If</a>
+        <a href="/orgs/{{$.Org.Slug}}/years/{{.ID}}/events" class="{{if or (eq $.Route "org-events") (eq $.Route "org-event-detail")}}active{{end}}">Events</a>
+        <a href="/orgs/{{$.Org.Slug}}/years/{{.ID}}/analysis" class="{{if eq $.Route "org-analysis"}}active{{end}}">Analysis</a>
+        <a href="/orgs/{{$.Org.Slug}}/years/{{.ID}}/report" class="{{if eq $.Route "org-report"}}active{{end}}">Report</a>
       </div>
     </div>
+    {{end}}{{end}}
 
-    <a href="/people"       class="{{if eq .Route "people"}}active{{end}}">People</a>
-
-    {{$settingsActive := or (eq .Route "settings") (eq .Route "auto-import")}}
     <div class="nav-group">
-      <button class="nav-group-btn {{if $settingsActive}}active{{end}}">
-        Settings <svg viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 1l4 4 4-4"/></svg>
+      <button class="nav-group-btn {{if or (eq .Route "org-teams") (eq .Route "org-members")}}active{{end}}">
+        Team <svg viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 1l4 4 4-4"/></svg>
       </button>
       <div class="nav-dropdown">
-        <a href="/settings?tab=accounts"    class="{{if eq .Route "settings"}}active{{end}}">Accounts & Categories</a>
-        <a href="/import"                   class="{{if eq .Route "import"}}active{{end}}">Import CSV</a>
-        <a href="/auto-import"              class="{{if eq .Route "auto-import"}}active{{end}}">Import Guide</a>
+        <a href="/orgs/{{.Org.Slug}}/teams" class="{{if eq .Route "org-teams"}}active{{end}}">Teams</a>
+        <a href="/orgs/{{.Org.Slug}}/members" class="{{if eq .Route "org-members"}}active{{end}}">Members</a>
       </div>
     </div>
+    {{end}}
+
     <div class="nav-spacer"></div>
-    <a href="/orgs" style="font-size:12px; color:var(--text3); padding:5px 9px; border:1px solid var(--border); border-radius:var(--radius-sm); text-decoration:none; transition:all 0.18s;" onmouseover="this.style.color='var(--text2)';this.style.borderColor='var(--border2)'" onmouseout="this.style.color='var(--text3)';this.style.borderColor='var(--border)'">🏢 Business</a>
     <span class="nav-email">{{.Email}}</span>
     <button class="theme-btn" id="theme-toggle" title="Toggle dark/light mode">🌙</button>
     <button class="nav-hamburger" id="nav-hamburger" aria-label="Menu">
@@ -618,26 +514,22 @@
 
   <!-- Mobile drawer -->
   <div class="nav-drawer" id="nav-drawer">
-    <a href="/dashboard"    class="{{if eq .Route "dashboard"}}active{{end}}">Dashboard</a>
-    <a href="/transactions" class="{{if eq .Route "transactions"}}active{{end}}">Transactions</a>
-    <a href="/portfolio"    class="{{if eq .Route "portfolio"}}active{{end}}">Portfolio</a>
-    <a href="/goals"        class="{{if eq .Route "goals"}}active{{end}}">Goals</a>
-    <a href="/people"       class="{{if eq .Route "people"}}active{{end}}">People</a>
-    <hr>
-    <span class="nav-drawer-section-label">Analysis</span>
-    <a href="/reports"     class="{{if eq .Route "reports"}}active{{end}}">Reports</a>
-    <a href="/projections" class="{{if eq .Route "projections"}}active{{end}}">Projections</a>
-    <a href="/tax"         class="{{if eq .Route "tax"}}active{{end}}">Tax</a>
-    <a href="/networth"    class="{{if eq .Route "networth"}}active{{end}}">Net Worth</a>
-    <a href="/simulator"   class="{{if eq .Route "simulator"}}active{{end}}">What If</a>
-    <hr>
-    <span class="nav-drawer-section-label">Settings</span>
-    <a href="/settings?tab=accounts" class="{{if eq .Route "settings"}}active{{end}}">Accounts &amp; Categories</a>
-    <a href="/import"                class="{{if eq .Route "import"}}active{{end}}">Import CSV</a>
-    <a href="/auto-import"           class="{{if eq .Route "auto-import"}}active{{end}}">Import Guide</a>
-    <hr>
-    <a href="/orgs">🏢 Business</a>
     <a href="/">← Hub</a>
+    <a href="/orgs" class="{{if eq .Route "org-list"}}active{{end}}">Organisations</a>
+    {{if .Org.Slug}}
+    <hr>
+    <span class="nav-drawer-section-label">{{.Org.Name}}</span>
+    <a href="/orgs/{{.Org.Slug}}" class="{{if eq .Route "org-home"}}active{{end}}">Overview</a>
+    <a href="/orgs/{{.Org.Slug}}/requests" class="{{if eq .Route "org-requests"}}active{{end}}">Requests</a>
+    <a href="/orgs/{{.Org.Slug}}/ledger" class="{{if eq .Route "org-ledger"}}active{{end}}">Ledger</a>
+    {{with .FiscalYear}}{{if .ID}}
+    <a href="/orgs/{{$.Org.Slug}}/years/{{.ID}}/events" class="{{if or (eq $.Route "org-events") (eq $.Route "org-event-detail")}}active{{end}}">Events</a>
+    <a href="/orgs/{{$.Org.Slug}}/years/{{.ID}}/analysis" class="{{if eq $.Route "org-analysis"}}active{{end}}">Analysis</a>
+    <a href="/orgs/{{$.Org.Slug}}/years/{{.ID}}/report" class="{{if eq $.Route "org-report"}}active{{end}}">Report</a>
+    {{end}}{{end}}
+    <a href="/orgs/{{.Org.Slug}}/teams" class="{{if eq .Route "org-teams"}}active{{end}}">Teams</a>
+    <a href="/orgs/{{.Org.Slug}}/members" class="{{if eq .Route "org-members"}}active{{end}}">Members</a>
+    {{end}}
   </div>
 
   <div class="container">
@@ -648,17 +540,14 @@
     /* ── Theme toggle ─────────────────────────────────────────────── */
     const html = document.documentElement;
     const btn  = document.getElementById('theme-toggle');
-
     function applyTheme(t) {
       html.setAttribute('data-theme', t);
       btn.textContent = t === 'dark' ? '☀️' : '🌙';
       localStorage.setItem('theme', t);
     }
-
     const saved = localStorage.getItem('theme') ||
       (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
     applyTheme(saved);
-
     btn.addEventListener('click', () =>
       applyTheme(html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'));
 
@@ -696,7 +585,7 @@
       requestAnimationFrame(step);
     }
 
-    /* ── Scroll reveal + counter trigger ─────────────────────────── */
+    /* ── Scroll reveal ────────────────────────────────────────────── */
     const io = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (!entry.isIntersecting) return;
@@ -707,19 +596,17 @@
         io.unobserve(entry.target);
       });
     }, { threshold: 0.08 });
-
     document.querySelectorAll('.animate-on-scroll').forEach(el => io.observe(el));
 
-    /* ── Chart.js defaults for dark/light ─────────────────────────── */
-    function getThemeColor(v) {
-      const dark = html.getAttribute('data-theme') === 'dark';
-      return {
-        gridColor: dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)',
-        textColor:  dark ? '#5c6585' : '#9fa8c7',
-      }[v];
+    /* ── Chart.js defaults ────────────────────────────────────────── */
+    if (typeof Chart !== 'undefined') {
+      function getThemeColor(v) {
+        const dark = html.getAttribute('data-theme') === 'dark';
+        return { gridColor: dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)', textColor: dark ? '#5c6585' : '#9fa8c7' }[v];
+      }
+      Chart.defaults.color = () => getThemeColor('textColor');
+      Chart.defaults.borderColor = () => getThemeColor('gridColor');
     }
-    Chart.defaults.color = () => getThemeColor('textColor');
-    Chart.defaults.borderColor = () => getThemeColor('gridColor');
   </script>
 </body>
 </html>

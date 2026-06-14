@@ -151,6 +151,7 @@ func parseTmpl(files ...string) *template.Template {
 }
 
 var (
+	homepageTmpl    = parseTmpl("templates/homepage.html")
 	baseTmpl        = parseTmpl("templates/base.html")
 	dashboardTmpl   = parseTmpl("templates/base.html", "templates/dashboard.html")
 	txnsTmpl        = parseTmpl("templates/base.html", "templates/transactions.html")
@@ -170,22 +171,23 @@ var (
 	peopleTmpl      = parseTmpl("templates/base.html", "templates/people.html")
 	settingsTmpl    = parseTmpl("templates/base.html", "templates/settings.html")
 
-	// Org
-	orgListTmpl    = parseTmpl("templates/base.html", "templates/org_list.html")
-	orgCreateTmpl  = parseTmpl("templates/base.html", "templates/org_create.html")
-	orgHomeTmpl    = parseTmpl("templates/base.html", "templates/org_home.html")
-	orgTeamsTmpl   = parseTmpl("templates/base.html", "templates/org_teams.html")
-	orgMembersTmpl = parseTmpl("templates/base.html", "templates/org_members.html")
-	orgInviteTmpl  = parseTmpl("templates/base.html", "templates/org_invite.html")
-	orgJoinTmpl         = parseTmpl("templates/base.html", "templates/org_join.html")
-	orgEventsTmpl       = parseTmpl("templates/base.html", "templates/org_events.html")
-	orgEventDetailTmpl  = parseTmpl("templates/base.html", "templates/org_event_detail.html")
-	orgRequestsTmpl     = parseTmpl("templates/base.html", "templates/org_requests.html")
-	orgRequestDetailTmpl = parseTmpl("templates/base.html", "templates/org_request_detail.html")
-	orgLedgerTmpl       = parseTmpl("templates/base.html", "templates/org_ledger.html")
-	orgBankImportTmpl   = parseTmpl("templates/base.html", "templates/org_bank_import.html")
-	orgAnalysisTmpl     = parseTmpl("templates/base.html", "templates/org_analysis.html")
-	orgReportTmpl       = parseTmpl("templates/base.html", "templates/org_report.html")
+	// Org — list/create/join stay on personal base; inner org pages use business base
+	orgListTmpl   = parseTmpl("templates/base.html", "templates/org_list.html")
+	orgCreateTmpl = parseTmpl("templates/base.html", "templates/org_create.html")
+	orgJoinTmpl   = parseTmpl("templates/base.html", "templates/org_join.html")
+
+	orgHomeTmpl          = parseTmpl("templates/base_org.html", "templates/org_home.html")
+	orgTeamsTmpl         = parseTmpl("templates/base_org.html", "templates/org_teams.html")
+	orgMembersTmpl       = parseTmpl("templates/base_org.html", "templates/org_members.html")
+	orgInviteTmpl        = parseTmpl("templates/base_org.html", "templates/org_invite.html")
+	orgEventsTmpl        = parseTmpl("templates/base_org.html", "templates/org_events.html")
+	orgEventDetailTmpl   = parseTmpl("templates/base_org.html", "templates/org_event_detail.html")
+	orgRequestsTmpl      = parseTmpl("templates/base_org.html", "templates/org_requests.html")
+	orgRequestDetailTmpl = parseTmpl("templates/base_org.html", "templates/org_request_detail.html")
+	orgLedgerTmpl        = parseTmpl("templates/base_org.html", "templates/org_ledger.html")
+	orgBankImportTmpl    = parseTmpl("templates/base_org.html", "templates/org_bank_import.html")
+	orgAnalysisTmpl      = parseTmpl("templates/base_org.html", "templates/org_analysis.html")
+	orgReportTmpl        = parseTmpl("templates/base_org.html", "templates/org_report.html")
 )
 
 type authInfo struct {
@@ -214,6 +216,20 @@ func (e *userError) Error() string {
 func render(w http.ResponseWriter, tmpl *template.Template, data interface{}) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := tmpl.ExecuteTemplate(w, "base.html", data); err != nil {
+		slog.Error("template error", "err", err)
+	}
+}
+
+func renderOrg(w http.ResponseWriter, tmpl *template.Template, data interface{}) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if err := tmpl.ExecuteTemplate(w, "base_org.html", data); err != nil {
+		slog.Error("template error", "err", err)
+	}
+}
+
+func renderRaw(w http.ResponseWriter, tmpl *template.Template, data interface{}) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if err := tmpl.Execute(w, data); err != nil {
 		slog.Error("template error", "err", err)
 	}
 }
@@ -351,6 +367,13 @@ func (h *Handler) ownerOrViewerMW(next http.HandlerFunc) http.HandlerFunc {
 			"Title":   "Access Denied",
 			"Content": template.HTML(`<div class="error-page"><h1>403 - Access Denied</h1><p>You do not have permission to view this user's finances.</p></div>`),
 		})
+	})
+}
+
+func (h *Handler) Homepage(w http.ResponseWriter, r *http.Request) {
+	a := getAuth(r)
+	renderRaw(w, homepageTmpl, map[string]interface{}{
+		"Email": a.Email,
 	})
 }
 
@@ -2551,7 +2574,8 @@ func (h *Handler) Settings(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("GET /{$}", h.Dashboard)
+	mux.HandleFunc("GET /{$}", h.Homepage)
+	mux.HandleFunc("GET /dashboard", h.authMW(h.Dashboard))
 	mux.HandleFunc("GET /transactions", h.Transactions)
 	mux.HandleFunc("GET /import", h.ImportPage)
 	mux.HandleFunc("POST /import/preview", h.ImportPreview)
