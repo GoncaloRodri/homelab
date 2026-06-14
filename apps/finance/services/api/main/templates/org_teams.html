@@ -19,7 +19,7 @@
   <table>
     <thead>
       <tr>
-        <th>Name</th>
+        <th>Team</th>
         <th>Type</th>
         <th>Members</th>
         {{if eq $d.MyRole "admin"}}<th></th>{{end}}
@@ -30,7 +30,12 @@
       {{$count := 0}}
       {{range $d.Members}}{{range .TeamIDs}}{{if eq . $t.ID}}{{$count = add $count 1}}{{end}}{{end}}{{end}}
       <tr>
-        <td style="font-weight:600;">{{$t.Name}}</td>
+        <td>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span class="team-avatar">{{if $t.Avatar}}{{$t.Avatar}}{{else}}👥{{end}}</span>
+            <span style="font-weight:600;">{{$t.Name}}</span>
+          </div>
+        </td>
         <td>
           {{if eq (print $t.Type) "guest"}}
             <span style="font-size:11px; font-weight:600; padding:3px 9px; border-radius:20px; background:rgba(251,191,36,0.1); color:#fbbf24;">guest</span>
@@ -64,13 +69,27 @@
 {{end}}
 
 {{if eq $d.MyRole "admin"}}
-<div id="new-team-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:500; align-items:center; justify-content:center;">
-  <div class="card" style="width:100%; max-width:400px; margin:16px;">
+<div id="new-team-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:500; align-items:center; justify-content:center; padding:16px;">
+  <div class="card" style="width:100%; max-width:420px;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
       <h2>New team</h2>
       <button onclick="document.getElementById('new-team-modal').style.display='none'" style="background:none; border:none; color:var(--text3); font-size:20px; cursor:pointer;">×</button>
     </div>
     <form method="post" action="/orgs/{{$d.Org.Slug}}/teams">
+      <!-- Avatar picker -->
+      <div style="margin-bottom:16px;">
+        <label class="form-label">Avatar</label>
+        <input type="hidden" name="avatar" id="avatar-val" value="👥">
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
+          <span class="team-avatar team-avatar-lg" id="avatar-preview">👥</span>
+          <span style="font-size:12px; color:var(--text3);">Pick an emoji below</span>
+        </div>
+        <div class="emoji-picker">
+          {{range (avatarEmojis)}}
+          <button type="button" class="emoji-opt" onclick="pickEmoji(this, '{{.}}')">{{.}}</button>
+          {{end}}
+        </div>
+      </div>
       <div style="margin-bottom:14px;">
         <label class="form-label">Team name</label>
         <input class="form-input" type="text" name="name" placeholder="Marketing" required autofocus>
@@ -86,5 +105,13 @@
     </form>
   </div>
 </div>
+<script>
+function pickEmoji(btn, emoji) {
+  document.querySelectorAll('.emoji-opt').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById('avatar-val').value = emoji;
+  document.getElementById('avatar-preview').textContent = emoji;
+}
+</script>
 {{end}}
 {{end}}

@@ -118,6 +118,19 @@ func parseTmpl(files ...string) *template.Template {
 				return "var(--bg3); color:var(--text3)"
 			}
 		},
+		"avatarEmojis": func() []string {
+			return []string{
+				"👥", "🚀", "⚡", "🎯", "🏆", "💡", "🔥", "🌊", "🎨", "🛠️",
+				"📊", "🎪", "🌿", "🦋", "🏄", "🎸", "🔬", "📡", "🏗️", "🎭",
+				"🌍", "🦁", "🐉", "🦅", "🐋", "🌙", "⭐", "🍀", "🔮", "🎲",
+			}
+		},
+		"teamAvatar": func(t OrgTeam) string {
+			if t.Avatar != "" {
+				return t.Avatar
+			}
+			return "👥"
+		},
 		"varColor": func(planned, actual int64) string {
 			if planned == 0 {
 				return "var(--text2)"
