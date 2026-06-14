@@ -1,0 +1,85 @@
+{{define "content"}}
+{{$d := .}}
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:12px;">
+  <div>
+    <div style="font-size:12px; color:var(--text3); margin-bottom:4px;">
+      <a href="/orgs" style="color:var(--text3); text-decoration:none;">Orgs</a> /
+      <a href="/orgs/{{$d.Org.Slug}}" style="color:var(--text3); text-decoration:none;">{{$d.Org.Name}}</a> /
+      {{$d.FiscalYear.Label}} — Events
+    </div>
+    <h1>Events</h1>
+  </div>
+  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+    <a href="/orgs/{{$d.Org.Slug}}/years/{{$d.FiscalYear.ID}}/analysis" class="btn btn-outline btn-sm">Analysis</a>
+    {{if ne (print $d.FiscalYear.Status) "closed"}}
+    <a href="/orgs/{{$d.Org.Slug}}/years/{{$d.FiscalYear.ID}}/events/new" class="btn btn-primary btn-sm">+ New event</a>
+    {{end}}
+  </div>
+</div>
+
+<!-- Year status banner -->
+<div style="display:flex; gap:8px; align-items:center; margin-bottom:20px;">
+  <span style="font-size:12px; color:var(--text3);">Fiscal year:</span>
+  <span style="font-weight:600;">{{$d.FiscalYear.Label}}</span>
+  <span style="font-size:11px; font-weight:700; padding:2px 8px; border-radius:20px;
+    {{if eq (print $d.FiscalYear.Status) "active"}}background:rgba(74,222,128,0.12); color:var(--green);
+    {{else if eq (print $d.FiscalYear.Status) "closed"}}background:var(--bg3); color:var(--text3);
+    {{else}}background:rgba(251,191,36,0.1); color:#fbbf24;{{end}}">
+    {{$d.FiscalYear.Status}}
+  </span>
+  <span style="font-size:12px; color:var(--text3);">{{dateShort $d.FiscalYear.StartDate}} — {{dateShort $d.FiscalYear.EndDate}}</span>
+</div>
+
+{{if $d.Events}}
+<div class="card animate-on-scroll" style="padding:0; overflow:hidden;">
+  <table>
+    <thead>
+      <tr>
+        <th>Event</th>
+        <th>Teams</th>
+        <th>Dates</th>
+        <th style="text-align:right;">Planned income</th>
+        <th style="text-align:right;">Planned expense</th>
+        <th>Status</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {{range $d.Events}}
+      <tr>
+        <td style="font-weight:600;">{{.Event.Name}}</td>
+        <td style="font-size:12px; color:var(--text3);">
+          {{if .Teams}}{{range .Teams}}<span style="display:inline-block; padding:1px 6px; border-radius:4px; background:var(--bg3); margin-right:3px; font-size:11px;">{{.Name}}</span>{{end}}{{else}}—{{end}}
+        </td>
+        <td style="font-size:12px; color:var(--text2);">{{dateShort .Event.DateStart}} — {{dateShort .Event.DateEnd}}</td>
+        <td style="text-align:right; color:var(--green); font-size:13px;">{{cents .TotalIncome}}</td>
+        <td style="text-align:right; color:var(--red); font-size:13px;">{{cents .TotalExpense}}</td>
+        <td>
+          {{if eq (print .Event.Status) "approved"}}
+            <span style="font-size:11px; font-weight:700; padding:2px 8px; border-radius:20px; background:rgba(74,222,128,0.12); color:var(--green);">approved</span>
+          {{else if eq (print .Event.Status) "review"}}
+            <span style="font-size:11px; font-weight:700; padding:2px 8px; border-radius:20px; background:rgba(251,191,36,0.1); color:#fbbf24;">review</span>
+          {{else if eq (print .Event.Status) "rejected"}}
+            <span style="font-size:11px; font-weight:700; padding:2px 8px; border-radius:20px; background:rgba(239,68,68,0.12); color:var(--red);">rejected</span>
+          {{else}}
+            <span style="font-size:11px; font-weight:700; padding:2px 8px; border-radius:20px; background:var(--bg3); color:var(--text3);">draft</span>
+          {{end}}
+        </td>
+        <td style="text-align:right;">
+          <a href="/orgs/{{$d.Org.Slug}}/years/{{$d.FiscalYear.ID}}/events/{{.Event.ID}}" class="btn btn-outline btn-sm">View</a>
+        </td>
+      </tr>
+      {{end}}
+    </tbody>
+  </table>
+</div>
+{{else}}
+<div class="card empty-state animate-on-scroll">
+  <div style="font-size:36px; margin-bottom:12px;">🗓️</div>
+  <h3>No events yet</h3>
+  <p style="margin-bottom:16px;">Plan events with budgets for teams to execute this fiscal year.</p>
+  <a href="/orgs/{{$d.Org.Slug}}/years/{{$d.FiscalYear.ID}}/events/new" class="btn btn-primary">Create first event</a>
+</div>
+{{end}}
+{{end}}

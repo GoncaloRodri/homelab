@@ -98,6 +98,35 @@ func parseTmpl(files ...string) *template.Template {
 		"isOver": func(spent, budget int64) bool {
 			return budget > 0 && spent > budget
 		},
+		"dateInput": func(t time.Time) string {
+			if t.IsZero() {
+				return ""
+			}
+			return t.Format("2006-01-02")
+		},
+		"statusColor": func(s string) string {
+			switch s {
+			case "approved", "paid", "delivered", "settled", "received", "reconciled", "done":
+				return "rgba(74,222,128,0.12); color:var(--green)"
+			case "submitted", "under_review", "review", "ordered", "disbursed", "pending_payment":
+				return "rgba(99,179,237,0.12); color:#63b3ed"
+			case "rejected", "cancelled", "disputed":
+				return "rgba(239,68,68,0.12); color:var(--red)"
+			case "info_requested", "settlement_due", "partial_settlement":
+				return "rgba(251,191,36,0.1); color:#fbbf24"
+			default:
+				return "var(--bg3); color:var(--text3)"
+			}
+		},
+		"varColor": func(planned, actual int64) string {
+			if planned == 0 {
+				return "var(--text2)"
+			}
+			if actual > planned {
+				return "var(--red)"
+			}
+			return "var(--green)"
+		},
 		"jsonVals": func(m map[string]int64) template.JS {
 			var vals []string
 			for _, v := range m {
@@ -135,7 +164,15 @@ var (
 	orgTeamsTmpl   = parseTmpl("templates/base.html", "templates/org_teams.html")
 	orgMembersTmpl = parseTmpl("templates/base.html", "templates/org_members.html")
 	orgInviteTmpl  = parseTmpl("templates/base.html", "templates/org_invite.html")
-	orgJoinTmpl    = parseTmpl("templates/base.html", "templates/org_join.html")
+	orgJoinTmpl         = parseTmpl("templates/base.html", "templates/org_join.html")
+	orgEventsTmpl       = parseTmpl("templates/base.html", "templates/org_events.html")
+	orgEventDetailTmpl  = parseTmpl("templates/base.html", "templates/org_event_detail.html")
+	orgRequestsTmpl     = parseTmpl("templates/base.html", "templates/org_requests.html")
+	orgRequestDetailTmpl = parseTmpl("templates/base.html", "templates/org_request_detail.html")
+	orgLedgerTmpl       = parseTmpl("templates/base.html", "templates/org_ledger.html")
+	orgBankImportTmpl   = parseTmpl("templates/base.html", "templates/org_bank_import.html")
+	orgAnalysisTmpl     = parseTmpl("templates/base.html", "templates/org_analysis.html")
+	orgReportTmpl       = parseTmpl("templates/base.html", "templates/org_report.html")
 )
 
 type authInfo struct {
@@ -244,6 +281,11 @@ type storeIface interface {
 	createTxRequest(ctx context.Context, r *TxRequest) error
 	appendStatusLog(ctx context.Context, reqID, orgID string, entry StatusLogEntry) error
 	updateTxRequest(ctx context.Context, reqID, orgID string, update bson.M) error
+	getLedgerEntries(ctx context.Context, orgID, fiscalYearID string, extra bson.M) ([]OrgLedgerEntry, error)
+	createLedgerEntry(ctx context.Context, e *OrgLedgerEntry) error
+	updateLedgerEntry(ctx context.Context, id, orgID string, update bson.M) error
+	getAttachments(ctx context.Context, requestID, orgID string) ([]OrgAttachment, error)
+	createAttachment(ctx context.Context, a *OrgAttachment) error
 }
 
 type Handler struct {

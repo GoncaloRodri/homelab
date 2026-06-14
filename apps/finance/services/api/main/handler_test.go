@@ -217,6 +217,15 @@ func (m *mockStore) getTxRequest(_ context.Context, _, _ string) (*TxRequest, er
 func (m *mockStore) createTxRequest(_ context.Context, _ *TxRequest) error                    { return nil }
 func (m *mockStore) appendStatusLog(_ context.Context, _, _ string, _ StatusLogEntry) error   { return nil }
 func (m *mockStore) updateTxRequest(_ context.Context, _, _ string, _ bson.M) error           { return nil }
+func (m *mockStore) getLedgerEntries(_ context.Context, _, _ string, _ bson.M) ([]OrgLedgerEntry, error) {
+	return nil, nil
+}
+func (m *mockStore) createLedgerEntry(_ context.Context, _ *OrgLedgerEntry) error  { return nil }
+func (m *mockStore) updateLedgerEntry(_ context.Context, _, _ string, _ bson.M) error { return nil }
+func (m *mockStore) getAttachments(_ context.Context, _, _ string) ([]OrgAttachment, error) {
+	return nil, nil
+}
+func (m *mockStore) createAttachment(_ context.Context, _ *OrgAttachment) error { return nil }
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 

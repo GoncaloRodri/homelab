@@ -354,3 +354,173 @@ type OrgInviteData struct {
 	Error   string
 	Link    string // generated invite link shown after creation
 }
+
+type OrgEventsData struct {
+	UserID     string
+	Email      string
+	Title      string
+	Route      string
+	Org        Org
+	MyRole     OrgRole
+	FiscalYear FiscalYear
+	Events     []OrgEventSummary
+	Teams      []OrgTeam
+}
+
+type OrgEventSummary struct {
+	Event        OrgEvent
+	TotalIncome  int64
+	TotalExpense int64
+	Teams        []OrgTeam
+}
+
+type OrgEventDetailData struct {
+	UserID       string
+	Email        string
+	Title        string
+	Route        string
+	Org          Org
+	MyRole       OrgRole
+	FiscalYear   FiscalYear
+	Event        OrgEvent
+	BudgetLines  []BudgetLine
+	Comments     []EventComment
+	Teams        []OrgTeam
+	EventTeams   []OrgTeam
+	TotalIncome  int64
+	TotalExpense int64
+	Error        string
+}
+
+// ── Phase 3 page data ────────────────────────────────────────────────────────
+
+type OrgRequestsData struct {
+	UserID     string
+	Email      string
+	Title      string
+	Route      string
+	Org        Org
+	MyRole     OrgRole
+	Requests   []TxRequest
+	Events     []OrgEvent
+	Teams      []OrgTeam
+	StatusFilter string
+}
+
+type OrgRequestDetailData struct {
+	UserID      string
+	Email       string
+	Title       string
+	Route       string
+	Org         Org
+	MyRole      OrgRole
+	Request     TxRequest
+	Event       *OrgEvent
+	BudgetLine  *BudgetLine
+	Team        *OrgTeam
+	FiscalYear  *FiscalYear
+	Attachments []OrgAttachment
+	Error       string
+}
+
+type OrgLedgerData struct {
+	UserID      string
+	Email       string
+	Title       string
+	Route       string
+	Org         Org
+	MyRole      OrgRole
+	FiscalYear  *FiscalYear
+	FiscalYears []FiscalYear
+	Entries     []OrgLedgerEntry
+	Events      map[string]OrgEvent
+	Teams       map[string]OrgTeam
+	TotalIncome int64
+	TotalExpense int64
+}
+
+type OrgBankImportData struct {
+	UserID     string
+	Email      string
+	Title      string
+	Route      string
+	Org        Org
+	MyRole     OrgRole
+	FiscalYear *FiscalYear
+	Rows       []BankImportRow
+	Error      string
+	Imported   int
+}
+
+type BankImportRow struct {
+	Date        string
+	Description string
+	AmountCents int64
+	Reference   string
+	Matched     bool
+	MatchedID   string
+}
+
+// ── Phase 4 page data ────────────────────────────────────────────────────────
+
+type OrgAnalysisData struct {
+	UserID      string
+	Email       string
+	Title       string
+	Route       string
+	Org         Org
+	MyRole      OrgRole
+	FiscalYear  FiscalYear
+	FiscalYears []FiscalYear
+	EventRows   []AnalysisEventRow
+	TeamRows    []AnalysisTeamRow
+	TotalPlannedIncome   int64
+	TotalActualIncome    int64
+	TotalPlannedExpense  int64
+	TotalActualExpense   int64
+}
+
+type AnalysisEventRow struct {
+	Event          OrgEvent
+	PlannedIncome  int64
+	ActualIncome   int64
+	PlannedExpense int64
+	ActualExpense  int64
+}
+
+type AnalysisTeamRow struct {
+	Team           OrgTeam
+	PlannedIncome  int64
+	ActualIncome   int64
+	PlannedExpense int64
+	ActualExpense  int64
+}
+
+// ── Phase 5 page data ────────────────────────────────────────────────────────
+
+type OrgReportData struct {
+	UserID      string
+	Email       string
+	Title       string
+	Route       string
+	Org         Org
+	MyRole      OrgRole
+	FiscalYear  FiscalYear
+	FiscalYears []FiscalYear
+	EventReports []EventReport
+	TotalPlannedIncome   int64
+	TotalActualIncome    int64
+	TotalPlannedExpense  int64
+	TotalActualExpense   int64
+}
+
+type EventReport struct {
+	Event          OrgEvent
+	BudgetLines    []BudgetLine
+	Comments       []EventComment // kind=feedback only
+	PlannedIncome  int64
+	ActualIncome   int64
+	PlannedExpense int64
+	ActualExpense  int64
+	Teams          []OrgTeam
+}
