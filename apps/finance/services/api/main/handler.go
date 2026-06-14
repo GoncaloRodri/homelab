@@ -127,6 +127,15 @@ var (
 	autoImportTmpl  = parseTmpl("templates/base.html", "templates/auto_import.html")
 	peopleTmpl      = parseTmpl("templates/base.html", "templates/people.html")
 	settingsTmpl    = parseTmpl("templates/base.html", "templates/settings.html")
+
+	// Org
+	orgListTmpl    = parseTmpl("templates/base.html", "templates/org_list.html")
+	orgCreateTmpl  = parseTmpl("templates/base.html", "templates/org_create.html")
+	orgHomeTmpl    = parseTmpl("templates/base.html", "templates/org_home.html")
+	orgTeamsTmpl   = parseTmpl("templates/base.html", "templates/org_teams.html")
+	orgMembersTmpl = parseTmpl("templates/base.html", "templates/org_members.html")
+	orgInviteTmpl  = parseTmpl("templates/base.html", "templates/org_invite.html")
+	orgJoinTmpl    = parseTmpl("templates/base.html", "templates/org_join.html")
 )
 
 type authInfo struct {
@@ -194,6 +203,47 @@ type storeIface interface {
 	getImportSchedules(ctx context.Context, userID string) ([]ImportSchedule, error)
 	createImportSchedule(ctx context.Context, sched *ImportSchedule) error
 	deleteImportSchedule(ctx context.Context, id, userID string) error
+
+	// Org
+	getOrgsForUser(ctx context.Context, userID string) ([]OrgWithRole, error)
+	getOrg(ctx context.Context, orgID string) (*Org, error)
+	getOrgBySlug(ctx context.Context, slug string) (*Org, error)
+	createOrg(ctx context.Context, o *Org) error
+	slugExists(ctx context.Context, slug string) (bool, error)
+	getTeams(ctx context.Context, orgID string) ([]OrgTeam, error)
+	getTeam(ctx context.Context, teamID, orgID string) (*OrgTeam, error)
+	createTeam(ctx context.Context, t *OrgTeam) error
+	deleteTeam(ctx context.Context, teamID, orgID string) error
+	getMembers(ctx context.Context, orgID string) ([]OrgMember, error)
+	getMember(ctx context.Context, orgID, userID string) (*OrgMember, error)
+	createMember(ctx context.Context, m *OrgMember) error
+	updateMemberRole(ctx context.Context, memberID, orgID string, role OrgRole) error
+	removeMember(ctx context.Context, memberID, orgID string) error
+	getInvites(ctx context.Context, orgID string) ([]OrgInvite, error)
+	getInviteByToken(ctx context.Context, token string) (*OrgInvite, error)
+	createInvite(ctx context.Context, inv *OrgInvite) error
+	consumeInvite(ctx context.Context, inviteID string) error
+	revokeInvite(ctx context.Context, inviteID, orgID string) error
+	getFiscalYears(ctx context.Context, orgID string) ([]FiscalYear, error)
+	getFiscalYear(ctx context.Context, yearID, orgID string) (*FiscalYear, error)
+	getActiveFiscalYear(ctx context.Context, orgID string) (*FiscalYear, error)
+	createFiscalYear(ctx context.Context, y *FiscalYear) error
+	updateFiscalYearStatus(ctx context.Context, yearID, orgID string, status FiscalYearStatus, extraSet bson.M) error
+	getEvents(ctx context.Context, orgID, fiscalYearID string) ([]OrgEvent, error)
+	getEvent(ctx context.Context, eventID, orgID string) (*OrgEvent, error)
+	createEvent(ctx context.Context, e *OrgEvent) error
+	updateEvent(ctx context.Context, eventID, orgID string, update bson.M) error
+	deleteEvent(ctx context.Context, eventID, orgID string) error
+	getBudgetLines(ctx context.Context, eventID, orgID string) ([]BudgetLine, error)
+	createBudgetLine(ctx context.Context, l *BudgetLine) error
+	deleteBudgetLine(ctx context.Context, lineID, orgID string) error
+	getEventComments(ctx context.Context, eventID, orgID string) ([]EventComment, error)
+	createEventComment(ctx context.Context, c *EventComment) error
+	getTxRequests(ctx context.Context, orgID string, filter bson.M) ([]TxRequest, error)
+	getTxRequest(ctx context.Context, reqID, orgID string) (*TxRequest, error)
+	createTxRequest(ctx context.Context, r *TxRequest) error
+	appendStatusLog(ctx context.Context, reqID, orgID string, entry StatusLogEntry) error
+	updateTxRequest(ctx context.Context, reqID, orgID string, update bson.M) error
 }
 
 type Handler struct {
@@ -2488,6 +2538,8 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /tax", h.Tax)
 	mux.HandleFunc("GET /tax/export.csv", h.TaxExport)
 	mux.HandleFunc("GET /auto-import", h.AutoImport)
+
+	h.RegisterOrgRoutes(mux)
 }
 
 func sortStrings(s []string) {

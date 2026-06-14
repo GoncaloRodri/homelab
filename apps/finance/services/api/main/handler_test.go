@@ -170,6 +170,54 @@ func (m *mockStore) getImportSchedules(_ context.Context, _ string) ([]ImportSch
 func (m *mockStore) createImportSchedule(_ context.Context, _ *ImportSchedule) error { return nil }
 func (m *mockStore) deleteImportSchedule(_ context.Context, _, _ string) error        { return nil }
 
+// ── Org stubs (not exercised in unit tests) ───────────────────────────────────
+
+func (m *mockStore) getOrgsForUser(_ context.Context, _ string) ([]OrgWithRole, error) {
+	return nil, nil
+}
+func (m *mockStore) getOrg(_ context.Context, _ string) (*Org, error)            { return nil, nil }
+func (m *mockStore) getOrgBySlug(_ context.Context, _ string) (*Org, error)      { return nil, nil }
+func (m *mockStore) createOrg(_ context.Context, _ *Org) error                   { return nil }
+func (m *mockStore) slugExists(_ context.Context, _ string) (bool, error)        { return false, nil }
+func (m *mockStore) getTeams(_ context.Context, _ string) ([]OrgTeam, error)     { return nil, nil }
+func (m *mockStore) getTeam(_ context.Context, _, _ string) (*OrgTeam, error)    { return nil, nil }
+func (m *mockStore) createTeam(_ context.Context, _ *OrgTeam) error              { return nil }
+func (m *mockStore) deleteTeam(_ context.Context, _, _ string) error             { return nil }
+func (m *mockStore) getMembers(_ context.Context, _ string) ([]OrgMember, error) { return nil, nil }
+func (m *mockStore) getMember(_ context.Context, _, _ string) (*OrgMember, error) {
+	return nil, nil
+}
+func (m *mockStore) createMember(_ context.Context, _ *OrgMember) error                   { return nil }
+func (m *mockStore) updateMemberRole(_ context.Context, _, _ string, _ OrgRole) error     { return nil }
+func (m *mockStore) removeMember(_ context.Context, _, _ string) error                    { return nil }
+func (m *mockStore) getInvites(_ context.Context, _ string) ([]OrgInvite, error)          { return nil, nil }
+func (m *mockStore) getInviteByToken(_ context.Context, _ string) (*OrgInvite, error)     { return nil, nil }
+func (m *mockStore) createInvite(_ context.Context, _ *OrgInvite) error                   { return nil }
+func (m *mockStore) consumeInvite(_ context.Context, _ string) error                      { return nil }
+func (m *mockStore) revokeInvite(_ context.Context, _, _ string) error                    { return nil }
+func (m *mockStore) getFiscalYears(_ context.Context, _ string) ([]FiscalYear, error)     { return nil, nil }
+func (m *mockStore) getFiscalYear(_ context.Context, _, _ string) (*FiscalYear, error)    { return nil, nil }
+func (m *mockStore) getActiveFiscalYear(_ context.Context, _ string) (*FiscalYear, error) { return nil, nil }
+func (m *mockStore) createFiscalYear(_ context.Context, _ *FiscalYear) error              { return nil }
+func (m *mockStore) updateFiscalYearStatus(_ context.Context, _, _ string, _ FiscalYearStatus, _ bson.M) error {
+	return nil
+}
+func (m *mockStore) getEvents(_ context.Context, _, _ string) ([]OrgEvent, error)      { return nil, nil }
+func (m *mockStore) getEvent(_ context.Context, _, _ string) (*OrgEvent, error)        { return nil, nil }
+func (m *mockStore) createEvent(_ context.Context, _ *OrgEvent) error                  { return nil }
+func (m *mockStore) updateEvent(_ context.Context, _, _ string, _ bson.M) error        { return nil }
+func (m *mockStore) deleteEvent(_ context.Context, _, _ string) error                  { return nil }
+func (m *mockStore) getBudgetLines(_ context.Context, _, _ string) ([]BudgetLine, error) { return nil, nil }
+func (m *mockStore) createBudgetLine(_ context.Context, _ *BudgetLine) error            { return nil }
+func (m *mockStore) deleteBudgetLine(_ context.Context, _, _ string) error              { return nil }
+func (m *mockStore) getEventComments(_ context.Context, _, _ string) ([]EventComment, error) { return nil, nil }
+func (m *mockStore) createEventComment(_ context.Context, _ *EventComment) error             { return nil }
+func (m *mockStore) getTxRequests(_ context.Context, _ string, _ bson.M) ([]TxRequest, error) { return nil, nil }
+func (m *mockStore) getTxRequest(_ context.Context, _, _ string) (*TxRequest, error)          { return nil, nil }
+func (m *mockStore) createTxRequest(_ context.Context, _ *TxRequest) error                    { return nil }
+func (m *mockStore) appendStatusLog(_ context.Context, _, _ string, _ StatusLogEntry) error   { return nil }
+func (m *mockStore) updateTxRequest(_ context.Context, _, _ string, _ bson.M) error           { return nil }
+
 // ── helpers ───────────────────────────────────────────────────────────────────
 
 func newHandler(store *mockStore) *Handler {
