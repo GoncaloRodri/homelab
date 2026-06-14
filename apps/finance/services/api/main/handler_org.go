@@ -229,11 +229,16 @@ func (h *Handler) OrgTeamCreate(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "name required", http.StatusBadRequest)
 			return
 		}
+		avatar := r.FormValue("avatar")
+		if avatar == "" {
+			avatar = "👥"
+		}
 		team := &OrgTeam{
 			ID:        bson.NewObjectID().Hex(),
 			OrgID:     org.ID,
 			Name:      name,
 			Type:      teamType,
+			Avatar:    avatar,
 			CreatedAt: time.Now(),
 		}
 		if err := h.store.createTeam(ctx, team); err != nil {

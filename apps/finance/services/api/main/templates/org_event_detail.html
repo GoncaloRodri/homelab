@@ -118,7 +118,7 @@
         </div>
         <div>
           <div style="color:var(--text3); font-size:11px; font-weight:700; letter-spacing:.06em; margin-bottom:4px;">TEAMS</div>
-          <div>{{if $d.EventTeams}}{{range $d.EventTeams}}<span style="display:inline-block; padding:1px 6px; border-radius:4px; background:var(--bg3); margin-right:3px; font-size:11px;">{{.Name}}</span>{{end}}{{else}}—{{end}}</div>
+          <div style="display:flex; flex-wrap:wrap; gap:4px;">{{if $d.EventTeams}}{{range $d.EventTeams}}<span style="display:inline-flex; align-items:center; gap:3px; padding:2px 8px; border-radius:4px; background:var(--bg3); font-size:11px;"><span style="font-size:13px;">{{if .Avatar}}{{.Avatar}}{{else}}👥{{end}}</span>{{.Name}}</span>{{end}}{{else}}<span style="color:var(--text3);">—</span>{{end}}</div>
         </div>
       </div>
       {{if $d.Event.Description}}

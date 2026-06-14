@@ -50,7 +50,7 @@
       <tr>
         <td style="font-weight:600;">{{.Event.Name}}</td>
         <td style="font-size:12px; color:var(--text3);">
-          {{if .Teams}}{{range .Teams}}<span style="display:inline-block; padding:1px 6px; border-radius:4px; background:var(--bg3); margin-right:3px; font-size:11px;">{{.Name}}</span>{{end}}{{else}}—{{end}}
+          {{if .Teams}}{{range .Teams}}<span style="display:inline-flex; align-items:center; gap:3px; padding:2px 7px; border-radius:4px; background:var(--bg3); margin-right:3px; font-size:11px;"><span style="font-size:13px;">{{if .Avatar}}{{.Avatar}}{{else}}👥{{end}}</span>{{.Name}}</span>{{end}}{{else}}—{{end}}
         </td>
         <td style="font-size:12px; color:var(--text2);">{{dateShort .Event.DateStart}} — {{dateShort .Event.DateEnd}}</td>
         <td style="text-align:right; color:var(--green); font-size:13px;">{{cents .TotalIncome}}</td>

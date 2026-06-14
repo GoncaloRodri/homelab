@@ -35,6 +35,7 @@ type OrgTeam struct {
 	OrgID     string    `bson:"org_id"     json:"org_id"`
 	Name      string    `bson:"name"       json:"name"`
 	Type      TeamType  `bson:"type"       json:"type"`
+	Avatar    string    `bson:"avatar"     json:"avatar"` // single emoji
 	CreatedAt time.Time `bson:"created_at" json:"created_at"`
 }
 
