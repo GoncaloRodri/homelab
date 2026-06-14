@@ -373,7 +373,8 @@ func (h *Handler) ownerOrViewerMW(next http.HandlerFunc) http.HandlerFunc {
 func (h *Handler) Homepage(w http.ResponseWriter, r *http.Request) {
 	a := getAuth(r)
 	renderRaw(w, homepageTmpl, map[string]interface{}{
-		"Email": a.Email,
+		"Email":  a.Email,
+		"UserID": a.UserID,
 	})
 }
 
