@@ -284,6 +284,9 @@ type storeIface interface {
 	createEvent(ctx context.Context, e *OrgEvent) error
 	updateEvent(ctx context.Context, eventID, orgID string, update bson.M) error
 	deleteEvent(ctx context.Context, eventID, orgID string) error
+	addGoalItem(ctx context.Context, eventID, orgID string, goal EventGoal) error
+	toggleGoalItem(ctx context.Context, eventID, orgID, goalID string, done bool, doneBy string) error
+	deleteGoalItem(ctx context.Context, eventID, orgID, goalID string) error
 	getBudgetLines(ctx context.Context, eventID, orgID string) ([]BudgetLine, error)
 	createBudgetLine(ctx context.Context, l *BudgetLine) error
 	deleteBudgetLine(ctx context.Context, lineID, orgID string) error

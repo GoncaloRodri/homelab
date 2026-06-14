@@ -100,6 +100,16 @@ const (
 	EventRejected EventStatus = "rejected"
 )
 
+// EventGoal is a single checkable item in an event's goal list.
+// Done can be toggled by any org member while the fiscal year is active.
+type EventGoal struct {
+	ID      string    `bson:"id"                 json:"id"`
+	Text    string    `bson:"text"               json:"text"`
+	Done    bool      `bson:"done"               json:"done"`
+	DoneBy  string    `bson:"done_by,omitempty"  json:"done_by,omitempty"`
+	DoneAt  time.Time `bson:"done_at,omitempty"  json:"done_at,omitempty"`
+}
+
 type OrgEvent struct {
 	ID           string      `bson:"_id"           json:"id"`
 	OrgID        string      `bson:"org_id"        json:"org_id"`
@@ -108,6 +118,7 @@ type OrgEvent struct {
 	Name         string      `bson:"name"          json:"name"`
 	Description  string      `bson:"description"   json:"description"`
 	Goals        string      `bson:"goals"         json:"goals"`
+	GoalItems    []EventGoal `bson:"goal_items"    json:"goal_items"`
 	DateStart    time.Time   `bson:"date_start"    json:"date_start"`
 	DateEnd      time.Time   `bson:"date_end"      json:"date_end"`
 	Status       EventStatus `bson:"status"        json:"status"`
