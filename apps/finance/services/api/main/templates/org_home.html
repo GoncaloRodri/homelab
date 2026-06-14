@@ -43,10 +43,17 @@
         {{dateShort $d.ActiveYear.StartDate}} — {{dateShort $d.ActiveYear.EndDate}}
       </div>
     </div>
-    <div style="display:flex; gap:8px;">
-      <a href="/orgs/{{$d.Org.Slug}}/years/{{$d.ActiveYear.ID}}/events" class="btn btn-outline btn-sm">Events</a>
-      <a href="/orgs/{{$d.Org.Slug}}/years/{{$d.ActiveYear.ID}}/requests" class="btn btn-outline btn-sm">Requests</a>
-      <a href="/orgs/{{$d.Org.Slug}}/years/{{$d.ActiveYear.ID}}/ledger" class="btn btn-outline btn-sm">Ledger</a>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <a href="/orgs/{{$d.Org.Slug}}/years/{{$d.ActiveYear.ID}}/events"   class="btn btn-outline btn-sm">Events</a>
+      <a href="/orgs/{{$d.Org.Slug}}/years/{{$d.ActiveYear.ID}}/analysis" class="btn btn-outline btn-sm">Analysis</a>
+      <a href="/orgs/{{$d.Org.Slug}}/requests"                            class="btn btn-outline btn-sm">Requests</a>
+      <a href="/orgs/{{$d.Org.Slug}}/ledger"                              class="btn btn-outline btn-sm">Ledger</a>
+      {{if eq $d.MyRole "admin"}}
+      <form method="post" action="/orgs/{{$d.Org.Slug}}/years/{{$d.ActiveYear.ID}}/close" style="display:inline;"
+            onsubmit="return confirm('Close {{$d.ActiveYear.Label}}? This cannot be undone. Teams will be able to add post-mortem feedback.')">
+        <button class="btn btn-sm" style="background:transparent; border:1px solid var(--text3); color:var(--text3);">Close year</button>
+      </form>
+      {{end}}
     </div>
   </div>
 </div>
