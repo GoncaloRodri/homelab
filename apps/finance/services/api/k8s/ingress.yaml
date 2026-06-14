@@ -18,3 +18,25 @@ spec:
                 name: api
                 port:
                   name: http
+---
+# Public homepage — no auth middleware so unauthenticated visitors can reach it.
+# Traefik picks the most-specific match: this Exact rule wins for GET /,
+# the Prefix rule above catches everything else (still protected by forward-auth).
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: api-public
+  namespace: finance
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: finance.homelab.local
+      http:
+        paths:
+          - path: /
+            pathType: Exact
+            backend:
+              service:
+                name: api
+                port:
+                  name: http
