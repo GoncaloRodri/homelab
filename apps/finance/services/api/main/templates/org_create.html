@@ -1,0 +1,43 @@
+{{define "content"}}
+<div style="max-width:480px; margin:0 auto;">
+  <h1 style="margin-bottom:24px;">New Organisation</h1>
+
+  {{if .Error}}
+  <div class="error" style="margin-bottom:16px; padding:12px 16px; background:var(--red-dim); border-radius:var(--radius-sm);">{{.Error}}</div>
+  {{end}}
+
+  <div class="card">
+    <form method="post" action="/orgs/new">
+      <div style="margin-bottom:20px;">
+        <label class="form-label">Organisation name</label>
+        <input class="form-input" type="text" name="name" value="{{.Name}}" placeholder="Scouts Group Lisboa" required autofocus
+               oninput="autoSlug(this)">
+      </div>
+      <div style="margin-bottom:24px;">
+        <label class="form-label">URL slug <span style="color:var(--text3); font-weight:400;">(used in all links)</span></label>
+        <div style="display:flex; align-items:center; gap:0; border:1px solid var(--border2); border-radius:var(--radius-sm); overflow:hidden; background:var(--bg3);">
+          <span style="padding:0 10px; color:var(--text3); font-size:13px; white-space:nowrap; border-right:1px solid var(--border2);">finance.local/orgs/</span>
+          <input style="flex:1; border:none; background:transparent; padding:10px 12px; color:var(--text); font-size:13px; outline:none;" type="text" name="slug" id="slug" value="{{.Slug}}" placeholder="scouts-lisboa" required pattern="[a-z0-9-]{2,40}">
+        </div>
+        <div style="font-size:11px; color:var(--text3); margin-top:5px;">Lowercase letters, digits and hyphens only.</div>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;">Create organisation</button>
+    </form>
+  </div>
+</div>
+
+<script>
+function autoSlug(nameInput) {
+  const slug = document.getElementById('slug');
+  if (slug.dataset.edited) return;
+  slug.value = nameInput.value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 40);
+}
+document.getElementById('slug').addEventListener('input', function() {
+  this.dataset.edited = '1';
+});
+</script>
+{{end}}

@@ -504,6 +504,7 @@
     </div>
 
     <a href="/people"       class="{{if eq .Route "people"}}active{{end}}">People</a>
+    <a href="/orgs"         class="{{if eq .Route "orgs"}}active{{end}}">Organisations</a>
 
     {{$settingsActive := or (eq .Route "settings") (eq .Route "auto-import")}}
     <div class="nav-group">
@@ -531,6 +532,7 @@
     <a href="/portfolio"    class="{{if eq .Route "portfolio"}}active{{end}}">Portfolio</a>
     <a href="/goals"        class="{{if eq .Route "goals"}}active{{end}}">Goals</a>
     <a href="/people"       class="{{if eq .Route "people"}}active{{end}}">People</a>
+    <a href="/orgs"         class="{{if eq .Route "orgs"}}active{{end}}">Organisations</a>
     <hr>
     <span class="nav-drawer-section-label">Analysis</span>
     <a href="/reports"     class="{{if eq .Route "reports"}}active{{end}}">Reports</a>

@@ -1,0 +1,99 @@
+{{define "content"}}
+{{$d := .}}
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:12px;">
+  <div>
+    <div style="font-size:12px; color:var(--text3); margin-bottom:4px;">
+      <a href="/orgs" style="color:var(--text3); text-decoration:none;">Organisations</a> /
+      <a href="/orgs/{{$d.Org.Slug}}" style="color:var(--text3); text-decoration:none;">{{$d.Org.Name}}</a> /
+    </div>
+    <h1>Members</h1>
+  </div>
+  {{if eq $d.MyRole "admin"}}
+  <a href="/orgs/{{$d.Org.Slug}}/invite" class="btn btn-primary">+ Invite member</a>
+  {{end}}
+</div>
+
+<!-- Members table -->
+<div class="card animate-on-scroll" style="padding:0; overflow:hidden; margin-bottom:24px;">
+  <table>
+    <thead>
+      <tr>
+        <th>Email</th>
+        <th>Role</th>
+        <th>Teams</th>
+        {{if eq $d.MyRole "admin"}}<th></th>{{end}}
+      </tr>
+    </thead>
+    <tbody>
+      {{range $m := $d.Members}}
+      <tr>
+        <td style="font-weight:500;">{{$m.Email}}</td>
+        <td>
+          {{if eq $d.MyRole "admin"}}
+          <form method="post" action="/orgs/{{$d.Org.Slug}}/members/{{$m.ID}}/role" style="display:inline;">
+            <select name="role" onchange="this.form.submit()" style="background:var(--bg3); border:1px solid var(--border2); color:var(--text); border-radius:6px; padding:3px 6px; font-size:12px; cursor:pointer;">
+              <option value="admin"   {{if eq $m.Role "admin"}}selected{{end}}>admin</option>
+              <option value="finance" {{if eq $m.Role "finance"}}selected{{end}}>finance</option>
+              <option value="member"  {{if eq $m.Role "member"}}selected{{end}}>member</option>
+              <option value="viewer"  {{if eq $m.Role "viewer"}}selected{{end}}>viewer</option>
+            </select>
+          </form>
+          {{else}}
+          <span style="font-size:11px; font-weight:600; padding:3px 9px; border-radius:20px; background:var(--accent-glow); color:var(--accent2);">{{$m.Role}}</span>
+          {{end}}
+        </td>
+        <td style="font-size:12px; color:var(--text2);">
+          {{if $m.TeamIDs}}
+            {{range $i, $tid := $m.TeamIDs}}
+              {{range $d.Teams}}{{if eq .ID $tid}}{{if $i}}, {{end}}{{.Name}}{{end}}{{end}}
+            {{end}}
+          {{else}}
+            <span style="color:var(--text3);">all teams</span>
+          {{end}}
+        </td>
+        {{if eq $d.MyRole "admin"}}
+        <td style="text-align:right;">
+          <form method="post" action="/orgs/{{$d.Org.Slug}}/members/{{$m.ID}}/remove" style="display:inline;"
+                onsubmit="return confirm('Remove {{$m.Email}} from this organisation?')">
+            <button class="btn btn-outline btn-sm" style="color:var(--red); border-color:var(--red);">Remove</button>
+          </form>
+        </td>
+        {{end}}
+      </tr>
+      {{end}}
+    </tbody>
+  </table>
+</div>
+
+<!-- Pending invites -->
+{{if and (eq $d.MyRole "admin") $d.Invites}}
+<h2 style="margin-bottom:12px;">Pending invites</h2>
+<div class="card animate-on-scroll" style="padding:0; overflow:hidden;">
+  <table>
+    <thead>
+      <tr>
+        <th>Email</th>
+        <th>Role</th>
+        <th>Expires</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {{range $d.Invites}}
+      <tr>
+        <td style="font-weight:500;">{{.Email}}</td>
+        <td><span style="font-size:11px; font-weight:600; padding:3px 9px; border-radius:20px; background:rgba(251,191,36,0.1); color:#fbbf24;">{{.Role}}</span></td>
+        <td style="font-size:12px; color:var(--text3);">{{dateShort .ExpiresAt}}</td>
+        <td style="text-align:right;">
+          <form method="post" action="/orgs/{{$d.Org.Slug}}/invites/{{.ID}}/revoke" style="display:inline;">
+            <button class="btn btn-outline btn-sm" style="color:var(--red); border-color:var(--red);">Revoke</button>
+          </form>
+        </td>
+      </tr>
+      {{end}}
+    </tbody>
+  </table>
+</div>
+{{end}}
+{{end}}
