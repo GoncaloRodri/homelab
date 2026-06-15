@@ -350,7 +350,8 @@ type Handler struct {
 	secret       string // HMAC key for session tokens
 	googleID     string
 	googleSecret string
-	baseURL      string // used to build OAuth redirect URLs
+	baseURL      string // used to build OAuth redirect URLs and detect HTTPS
+	loginRL      *loginRateLimiter
 }
 
 func NewHandler(store *Store, secret, googleID, googleSecret, baseURL string) *Handler {
@@ -360,7 +361,32 @@ func NewHandler(store *Store, secret, googleID, googleSecret, baseURL string) *H
 		googleID:     googleID,
 		googleSecret: googleSecret,
 		baseURL:      baseURL,
+		loginRL:      newLoginRateLimiter(),
 	}
+}
+
+// securityHeaders adds defence-in-depth HTTP headers to every response.
+func (h *Handler) securityHeaders(next http.Handler) http.Handler {
+	csp := strings.Join([]string{
+		"default-src 'self'",
+		"script-src 'self' 'unsafe-inline' cdn.jsdelivr.net", // Chart.js + inline scripts in templates
+		"style-src 'self' 'unsafe-inline'",
+		"img-src 'self' data:",
+		"font-src 'self'",
+		"connect-src 'self'",
+		"frame-ancestors 'none'",
+	}, "; ")
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("X-Frame-Options", "DENY")
+		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
+		w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+		w.Header().Set("Content-Security-Policy", csp)
+		if h.isSecure() {
+			w.Header().Set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload")
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 func (h *Handler) authMW(next http.HandlerFunc) http.HandlerFunc {
