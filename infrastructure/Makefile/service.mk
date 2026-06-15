@@ -15,7 +15,8 @@ _rel_path     := $(patsubst $(_abs_root)/%,%,$(CURDIR))
 NAMESPACE     ?= $(word 2,$(subst /, ,$(_rel_path)))
 
 IMAGE_TAG     ?= latest
-IMAGE         ?= homelab/$(SERVICE_NAME):$(IMAGE_TAG)
+REGISTRY      ?= git.homelab.local/admin
+IMAGE         ?= $(REGISTRY)/$(SERVICE_NAME):$(IMAGE_TAG)
 CLUSTER_NAME  ?= homelab
 
 _is_node       := $(shell [ -f $(SERVICE_DIR)/package.json ] && echo yes)
