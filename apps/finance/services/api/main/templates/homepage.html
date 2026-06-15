@@ -525,7 +525,7 @@
         <a href="/dashboard" class="btn-open">Personal</a>
         <a href="/orgs" class="btn-open">Business</a>
       {{else}}
-        <a href="https://auth.homelab.local/login" class="btn-signin">Sign in <span>→</span></a>
+        <a href="/auth/login" class="btn-signin">Sign in <span>→</span></a>
       {{end}}
     </div>
   </nav>
@@ -545,7 +545,7 @@
         <a href="/dashboard" class="cta-primary">Open personal <span class="arrow">→</span></a>
         <a href="/orgs" class="cta-secondary">Open business</a>
       {{else}}
-        <a href="https://auth.homelab.local/login" class="cta-primary">Get started <span class="arrow">→</span></a>
+        <a href="/auth/login" class="cta-primary">Get started <span class="arrow">→</span></a>
         <a href="#products" class="cta-secondary">See what's inside</a>
       {{end}}
     </div>
@@ -568,7 +568,7 @@
   <div class="section" id="products">
     <div class="products-grid">
 
-      <a href="{{if .UserID}}/dashboard{{else}}https://auth.homelab.local/login{{end}}"
+      <a href="{{if .UserID}}/dashboard{{else}}/auth/login{{end}}"
          class="pcard pcard-teal reveal" id="card-personal">
         <div class="pcard-glow"></div>
         <div class="pcard-badge">Personal</div>
@@ -587,7 +587,7 @@
         <span class="pcard-cta">{{if .UserID}}Open app{{else}}Sign in{{end}} <span class="cta-arr">→</span></span>
       </a>
 
-      <a href="{{if .UserID}}/orgs{{else}}https://auth.homelab.local/login{{end}}"
+      <a href="{{if .UserID}}/orgs{{else}}/auth/login{{end}}"
          class="pcard pcard-purple reveal" id="card-business">
         <div class="pcard-glow"></div>
         <div class="pcard-badge">Business</div>
@@ -760,7 +760,7 @@
     <div class="signin-card">
       <h2>Ready to get started?</h2>
       <p>Finance Hub is self-hosted on your homelab. Sign in with your account to access your personal and business dashboards.</p>
-      <a href="https://auth.homelab.local/login" class="cta-primary" style="margin: 0 auto;">
+      <a href="/auth/login" class="cta-primary" style="margin: 0 auto;">
         Sign in to Finance Hub <span class="arrow">→</span>
       </a>
     </div>
@@ -778,7 +778,7 @@
         <a href="/dashboard">Personal</a>
         <a href="/orgs">Business</a>
       {{else}}
-        <a href="https://auth.homelab.local/login">Sign in</a>
+        <a href="/auth/login">Sign in</a>
       {{end}}
     </div>
     <span>Self-hosted homelab</span>
