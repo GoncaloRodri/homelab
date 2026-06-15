@@ -1,0 +1,467 @@
+{{template "base.html" .}}
+
+{{define "content"}}
+{{$d := .}}
+
+<style>
+  .prop-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:16px; }
+  .prop-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius); padding:22px; position:relative;
+    transition:border-color 0.18s;
+  }
+  .prop-card:hover { border-color:var(--border2); }
+  .prop-badge {
+    display:inline-block; font-size:11px; font-weight:600; padding:2px 8px;
+    border-radius:20px; margin-bottom:12px; text-transform:uppercase; letter-spacing:.5px;
+  }
+  .badge-owned    { background:rgba(20,184,166,.12); color:#14b8a6; border:1px solid rgba(20,184,166,.25); }
+  .badge-building { background:rgba(245,158,11,.12); color:#f59e0b; border:1px solid rgba(245,158,11,.25); }
+  .badge-sold     { background:rgba(148,163,184,.1);  color:var(--text3); border:1px solid var(--border); }
+  .prop-name  { font-size:17px; font-weight:700; margin:0 0 2px; color:var(--text); }
+  .prop-addr  { font-size:12px; color:var(--text3); margin:0 0 16px; }
+  .prop-stats { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px; }
+  .prop-stat  { background:var(--surface2); border-radius:8px; padding:10px 12px; }
+  .prop-stat-label { font-size:11px; color:var(--text3); margin-bottom:3px; }
+  .prop-stat-value { font-size:15px; font-weight:700; color:var(--text); }
+  .prop-stat-value.positive { color:var(--green); }
+  .prop-stat-value.negative { color:var(--red); }
+  .equity-bar-wrap { margin-bottom:16px; }
+  .equity-bar-label { display:flex; justify-content:space-between; font-size:12px; color:var(--text3); margin-bottom:5px; }
+  .equity-bar { height:6px; background:var(--surface2); border-radius:3px; overflow:hidden; }
+  .equity-bar-fill { height:100%; border-radius:3px; background:linear-gradient(90deg,#14b8a6,#6366f1); transition:width .6s ease; }
+  .loan-mini {
+    background:var(--surface2); border-radius:8px; padding:12px 14px;
+    font-size:12px; color:var(--text2); margin-bottom:12px;
+  }
+  .loan-mini-title { font-weight:600; color:var(--text); margin-bottom:6px; font-size:13px; }
+  .loan-mini-row { display:flex; justify-content:space-between; margin-bottom:3px; }
+  .loan-progress { height:4px; background:var(--surface); border-radius:2px; margin-top:8px; overflow:hidden; }
+  .loan-progress-fill { height:100%; background:var(--accent2); border-radius:2px; }
+  .prop-actions { display:flex; gap:8px; flex-wrap:wrap; }
+
+  .loan-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius); padding:20px; transition:border-color .18s;
+  }
+  .loan-card:hover { border-color:var(--border2); }
+  .loan-type-badge {
+    display:inline-block; font-size:11px; font-weight:600; padding:2px 8px;
+    border-radius:20px; margin-bottom:10px; text-transform:capitalize;
+    background:rgba(99,102,241,.1); color:#6366f1; border:1px solid rgba(99,102,241,.2);
+  }
+
+  /* summary cards */
+  .summary-row { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:28px; }
+  @media(max-width:600px){ .summary-row{grid-template-columns:1fr;} .prop-grid{grid-template-columns:1fr;} }
+
+  /* section header */
+  .section-header { display:flex; align-items:center; justify-content:space-between; margin:28px 0 14px; }
+  .section-title { font-size:16px; font-weight:700; color:var(--text); }
+
+  /* modal */
+  .modal-overlay {
+    display:none; position:fixed; inset:0; z-index:1000;
+    background:rgba(0,0,0,.6); backdrop-filter:blur(4px);
+    align-items:center; justify-content:center; padding:16px;
+  }
+  .modal-box {
+    background:var(--surface); border:1px solid var(--border2);
+    border-radius:var(--radius); padding:28px; width:100%; max-width:480px;
+    max-height:90vh; overflow-y:auto;
+  }
+  .modal-title { font-size:17px; font-weight:700; margin:0 0 20px; }
+  .form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media(max-width:500px){ .form-row{grid-template-columns:1fr;} }
+  .form-group { display:flex; flex-direction:column; gap:5px; margin-bottom:14px; }
+  .form-group label { font-size:12px; color:var(--text3); font-weight:500; }
+  .form-group input, .form-group select, .form-group textarea {
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:8px; padding:9px 12px; color:var(--text);
+    font-size:14px; outline:none; transition:border-color .18s; width:100%; box-sizing:border-box;
+  }
+  .form-group input:focus, .form-group select:focus { border-color:var(--accent2); }
+  .form-hint { font-size:11px; color:var(--text3); margin-top:2px; }
+  .modal-footer { display:flex; gap:10px; justify-content:flex-end; margin-top:8px; }
+</style>
+
+<!-- ── Summary ── -->
+<div class="summary-row">
+  <div class="card value-card animate-on-scroll">
+    <h2>Total property value</h2>
+    <div class="value animate-counter" data-target="{{$d.TotalPropertyValueCents}}" data-prefix="€">€0</div>
+    <p style="font-size:12px;color:var(--text3);margin-top:4px;">current estimated value</p>
+  </div>
+  <div class="card value-card animate-on-scroll">
+    <h2>Outstanding loans</h2>
+    <div class="value animate-counter" data-target="{{$d.TotalLoanBalanceCents}}" data-prefix="€" style="color:var(--red);">€0</div>
+    <p style="font-size:12px;color:var(--text3);margin-top:4px;">remaining balance</p>
+  </div>
+  <div class="card value-card animate-on-scroll">
+    <h2>Net equity</h2>
+    <div class="value animate-counter" data-target="{{$d.TotalEquityCents}}" data-prefix="€"
+         style="color:{{if ge $d.TotalEquityCents 0}}var(--green){{else}}var(--red){{end}};">€0</div>
+    <p style="font-size:12px;color:var(--text3);margin-top:4px;">value − loans</p>
+  </div>
+</div>
+
+<!-- ── Properties ── -->
+<div class="section-header">
+  <span class="section-title">Properties</span>
+  <button class="btn btn-primary btn-sm" onclick="openModal('add-property-modal')">+ Add property</button>
+</div>
+
+{{if $d.Properties}}
+<div class="prop-grid">
+  {{range $d.Properties}}
+  <div class="prop-card animate-on-scroll">
+    <span class="prop-badge badge-{{.Status}}">{{.StatusLabel}}</span>
+    <p class="prop-name">{{.Name}}</p>
+    {{if .Address}}<p class="prop-addr">📍 {{.Address}}</p>{{end}}
+
+    <div class="prop-stats">
+      <div class="prop-stat">
+        <div class="prop-stat-label">Current value</div>
+        <div class="prop-stat-value">€{{cents .CurrentValueCents}}</div>
+      </div>
+      <div class="prop-stat">
+        <div class="prop-stat-label">Equity</div>
+        <div class="prop-stat-value {{if ge .EquityCents 0}}positive{{else}}negative{{end}}">
+          €{{cents .EquityCents}}
+        </div>
+      </div>
+      <div class="prop-stat">
+        <div class="prop-stat-label">Purchase price</div>
+        <div class="prop-stat-value">€{{cents .PurchasePriceCents}}</div>
+      </div>
+      <div class="prop-stat">
+        <div class="prop-stat-label">Gain</div>
+        <div class="prop-stat-value {{if ge .GainCents 0}}positive{{else}}negative{{end}}">
+          {{printf "%.1f" .GainPct}}%
+        </div>
+      </div>
+    </div>
+
+    {{if .LinkedLoan}}
+    <div class="equity-bar-wrap">
+      <div class="equity-bar-label">
+        <span>Equity {{.EquityPct}}%</span>
+        <span>Loan {{.LoanPct}}%</span>
+      </div>
+      <div class="equity-bar">
+        <div class="equity-bar-fill" style="width:{{.EquityPct}}%;"></div>
+      </div>
+    </div>
+    <div class="loan-mini">
+      <div class="loan-mini-title">🏦 {{.LinkedLoan.Name}}</div>
+      <div class="loan-mini-row"><span>Remaining</span><span style="font-weight:600;color:var(--red);">€{{cents .LinkedLoan.BalanceCents}}</span></div>
+      <div class="loan-mini-row"><span>Monthly payment</span><span>€{{cents .LinkedLoan.EffectiveMonthlyPaymentCents}}</span></div>
+      <div class="loan-mini-row"><span>Payoff</span><span>{{.LinkedLoan.PayoffDate.Format "Jan 2006"}}</span></div>
+      <div class="loan-mini-row"><span>Rate</span><span>{{printf "%.2f" .LinkedLoan.InterestRatePct}}%</span></div>
+      <div class="loan-progress">
+        <div class="loan-progress-fill" style="width:{{.LinkedLoan.PaidPct}}%;"></div>
+      </div>
+    </div>
+    {{end}}
+
+    <div class="prop-actions">
+      <button class="btn btn-outline btn-sm"
+              onclick="openEditProperty('{{.ID}}','{{.Name}}','{{.Address}}',{{.PurchasePriceCents}},{{.CurrentValueCents}},{{printf "%.2f" .AppreciationPct}},'{{.PurchaseDate.Format "2006-01-02"}}','{{.Status}}','{{.Notes}}')">
+        Edit
+      </button>
+      <form method="POST" action="/property" style="display:inline;">
+        <input type="hidden" name="action" value="delete_property">
+        <input type="hidden" name="id" value="{{.ID}}">
+        <button type="submit" class="btn btn-outline btn-sm" style="color:var(--red);border-color:var(--red)33;"
+                onclick="return confirm('Remove {{.Name}}?')">Remove</button>
+      </form>
+    </div>
+  </div>
+  {{end}}
+</div>
+{{else}}
+<div class="card empty-state animate-on-scroll">
+  <div style="font-size:48px;margin-bottom:16px;">🏠</div>
+  <h3>No properties yet</h3>
+  <p style="margin-bottom:20px;">Add your home, investment property, or land to track equity and loans in one place.</p>
+  <button class="btn btn-primary" onclick="openModal('add-property-modal')">Add your first property</button>
+</div>
+{{end}}
+
+<!-- ── Standalone loans ── -->
+{{if or $d.UnlinkedLoans (not $d.Properties)}}
+<div class="section-header" style="margin-top:32px;">
+  <span class="section-title">Loans</span>
+  <button class="btn btn-outline btn-sm" onclick="openModal('add-loan-modal')">+ Add loan</button>
+</div>
+{{end}}
+
+{{if $d.UnlinkedLoans}}
+<div class="prop-grid">
+  {{range $d.UnlinkedLoans}}
+  <div class="loan-card animate-on-scroll">
+    <span class="loan-type-badge">{{.Type}}</span>
+    <p class="prop-name" style="margin-bottom:4px;">{{.Name}}</p>
+
+    <div class="prop-stats" style="margin-top:12px;">
+      <div class="prop-stat">
+        <div class="prop-stat-label">Balance</div>
+        <div class="prop-stat-value negative">€{{cents .BalanceCents}}</div>
+      </div>
+      <div class="prop-stat">
+        <div class="prop-stat-label">Monthly</div>
+        <div class="prop-stat-value">€{{cents .EffectiveMonthlyPaymentCents}}</div>
+      </div>
+      <div class="prop-stat">
+        <div class="prop-stat-label">Payoff</div>
+        <div class="prop-stat-value">{{.PayoffDate.Format "Jan 2006"}}</div>
+      </div>
+      <div class="prop-stat">
+        <div class="prop-stat-label">Rate</div>
+        <div class="prop-stat-value">{{printf "%.2f" .InterestRatePct}}%</div>
+      </div>
+    </div>
+
+    <div class="equity-bar-wrap">
+      <div class="equity-bar-label">
+        <span>Paid {{.PaidPct}}%</span>
+        <span>€{{cents .TotalRemainingInterestCents}} interest left</span>
+      </div>
+      <div class="equity-bar">
+        <div class="equity-bar-fill" style="width:{{.PaidPct}}%;"></div>
+      </div>
+    </div>
+
+    <div class="prop-actions">
+      <form method="POST" action="/property" style="display:inline;">
+        <input type="hidden" name="action" value="payoff_loan">
+        <input type="hidden" name="id" value="{{.ID}}">
+        <button type="submit" class="btn btn-outline btn-sm" style="color:var(--green);border-color:var(--green)33;"
+                onclick="return confirm('Mark as paid off?')">Mark paid off</button>
+      </form>
+      <form method="POST" action="/property" style="display:inline;">
+        <input type="hidden" name="action" value="delete_loan">
+        <input type="hidden" name="id" value="{{.ID}}">
+        <button type="submit" class="btn btn-outline btn-sm" style="color:var(--red);border-color:var(--red)33;"
+                onclick="return confirm('Remove {{.Name}}?')">Remove</button>
+      </form>
+    </div>
+  </div>
+  {{end}}
+</div>
+{{end}}
+
+{{if $d.Properties}}
+<div style="margin-top:24px;">
+  <button class="btn btn-outline btn-sm" onclick="openModal('add-loan-modal')">+ Add loan</button>
+</div>
+{{end}}
+
+<!-- ── Add Property Modal ── -->
+<div id="add-property-modal" class="modal-overlay" onclick="if(event.target===this)closeModal('add-property-modal')">
+  <div class="modal-box">
+    <p class="modal-title">Add property</p>
+    <form method="POST" action="/property">
+      <input type="hidden" name="action" value="add_property">
+      <div class="form-group">
+        <label>Property name *</label>
+        <input type="text" name="name" placeholder="e.g. Main House" required>
+      </div>
+      <div class="form-group">
+        <label>Address</label>
+        <input type="text" name="address" placeholder="Street, city">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Purchase price (€) *</label>
+          <input type="number" name="purchase_price" placeholder="220000" step="0.01" required>
+        </div>
+        <div class="form-group">
+          <label>Current value (€)</label>
+          <input type="number" name="current_value" placeholder="Same as purchase" step="0.01">
+          <span class="form-hint">Leave blank to use purchase price</span>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Purchase date</label>
+          <input type="date" name="purchase_date">
+        </div>
+        <div class="form-group">
+          <label>Est. appreciation (%/year)</label>
+          <input type="number" name="appreciation_pct" placeholder="2.0" step="0.1" value="2.0">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select name="status">
+          <option value="owned">Owned</option>
+          <option value="building">Under construction</option>
+          <option value="sold">Sold</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea name="notes" rows="2" placeholder="Optional notes"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('add-property-modal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Add property</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── Edit Property Modal ── -->
+<div id="edit-property-modal" class="modal-overlay" onclick="if(event.target===this)closeModal('edit-property-modal')">
+  <div class="modal-box">
+    <p class="modal-title">Edit property</p>
+    <form method="POST" action="/property" id="edit-property-form">
+      <input type="hidden" name="action" value="update_property">
+      <input type="hidden" name="id" id="edit-prop-id">
+      <div class="form-group">
+        <label>Property name *</label>
+        <input type="text" name="name" id="edit-prop-name" required>
+      </div>
+      <div class="form-group">
+        <label>Address</label>
+        <input type="text" name="address" id="edit-prop-addr">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Purchase price (€)</label>
+          <input type="number" name="purchase_price" id="edit-prop-purchase" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>Current value (€)</label>
+          <input type="number" name="current_value" id="edit-prop-value" step="0.01">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Purchase date</label>
+          <input type="date" name="purchase_date" id="edit-prop-date">
+        </div>
+        <div class="form-group">
+          <label>Appreciation (%/year)</label>
+          <input type="number" name="appreciation_pct" id="edit-prop-appr" step="0.1">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select name="status" id="edit-prop-status">
+          <option value="owned">Owned</option>
+          <option value="building">Under construction</option>
+          <option value="sold">Sold</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea name="notes" id="edit-prop-notes" rows="2"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('edit-property-modal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── Add Loan Modal ── -->
+<div id="add-loan-modal" class="modal-overlay" onclick="if(event.target===this)closeModal('add-loan-modal')">
+  <div class="modal-box">
+    <p class="modal-title">Add loan</p>
+    <form method="POST" action="/property">
+      <input type="hidden" name="action" value="add_loan">
+      <div class="form-group">
+        <label>Loan name *</label>
+        <input type="text" name="name" placeholder="e.g. Home mortgage" required>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Type</label>
+          <select name="loan_type">
+            <option value="mortgage">Mortgage</option>
+            <option value="construction">Construction loan</option>
+            <option value="personal">Personal loan</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Linked property</label>
+          <select name="property_id">
+            <option value="">— none —</option>
+            {{range $d.Properties}}
+            <option value="{{.ID}}">{{.Name}}</option>
+            {{end}}
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Original principal (€) *</label>
+          <input type="number" name="principal" placeholder="200000" step="0.01" required>
+        </div>
+        <div class="form-group">
+          <label>Current balance (€)</label>
+          <input type="number" name="balance" placeholder="Same as principal" step="0.01">
+          <span class="form-hint">Leave blank if just starting</span>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Interest rate (%/year) *</label>
+          <input type="number" name="interest_rate" placeholder="3.2" step="0.01" required>
+        </div>
+        <div class="form-group">
+          <label>Term (months) *</label>
+          <input type="number" name="term_months" placeholder="360" required>
+          <span class="form-hint">e.g. 360 = 30 years</span>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Monthly payment (€)</label>
+          <input type="number" name="monthly_payment" placeholder="Auto-computed" step="0.01">
+          <span class="form-hint">Leave blank to calculate</span>
+        </div>
+        <div class="form-group">
+          <label>Start date</label>
+          <input type="date" name="start_date">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea name="notes" rows="2" placeholder="Bank name, reference, etc."></textarea>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('add-loan-modal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Add loan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+function openEditProperty(id, name, addr, purchaseCents, valueCents, appr, date, status, notes) {
+  document.getElementById('edit-prop-id').value     = id;
+  document.getElementById('edit-prop-name').value   = name;
+  document.getElementById('edit-prop-addr').value   = addr;
+  document.getElementById('edit-prop-purchase').value = (purchaseCents / 100).toFixed(2);
+  document.getElementById('edit-prop-value').value  = (valueCents / 100).toFixed(2);
+  document.getElementById('edit-prop-appr').value   = appr;
+  document.getElementById('edit-prop-date').value   = date;
+  document.getElementById('edit-prop-status').value = status;
+  document.getElementById('edit-prop-notes').value  = notes;
+  openModal('edit-property-modal');
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    ['add-property-modal','edit-property-modal','add-loan-modal'].forEach(closeModal);
+  }
+});
+</script>
+{{end}}
