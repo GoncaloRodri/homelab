@@ -1,0 +1,95 @@
+name: Finance API
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/finance/**"
+      - "pkg/**"
+      - "go.mod"
+      - "go.sum"
+  pull_request:
+    paths:
+      - "apps/finance/**"
+      - "pkg/**"
+
+env:
+  # Internal Gitea service — reachable from within the cluster (pipeline steps via DinD)
+  GITEA_INTERNAL: gitea-http.gitea.svc.cluster.local:3000
+  # Public registry hostname — used in k8s image references (containerd mirrors to NodePort 30002)
+  REGISTRY: git.homelab.local
+  IMAGE: git.homelab.local/admin/finance-api
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: golang:1.25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: /go/pkg/mod
+          key: go-${{ hashFiles('go.sum') }}
+      - name: Test
+        run: go test ./apps/finance/... ./pkg/...
+
+  build-push:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to Gitea registry
+        run: |
+          echo "${{ secrets.GITEA_ADMIN_PASSWORD }}" | \
+            docker login ${{ env.GITEA_INTERNAL }} -u admin --password-stdin
+
+      - name: Build and push
+        run: |
+          SHA=${{ github.sha }}
+          # Build image — tag with both sha and latest
+          docker build \
+            -t ${{ env.GITEA_INTERNAL }}/admin/finance-api:${SHA} \
+            -t ${{ env.GITEA_INTERNAL }}/admin/finance-api:latest \
+            -f apps/finance/services/api/Dockerfile \
+            .
+          docker push ${{ env.GITEA_INTERNAL }}/admin/finance-api:${SHA}
+          docker push ${{ env.GITEA_INTERNAL }}/admin/finance-api:latest
+
+  deploy:
+    needs: build-push
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Install kubectl
+        run: |
+          curl -LO "https://dl.k8s.io/release/v1.31.0/bin/linux/amd64/kubectl"
+          chmod +x kubectl && mv kubectl /usr/local/bin/
+
+      # The runner pod has a ServiceAccount with deploy permissions.
+      # Mount its token via the act runner valid_volumes config.
+      - name: Deploy to cluster
+        run: |
+          SHA=${{ github.sha }}
+          TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+          CA=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+          K8S=https://kubernetes.default.svc
+
+          kubectl \
+            --server=$K8S \
+            --token=$TOKEN \
+            --certificate-authority=$CA \
+            set image deployment/api \
+              api=${{ env.IMAGE }}:${SHA} \
+            -n finance
+
+          kubectl \
+            --server=$K8S \
+            --token=$TOKEN \
+            --certificate-authority=$CA \
+            rollout status deployment/api \
+            -n finance \
+            --timeout=120s

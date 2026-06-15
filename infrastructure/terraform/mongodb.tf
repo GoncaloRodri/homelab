@@ -96,6 +96,11 @@ resource "kubernetes_stateful_set" "mongodb" {
             value = "homelab"
           }
 
+          volume_mount {
+            name       = "mongodb-data"
+            mount_path = "/data/db"
+          }
+
           port {
             container_port = 27017
           }
@@ -109,6 +114,21 @@ resource "kubernetes_stateful_set" "mongodb" {
               cpu    = "500m"
               memory = "512Mi"
             }
+          }
+        }
+      }
+    }
+
+    volume_claim_template {
+      metadata {
+        name = "mongodb-data"
+      }
+      spec {
+        access_modes       = ["ReadWriteOnce"]
+        storage_class_name = "local-path"
+        resources {
+          requests = {
+            storage = "5Gi"
           }
         }
       }
