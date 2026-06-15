@@ -41,19 +41,26 @@ func SeedAdmin(ctx context.Context, store *Store) {
 	}
 }
 
-// lookupUserByEmailMongo queries the shared "users" collection directly,
-// avoiding any cross-service HTTP dependency.
+// lookupUserByEmailMongo resolves a user ID from email.
+// Checks finance_users first (standalone/cloud deployment), then the shared
+// "users" collection (Traefik forward-auth deployment).
 func lookupUserByEmailMongo(ctx context.Context, store *Store, email string) (string, error) {
-	coll := store.db.Collection("users")
-	var result struct {
+	// standalone auth
+	var finUser struct {
+		ID bson.ObjectID `bson:"_id"`
+	}
+	if err := store.db.Collection("finance_users").FindOne(ctx, bson.M{"email": email}).Decode(&finUser); err == nil {
+		return finUser.ID.Hex(), nil
+	}
+	// legacy shared-auth fallback
+	var legacy struct {
 		ID    string `bson:"_id"`
 		Email string `bson:"email"`
 	}
-	err := coll.FindOne(ctx, bson.M{"email": email}).Decode(&result)
-	if err != nil {
+	if err := store.db.Collection("users").FindOne(ctx, bson.M{"email": email}).Decode(&legacy); err != nil {
 		return "", fmt.Errorf("user %q not found in mongo: %w", email, err)
 	}
-	return result.ID, nil
+	return legacy.ID, nil
 }
 
 func seedAll(ctx context.Context, store *Store, userID string) error {

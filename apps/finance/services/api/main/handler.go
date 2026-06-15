@@ -12,6 +12,7 @@ import (
 	"log/slog"
 	"math"
 	"net/http"
+	"net/url"
 	"sort"
 	"strconv"
 	"strings"
@@ -150,8 +151,19 @@ func parseTmpl(files ...string) *template.Template {
 	}).ParseFS(templateFS, files...))
 }
 
+// parseStandalone parses a single template file that has no {{define}} blocks.
+// parseTmpl roots on "", but ParseFS stores content under the base filename,
+// so Execute() would run the empty root. Here we root on the base filename so
+// Execute() runs the actual content.
+func parseStandalone(file string) *template.Template {
+	name := file[strings.LastIndex(file, "/")+1:]
+	return template.Must(template.New(name).ParseFS(templateFS, file))
+}
+
 var (
-	homepageTmpl    = parseTmpl("templates/homepage.html")
+	homepageTmpl     = parseStandalone("templates/homepage.html")
+	authLoginTmpl    = parseStandalone("templates/auth_login.html")
+	authRegisterTmpl = parseStandalone("templates/auth_register.html")
 	baseTmpl        = parseTmpl("templates/base.html")
 	dashboardTmpl   = parseTmpl("templates/base.html", "templates/dashboard.html")
 	txnsTmpl        = parseTmpl("templates/base.html", "templates/transactions.html")
@@ -196,7 +208,12 @@ type authInfo struct {
 	Roles  string
 }
 
-func getAuth(r *http.Request) authInfo {
+// getAuth resolves the current user from the session cookie first, then falls
+// back to X-Auth-* headers (Traefik forward-auth / tests).
+func (h *Handler) getAuth(r *http.Request) authInfo {
+	if a, ok := h.authFromSession(r); ok {
+		return a
+	}
 	return authInfo{
 		UserID: r.Header.Get("X-Auth-User-Id"),
 		Email:  r.Header.Get("X-Auth-Email"),
@@ -318,21 +335,39 @@ type storeIface interface {
 	updateLedgerEntry(ctx context.Context, id, orgID string, update bson.M) error
 	getAttachments(ctx context.Context, requestID, orgID string) ([]OrgAttachment, error)
 	createAttachment(ctx context.Context, a *OrgAttachment) error
+
+	// Auth
+	createAuthUser(ctx context.Context, u *AuthUser) error
+	findAuthUserByEmail(ctx context.Context, email string) (*AuthUser, error)
+	findAuthUserByProvider(ctx context.Context, provider, providerID string) (*AuthUser, error)
+	createAuthSession(ctx context.Context, sess *AuthSession) error
+	getAuthSession(ctx context.Context, id string) (*AuthSession, error)
+	deleteAuthSession(ctx context.Context, id string) error
 }
 
 type Handler struct {
-	store storeIface
+	store        storeIface
+	secret       string // HMAC key for session tokens
+	googleID     string
+	googleSecret string
+	baseURL      string // used to build OAuth redirect URLs
 }
 
-func NewHandler(store *Store) *Handler {
-	return &Handler{store: store}
+func NewHandler(store *Store, secret, googleID, googleSecret, baseURL string) *Handler {
+	return &Handler{
+		store:        store,
+		secret:       secret,
+		googleID:     googleID,
+		googleSecret: googleSecret,
+		baseURL:      baseURL,
+	}
 }
 
 func (h *Handler) authMW(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		a := getAuth(r)
+		a := h.getAuth(r)
 		if a.UserID == "" {
-			http.Redirect(w, r, "https://auth.homelab.local/login", http.StatusFound)
+			http.Redirect(w, r, "/auth/login?next="+url.QueryEscape(r.URL.RequestURI()), http.StatusFound)
 			return
 		}
 		next(w, r)
@@ -341,7 +376,7 @@ func (h *Handler) authMW(next http.HandlerFunc) http.HandlerFunc {
 
 func (h *Handler) ownerOrViewerMW(next http.HandlerFunc) http.HandlerFunc {
 	return h.authMW(func(w http.ResponseWriter, r *http.Request) {
-		a := getAuth(r)
+		a := h.getAuth(r)
 		ownerID := r.PathValue("user_id")
 		if ownerID == "" {
 			ownerID = a.UserID
@@ -371,15 +406,16 @@ func (h *Handler) ownerOrViewerMW(next http.HandlerFunc) http.HandlerFunc {
 }
 
 func (h *Handler) Homepage(w http.ResponseWriter, r *http.Request) {
-	a := getAuth(r)
+	a := h.getAuth(r)
 	renderRaw(w, homepageTmpl, map[string]interface{}{
-		"Email": a.Email,
+		"Email":  a.Email,
+		"UserID": a.UserID,
 	})
 }
 
 func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	a := getAuth(r)
+	a := h.getAuth(r)
 
 	now := time.Now()
 	thisStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
@@ -725,7 +761,7 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) Transactions(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	a := getAuth(r)
+	a := h.getAuth(r)
 
 	var filter bson.M
 	cat := r.URL.Query().Get("category")
@@ -796,7 +832,7 @@ func (h *Handler) Transactions(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) CreateTransaction(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	a := getAuth(r)
+	a := h.getAuth(r)
 
 	var body struct {
 		AccountID   string `json:"account_id"`
@@ -838,7 +874,7 @@ func (h *Handler) CreateTransaction(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) ImportPage(w http.ResponseWriter, r *http.Request) {
-	a := getAuth(r)
+	a := h.getAuth(r)
 	accounts, _ := h.store.getAccounts(r.Context(), a.UserID)
 	render(w, importTmpl, map[string]interface{}{
 		"UserID":   a.UserID,
@@ -853,7 +889,7 @@ func (h *Handler) ImportPage(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) ImportPreview(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	a := getAuth(r)
+	a := h.getAuth(r)
 
 	if err := r.ParseMultipartForm(32 << 20); err != nil {
 		slog.Error("import preview multipart",
@@ -987,7 +1023,7 @@ func GenericMapping(data []byte) CSVColumnMapping {
 
 func (h *Handler) ImportConfirm(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	a := getAuth(r)
+	a := h.getAuth(r)
 
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "bad request", http.StatusBadRequest)
@@ -1123,7 +1159,7 @@ func autoCategorize(desc string, catMap map[string]string) string {
 
 func (h *Handler) UpdateTransaction(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	a := getAuth(r)
+	a := h.getAuth(r)
 	id := r.PathValue("id")
 
 	var body struct {
@@ -1153,7 +1189,7 @@ func (h *Handler) UpdateTransaction(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) DeleteTransaction(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	a := getAuth(r)
+	a := h.getAuth(r)
 	id := r.PathValue("id")
 	if err := h.store.deleteTransaction(ctx, id, a.UserID); err != nil {
 		slog.Error("delete transaction", "err", err)
@@ -1164,7 +1200,7 @@ func (h *Handler) DeleteTransaction(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Accounts(w http.ResponseWriter, r *http.Request) {
-	a := getAuth(r)
+	a := h.getAuth(r)
 
 	switch r.Method {
 	case http.MethodGet:
@@ -1213,7 +1249,7 @@ func (h *Handler) Accounts(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Categories(w http.ResponseWriter, r *http.Request) {
-	a := getAuth(r)
+	a := h.getAuth(r)
 
 	switch r.Method {
 	case http.MethodGet:
@@ -1288,7 +1324,7 @@ func (h *Handler) Categories(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) Reports(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	a := getAuth(r)
+	a := h.getAuth(r)
 
 	txns, err := h.store.getTransactions(ctx, a.UserID, bson.M{})
 	if err != nil {
@@ -1344,7 +1380,7 @@ func (h *Handler) Reports(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) Projections(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	a := getAuth(r)
+	a := h.getAuth(r)
 
 	txns, err := h.store.getTransactions(ctx, a.UserID, bson.M{})
 	if err != nil {
@@ -1443,7 +1479,7 @@ func (h *Handler) Projections(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) Portfolio(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	a := getAuth(r)
+	a := h.getAuth(r)
 
 	trades, err := h.store.getTrades(ctx, a.UserID)
 	if err != nil {
@@ -1502,7 +1538,7 @@ func (h *Handler) Portfolio(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) SaveTickerMapping(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	a := getAuth(r)
+	a := h.getAuth(r)
 	isin := strings.TrimSpace(r.FormValue("isin"))
 	ticker := strings.TrimSpace(r.FormValue("ticker"))
 	if isin == "" || ticker == "" {
@@ -1519,7 +1555,7 @@ func (h *Handler) SaveTickerMapping(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) ImportSecurities(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	a := getAuth(r)
+	a := h.getAuth(r)
 
 	if err := r.ParseMultipartForm(32 << 20); err != nil {
 		http.Error(w, "bad request", http.StatusBadRequest)
@@ -1574,7 +1610,7 @@ func (h *Handler) ImportSecurities(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) Sharing(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	a := getAuth(r)
+	a := h.getAuth(r)
 
 	switch r.Method {
 	case http.MethodGet:
@@ -1654,7 +1690,7 @@ func (h *Handler) Sharing(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) SearchUsers(w http.ResponseWriter, r *http.Request) {
-	a := getAuth(r)
+	a := h.getAuth(r)
 	q := r.URL.Query().Get("q")
 	if q == "" || len(q) < 2 {
 		json.NewEncoder(w).Encode([]map[string]string{})
@@ -1693,7 +1729,7 @@ func (h *Handler) healthz(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) Goals(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	a := getAuth(r)
+	a := h.getAuth(r)
 
 	if r.Method == http.MethodPost {
 		if err := r.ParseForm(); err != nil {
@@ -1878,7 +1914,7 @@ func parseFloat(s string) float64 {
 
 func (h *Handler) Simulator(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	a := getAuth(r)
+	a := h.getAuth(r)
 
 	txns, _ := h.store.getTransactions(ctx, a.UserID, bson.M{})
 	goals, _ := h.store.getGoals(ctx, a.UserID)
@@ -2008,7 +2044,7 @@ func (h *Handler) Simulator(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) NetWorth(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	a := getAuth(r)
+	a := h.getAuth(r)
 
 	txns, err := h.store.getTransactions(ctx, a.UserID, bson.M{})
 	if err != nil {
@@ -2097,7 +2133,7 @@ func (h *Handler) NetWorth(w http.ResponseWriter, r *http.Request) {
 // ── Tax Summary ───────────────────────────────────────────────────────────────
 
 func (h *Handler) Tax(w http.ResponseWriter, r *http.Request) {
-	auth := getAuth(r)
+	auth := h.getAuth(r)
 	ctx := r.Context()
 
 	// year selector
@@ -2277,7 +2313,7 @@ func (h *Handler) Tax(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) TaxExport(w http.ResponseWriter, r *http.Request) {
 	// Reuse Tax logic output as CSV — redirect with same year param
-	auth := getAuth(r)
+	auth := h.getAuth(r)
 	ctx := r.Context()
 
 	yearStr := r.URL.Query().Get("year")
@@ -2312,7 +2348,7 @@ func (h *Handler) TaxExport(w http.ResponseWriter, r *http.Request) {
 // ── Household ─────────────────────────────────────────────────────────────────
 
 func (h *Handler) Household(w http.ResponseWriter, r *http.Request) {
-	auth := getAuth(r)
+	auth := h.getAuth(r)
 	ctx := r.Context()
 	now := time.Now()
 
@@ -2409,7 +2445,7 @@ func (h *Handler) Household(w http.ResponseWriter, r *http.Request) {
 // ── Auto Import ───────────────────────────────────────────────────────────────
 
 func (h *Handler) AutoImport(w http.ResponseWriter, r *http.Request) {
-	auth := getAuth(r)
+	auth := h.getAuth(r)
 	accounts, _ := h.store.getAccounts(r.Context(), auth.UserID)
 	render(w, autoImportTmpl, &AutoImportData{
 		UserID:   auth.UserID,
@@ -2424,7 +2460,7 @@ func (h *Handler) AutoImport(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) People(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	a := getAuth(r)
+	a := h.getAuth(r)
 	tab := r.URL.Query().Get("tab")
 	if tab == "" {
 		tab = "sharing"
@@ -2553,7 +2589,7 @@ func (h *Handler) People(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) Settings(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	a := getAuth(r)
+	a := h.getAuth(r)
 	tab := r.URL.Query().Get("tab")
 	if tab == "" {
 		tab = "accounts"
@@ -2574,6 +2610,15 @@ func (h *Handler) Settings(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
+	// Auth (no authMW — these are public by definition)
+	mux.HandleFunc("GET /auth/login", h.AuthLogin)
+	mux.HandleFunc("POST /auth/login", h.AuthLogin)
+	mux.HandleFunc("GET /auth/register", h.AuthRegister)
+	mux.HandleFunc("POST /auth/register", h.AuthRegister)
+	mux.HandleFunc("POST /auth/logout", h.AuthLogout)
+	mux.HandleFunc("GET /auth/oauth/google", h.AuthGoogleStart)
+	mux.HandleFunc("GET /auth/oauth/google/callback", h.AuthGoogleCallback)
+
 	mux.HandleFunc("GET /{$}", h.Homepage)
 	mux.HandleFunc("GET /dashboard", h.authMW(h.Dashboard))
 	mux.HandleFunc("GET /transactions", h.Transactions)
