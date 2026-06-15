@@ -12,7 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
-var propertyTmpl = parseTmpl("templates/property.html")
+var propertyTmpl = parseTmpl("templates/base.html", "templates/property.html")
 
 // ── Amortization helpers ──────────────────────────────────────────────────────
 
