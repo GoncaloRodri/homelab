@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -20,11 +21,112 @@ import (
 )
 
 const (
-	cookieName    = "finsession"
-	sessionTTL    = 30 * 24 * time.Hour
+	cookieName  = "finsession"
+	sessionTTL  = 30 * 24 * time.Hour
+	bcryptCost  = 12 // OWASP minimum for cloud deployments
 )
 
-// ── session token ─────────────────────────────────────────────────────────────
+// ── rate limiter ──────────────────────────────────────────────────────────────
+
+const (
+	rlMaxFailures = 10
+	rlWindow      = 15 * time.Minute
+	rlLockout     = 15 * time.Minute
+)
+
+type rlEntry struct {
+	mu          sync.Mutex
+	failures    int
+	windowStart time.Time
+	lockedUntil time.Time
+}
+
+type loginRateLimiter struct {
+	entries sync.Map
+}
+
+func newLoginRateLimiter() *loginRateLimiter {
+	rl := &loginRateLimiter{}
+	go func() {
+		for range time.Tick(10 * time.Minute) {
+			rl.cleanup()
+		}
+	}()
+	return rl
+}
+
+func (l *loginRateLimiter) entry(ip string) *rlEntry {
+	v, _ := l.entries.LoadOrStore(ip, &rlEntry{windowStart: time.Now()})
+	return v.(*rlEntry)
+}
+
+// allow returns true if the IP may attempt a login right now.
+func (l *loginRateLimiter) allow(ip string) bool {
+	e := l.entry(ip)
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	now := time.Now()
+	if now.Before(e.lockedUntil) {
+		return false
+	}
+	if now.After(e.windowStart.Add(rlWindow)) {
+		e.failures = 0
+		e.windowStart = now
+	}
+	return true
+}
+
+func (l *loginRateLimiter) failure(ip string) {
+	e := l.entry(ip)
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	e.failures++
+	if e.failures >= rlMaxFailures {
+		e.lockedUntil = time.Now().Add(rlLockout)
+		slog.Warn("auth: IP locked out after repeated failures", "ip", ip, "failures", e.failures)
+	}
+}
+
+func (l *loginRateLimiter) success(ip string) {
+	l.entries.Delete(ip)
+}
+
+func (l *loginRateLimiter) cleanup() {
+	now := time.Now()
+	l.entries.Range(func(k, v any) bool {
+		e := v.(*rlEntry)
+		e.mu.Lock()
+		stale := now.After(e.lockedUntil) && now.After(e.windowStart.Add(rlWindow))
+		e.mu.Unlock()
+		if stale {
+			l.entries.Delete(k)
+		}
+		return true
+	})
+}
+
+// clientIP extracts the real client IP, honouring X-Forwarded-For from a
+// trusted proxy (Traefik / cloud load balancer).
+func clientIP(r *http.Request) string {
+	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+		if i := strings.Index(xff, ","); i > 0 {
+			return strings.TrimSpace(xff[:i])
+		}
+		return strings.TrimSpace(xff)
+	}
+	if ip, _, _ := strings.Cut(r.RemoteAddr, ":"); ip != "" {
+		return ip
+	}
+	return r.RemoteAddr
+}
+
+// ── session helpers ───────────────────────────────────────────────────────────
+
+// isSecure reports whether the deployment is behind HTTPS, which controls the
+// Secure cookie flag and HSTS header.
+func (h *Handler) isSecure() bool {
+	return strings.HasPrefix(h.baseURL, "https://")
+}
 
 func (h *Handler) signSessionID(id string) string {
 	mac := hmac.New(sha256.New, []byte(h.secret))
@@ -58,13 +160,16 @@ func (h *Handler) authFromSession(r *http.Request) (authInfo, bool) {
 	if err != nil || sess == nil || time.Now().After(sess.ExpiresAt) {
 		return authInfo{}, false
 	}
-	return authInfo{
-		UserID: sess.UserID.Hex(),
-		Email:  sess.Email,
-	}, true
+	return authInfo{UserID: sess.UserID.Hex(), Email: sess.Email}, true
 }
 
 func (h *Handler) startSession(w http.ResponseWriter, r *http.Request, userID bson.ObjectID, email string) error {
+	// Rotate: delete any existing session to prevent session fixation.
+	if cookie, err := r.Cookie(cookieName); err == nil {
+		if id, ok := h.verifySessionToken(cookie.Value); ok {
+			_ = h.store.deleteAuthSession(r.Context(), id)
+		}
+	}
 	sess := &AuthSession{
 		UserID:    userID,
 		Email:     email,
@@ -78,7 +183,8 @@ func (h *Handler) startSession(w http.ResponseWriter, r *http.Request, userID bs
 		Value:    h.signSessionID(sess.ID.Hex()),
 		Path:     "/",
 		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
+		Secure:   h.isSecure(),
+		SameSite: http.SameSiteStrictMode,
 		MaxAge:   int(sessionTTL.Seconds()),
 	})
 	return nil
@@ -97,7 +203,6 @@ func clearSessionCookie(w http.ResponseWriter) {
 // ── login ─────────────────────────────────────────────────────────────────────
 
 func (h *Handler) AuthLogin(w http.ResponseWriter, r *http.Request) {
-	// Already signed in → go to dashboard
 	if a, ok := h.authFromSession(r); ok && a.UserID != "" {
 		http.Redirect(w, r, "/dashboard", http.StatusFound)
 		return
@@ -106,16 +211,23 @@ func (h *Handler) AuthLogin(w http.ResponseWriter, r *http.Request) {
 		h.authLoginPost(w, r)
 		return
 	}
+	errMsg := ""
+	if r.URL.Query().Get("error") == "oauth" {
+		errMsg = "Google sign-in failed. Please try again or use email and password."
+	}
 	renderRaw(w, authLoginTmpl, map[string]any{
 		"GoogleEnabled": h.googleID != "",
+		"Error":         errMsg,
 	})
 }
 
 func (h *Handler) authLoginPost(w http.ResponseWriter, r *http.Request) {
+	ip := clientIP(r)
 	email := strings.TrimSpace(r.FormValue("email"))
-	password := r.FormValue("password")
 
 	fail := func(msg string) {
+		h.loginRL.failure(ip)
+		slog.Warn("auth: login failed", "ip", ip, "email", email)
 		renderRaw(w, authLoginTmpl, map[string]any{
 			"Error":         msg,
 			"Email":         email,
@@ -123,6 +235,13 @@ func (h *Handler) authLoginPost(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
+	if !h.loginRL.allow(ip) {
+		slog.Warn("auth: login blocked by rate limiter", "ip", ip)
+		http.Error(w, "Too many failed attempts. Try again in 15 minutes.", http.StatusTooManyRequests)
+		return
+	}
+
+	password := r.FormValue("password")
 	if email == "" || password == "" {
 		fail("Email and password are required.")
 		return
@@ -136,10 +255,14 @@ func (h *Handler) authLoginPost(w http.ResponseWriter, r *http.Request) {
 		fail("Invalid email or password.")
 		return
 	}
+
+	h.loginRL.success(ip)
 	if err := h.startSession(w, r, user.ID, user.Email); err != nil {
 		http.Error(w, "session error", http.StatusInternalServerError)
 		return
 	}
+	slog.Info("auth: login successful", "user_id", user.ID.Hex(), "email", user.Email, "ip", ip)
+
 	next := r.URL.Query().Get("next")
 	if next == "" || !strings.HasPrefix(next, "/") {
 		next = "/dashboard"
@@ -158,9 +281,7 @@ func (h *Handler) AuthRegister(w http.ResponseWriter, r *http.Request) {
 		h.authRegisterPost(w, r)
 		return
 	}
-	renderRaw(w, authRegisterTmpl, map[string]any{
-		"GoogleEnabled": h.googleID != "",
-	})
+	renderRaw(w, authRegisterTmpl, map[string]any{"GoogleEnabled": h.googleID != ""})
 }
 
 func (h *Handler) authRegisterPost(w http.ResponseWriter, r *http.Request) {
@@ -199,7 +320,7 @@ func (h *Handler) authRegisterPost(w http.ResponseWriter, r *http.Request) {
 		fail("An account with that email already exists.")
 		return
 	}
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcryptCost)
 	if err != nil {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
@@ -216,6 +337,7 @@ func (h *Handler) authRegisterPost(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "session error", http.StatusInternalServerError)
 		return
 	}
+	slog.Info("auth: new account registered", "user_id", user.ID.Hex(), "email", user.Email)
 	http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 }
 
@@ -264,7 +386,8 @@ func (h *Handler) AuthGoogleStart(w http.ResponseWriter, r *http.Request) {
 		Value:    state,
 		Path:     "/auth",
 		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
+		Secure:   h.isSecure(),
+		SameSite: http.SameSiteLaxMode, // Lax required — the OAuth redirect is cross-site
 		MaxAge:   600,
 	})
 	params := url.Values{
@@ -296,18 +419,17 @@ func (h *Handler) AuthGoogleCallback(w http.ResponseWriter, r *http.Request) {
 	}
 	token, err := h.googleExchangeCode(r.Context(), code)
 	if err != nil {
-		slog.Error("google token exchange", "err", err)
+		slog.Error("auth: google token exchange failed", "err", err)
 		http.Redirect(w, r, "/auth/login?error=oauth", http.StatusFound)
 		return
 	}
 	gUser, err := h.googleUserInfo(r.Context(), token)
 	if err != nil {
-		slog.Error("google userinfo", "err", err)
+		slog.Error("auth: google userinfo failed", "err", err)
 		http.Redirect(w, r, "/auth/login?error=oauth", http.StatusFound)
 		return
 	}
 
-	// Find by OAuth provider first, then fall back to matching email
 	user, err := h.store.findAuthUserByProvider(r.Context(), "google", gUser.Sub)
 	if err != nil {
 		http.Error(w, "internal error", http.StatusInternalServerError)
@@ -321,18 +443,14 @@ func (h *Handler) AuthGoogleCallback(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if user == nil {
-		user = &AuthUser{
-			Email:      gUser.Email,
-			Name:       gUser.Name,
-			Provider:   "google",
-			ProviderID: gUser.Sub,
-		}
+		user = &AuthUser{Email: gUser.Email, Name: gUser.Name, Provider: "google", ProviderID: gUser.Sub}
 		if err := h.store.createAuthUser(r.Context(), user); err != nil {
-			slog.Error("create oauth user", "err", err)
+			slog.Error("auth: create oauth user", "err", err)
 			http.Redirect(w, r, "/auth/login?error=oauth", http.StatusFound)
 			return
 		}
 		_ = h.store.seedCategories(r.Context(), user.ID.Hex())
+		slog.Info("auth: new OAuth account", "provider", "google", "user_id", user.ID.Hex(), "email", user.Email)
 	}
 
 	if err := h.startSession(w, r, user.ID, user.Email); err != nil {

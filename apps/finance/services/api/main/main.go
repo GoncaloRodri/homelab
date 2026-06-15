@@ -50,7 +50,7 @@ func main() {
 	mux := http.NewServeMux()
 	handler.RegisterRoutes(mux)
 
-	srv := setup.Default("finance-api", mux)
+	srv := setup.Default("finance-api", handler.securityHeaders(mux))
 
 	go func() {
 		sigCh := make(chan os.Signal, 1)
