@@ -12,7 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
-var propertyTmpl = parseTmpl("templates/property.html")
+var propertyTmpl = parseTmpl("templates/base.html", "templates/property.html")
 
 // ── Amortization helpers ──────────────────────────────────────────────────────
 
@@ -112,6 +112,28 @@ func toPropertyView(p Property, allLoans []Loan) PropertyView {
 		LoanPct:     100 - equityPct,
 		StatusLabel: labels[p.Status],
 	}
+}
+
+// loanBalanceAt returns the outstanding balance after n monthly payments.
+// Formula: B_n = P*(1+r)^n - (M/r)*((1+r)^n - 1)
+func loanBalanceAt(principalCents int64, annualRatePct float64, monthlyPaymentCents int64, monthsElapsed int) int64 {
+	if monthsElapsed <= 0 {
+		return principalCents
+	}
+	if annualRatePct == 0 {
+		b := principalCents - monthlyPaymentCents*int64(monthsElapsed)
+		if b < 0 {
+			return 0
+		}
+		return b
+	}
+	r := annualRatePct / 12 / 100
+	factor := math.Pow(1+r, float64(monthsElapsed))
+	balance := float64(principalCents)*factor - (float64(monthlyPaymentCents)/r)*(factor-1)
+	if balance < 0 {
+		return 0
+	}
+	return int64(math.Round(balance))
 }
 
 // ── Handler ───────────────────────────────────────────────────────────────────
