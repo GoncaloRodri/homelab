@@ -15,10 +15,12 @@ spec:
       labels:
         app: api
     spec:
+      imagePullSecrets:
+        - name: gitea-registry
       containers:
         - name: api
-          image: homelab/api:latest
-          imagePullPolicy: IfNotPresent
+          image: git.homelab.local/admin/finance-api:latest
+          imagePullPolicy: Always
           ports:
             - name: http
               containerPort: 8080
@@ -26,12 +28,17 @@ spec:
             - name: PORT
               value: "8080"
             - name: LOG_LEVEL
-              value: "debug"
+              value: "info"
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               value: "jaeger.monitoring.svc:4317"
+            - name: BASE_URL
+              value: "https://finance.homelab.local"
           envFrom:
             - secretRef:
                 name: mongodb-shared-config
+            - secretRef:
+                name: finance-api-secrets
+                optional: true
           livenessProbe:
             httpGet:
               path: /healthz

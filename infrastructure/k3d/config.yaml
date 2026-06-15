@@ -18,6 +18,21 @@ ports:
     nodeFilters:
       - loadbalancer
 
+# Registry mirror: k3s containerd pulls "git.homelab.local/..." images by redirecting
+# to the Gitea NodePort (30002) on localhost inside the k3d node container.
+# This is set up once at cluster creation — changing it requires recreating the cluster:
+#   k3d cluster delete homelab && k3d cluster create --config infrastructure/k3d/config.yaml
+registries:
+  config: |
+    mirrors:
+      "git.homelab.local":
+        endpoint:
+          - "http://localhost:30002"
+    configs:
+      "localhost:30002":
+        tls:
+          insecure_skip_verify: true
+
 options:
   k3s:
     extraArgs:
