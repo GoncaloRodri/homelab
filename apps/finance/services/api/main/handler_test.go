@@ -232,10 +232,23 @@ func (m *mockStore) getAttachments(_ context.Context, _, _ string) ([]OrgAttachm
 }
 func (m *mockStore) createAttachment(_ context.Context, _ *OrgAttachment) error { return nil }
 
+func (m *mockStore) createAuthUser(_ context.Context, _ *AuthUser) error           { return nil }
+func (m *mockStore) findAuthUserByEmail(_ context.Context, _ string) (*AuthUser, error) {
+	return nil, nil
+}
+func (m *mockStore) findAuthUserByProvider(_ context.Context, _, _ string) (*AuthUser, error) {
+	return nil, nil
+}
+func (m *mockStore) createAuthSession(_ context.Context, _ *AuthSession) error      { return nil }
+func (m *mockStore) getAuthSession(_ context.Context, _ string) (*AuthSession, error) {
+	return nil, nil
+}
+func (m *mockStore) deleteAuthSession(_ context.Context, _ string) error { return nil }
+
 // ── helpers ───────────────────────────────────────────────────────────────────
 
 func newHandler(store *mockStore) *Handler {
-	return &Handler{store: store}
+	return &Handler{store: store, secret: "test-secret"}
 }
 
 func authReq(method, path string, body url.Values) *http.Request {
@@ -1487,7 +1500,7 @@ func TestProjections_WithTransactions(t *testing.T) {
 func TestNewHandler(t *testing.T) {
 	// NewHandler wraps a *Store into a Handler.
 	// Pass a nil *Store — the function just assigns; no methods are called.
-	h := NewHandler((*Store)(nil))
+	h := NewHandler((*Store)(nil), "test-secret", "", "", "")
 	if h == nil {
 		t.Fatal("NewHandler returned nil")
 	}
