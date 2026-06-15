@@ -689,6 +689,22 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// ── Property equity (for net worth card on dashboard) ───────────────
+	var dashPropertyEquity int64
+	if dProps, err2 := h.store.getProperties(ctx, a.UserID); err2 == nil {
+		dLoans, _ := h.store.getLoans(ctx, a.UserID)
+		for _, p := range dProps {
+			if p.Status != PropertySold {
+				dashPropertyEquity += p.CurrentValueCents
+			}
+		}
+		for _, l := range dLoans {
+			if l.Status == LoanActive {
+				dashPropertyEquity -= l.BalanceCents
+			}
+		}
+	}
+
 	// ── Alerts ──────────────────────────────────────────────────────────
 	var alerts []Alert
 
@@ -792,7 +808,7 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 		PortfolioPCLCents:            portfolioPCLCents,
 		PortfolioHoldings:            portfolioHoldings,
 		PortfolioPricesAvailable:     portfolioPricesAvailable,
-		NetWorthCents:                portfolioValueCents + running,
+		NetWorthCents:                portfolioValueCents + running + dashPropertyEquity,
 		Alerts:                       alerts,
 	})
 }
@@ -2140,17 +2156,56 @@ func (h *Handler) NetWorth(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	netWorthCents := cashCents + portfolioCents
+	// ── Property equity ──────────────────────────────────────────────────────────
+	var propertyValueCents, loanBalanceCents int64
+	props, _ := h.store.getProperties(ctx, a.UserID)
+	loans, _ := h.store.getLoans(ctx, a.UserID)
 
-	// build history points — each month: cash snapshot + portfolio (we only have current portfolio)
+	for _, p := range props {
+		if p.Status != PropertySold {
+			propertyValueCents += p.CurrentValueCents
+		}
+	}
+	for _, l := range loans {
+		if l.Status == LoanActive {
+			loanBalanceCents += l.BalanceCents
+		}
+	}
+	propertyEquityCents := propertyValueCents - loanBalanceCents
+	netWorthCents := cashCents + portfolioCents + propertyEquityCents
+
+	// build history points — cash snapshot + portfolio + property equity (amortised)
 	var history []NetWorthPoint
 	for _, m := range months {
 		cash := monthCash[m]
+
+		// For each month in history, compute what the loan balance was at that point
+		// using standard amortisation: B_n = P*(1+r)^n - (M/r)*((1+r)^n - 1)
+		histLoanBalance := int64(0)
+		for _, l := range loans {
+			if l.Status != LoanActive {
+				continue
+			}
+			t, _ := time.Parse("2006-01", m)
+			monthsElapsed := monthsBetween(l.StartDate, t)
+			if monthsElapsed < 0 {
+				// loan didn't exist yet — exclude its balance from this month
+				continue
+			}
+			monthly := l.MonthlyPaymentCents
+			if monthly == 0 {
+				monthly = loanMonthlyPayment(l.PrincipalCents, l.InterestRatePct, l.TermMonths)
+			}
+			histLoanBalance += loanBalanceAt(l.PrincipalCents, l.InterestRatePct, monthly, monthsElapsed)
+		}
+		// property value is static (current estimate — we don't have historical valuations)
+		histEquity := propertyValueCents - histLoanBalance
+
 		history = append(history, NetWorthPoint{
 			Month:      m,
-			AssetCents: cash + portfolioCents,
-			LiabCents:  0,
-			NetCents:   cash + portfolioCents,
+			AssetCents: cash + portfolioCents + propertyValueCents,
+			LiabCents:  histLoanBalance,
+			NetCents:   cash + portfolioCents + histEquity,
 		})
 	}
 
@@ -2162,6 +2217,9 @@ func (h *Handler) NetWorth(w http.ResponseWriter, r *http.Request) {
 		CashCents:                cashCents,
 		PortfolioCents:           portfolioCents,
 		CreditCents:              0,
+		PropertyValueCents:       propertyValueCents,
+		LoanBalanceCents:         loanBalanceCents,
+		PropertyEquityCents:      propertyEquityCents,
 		NetWorthCents:            netWorthCents,
 		PortfolioPricesAvailable: pricesAvailable,
 		History:                  history,

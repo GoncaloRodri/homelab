@@ -17,6 +17,16 @@
   <div class="animate-counter {{if lt $d.NetWorthCents 0}}negative{{else}}positive{{end}}"
        style="font-size:42px; font-weight:500; letter-spacing:-1.5px; line-height:1;"
        data-target="{{$d.NetWorthCents}}" data-prefix="€">€0.00</div>
+  <div style="margin-top:14px; display:flex; flex-wrap:wrap; gap:18px; font-size:13px; color:var(--text3);">
+    <span>💵 Cash <strong style="color:var(--text2);">€{{cents $d.CashCents}}</strong></span>
+    <span>📈 Portfolio <strong style="color:var(--text2);">€{{cents $d.PortfolioCents}}</strong></span>
+    {{if $d.PropertyValueCents}}
+    <span>🏠 Property equity <strong style="color:var(--text2);">€{{cents $d.PropertyEquityCents}}</strong></span>
+    {{end}}
+    {{if $d.CreditCents}}
+    <span>💳 Credit <strong style="color:var(--red);">-€{{cents $d.CreditCents}}</strong></span>
+    {{end}}
+  </div>
 </div>
 
 <!-- Breakdown cards -->
@@ -40,6 +50,17 @@
     {{end}}
   </div>
 
+  {{if $d.PropertyValueCents}}
+  <div class="card value-card animate-on-scroll">
+    <h2>Property equity</h2>
+    <div class="value animate-counter {{if lt $d.PropertyEquityCents 0}}negative{{else}}positive{{end}}"
+         data-target="{{$d.PropertyEquityCents}}" data-prefix="€">€0.00</div>
+    <p style="font-size:12px; color:var(--text3); margin-top:6px;">
+      €{{cents $d.PropertyValueCents}} value − €{{cents $d.LoanBalanceCents}} loans
+    </p>
+  </div>
+  {{end}}
+
   {{if $d.CreditCents}}
   <div class="card value-card animate-on-scroll">
     <h2>Credit / liabilities</h2>
@@ -62,37 +83,61 @@
 
 <script>
 (function() {
-  const labels = [{{range $d.History}}"{{.Month}}",{{end}}];
-  const data   = [{{range $d.History}}{{.NetCents}},{{end}}];
-  const ctx = document.getElementById('nw-chart').getContext('2d');
+  const labels   = [{{range $d.History}}"{{.Month}}",{{end}}];
+  const netData  = [{{range $d.History}}{{.NetCents}},{{end}}];
+  const cashData = [{{range $d.History}}{{.AssetCents}},{{end}}]; // assets (cash+portfolio+property)
+  const liabData = [{{range $d.History}}{{.LiabCents}},{{end}}]; // loan balances
+  const hasProperty = {{if $d.PropertyValueCents}}true{{else}}false{{end}};
+
+  const ctx    = document.getElementById('nw-chart').getContext('2d');
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#6979f8';
-  const green  = getComputedStyle(document.documentElement).getPropertyValue('--green').trim()  || '#4ade80';
+  const style  = getComputedStyle(document.documentElement);
+  const accent = style.getPropertyValue('--accent').trim()  || '#6979f8';
+  const green  = style.getPropertyValue('--green').trim()   || '#4ade80';
+  const red    = style.getPropertyValue('--red').trim()     || '#f87171';
+  const teal   = '#14b8a6';
+  const pts    = netData.length > 24 ? 0 : 3;
+
+  const datasets = [{
+    label: 'Net Worth',
+    data: netData.map(v => v / 100),
+    borderColor: accent,
+    backgroundColor: isDark ? 'rgba(105,121,248,0.07)' : 'rgba(67,85,232,0.05)',
+    fill: true,
+    tension: 0.35,
+    pointRadius: pts,
+    pointHoverRadius: 5,
+    borderWidth: 2.5,
+    order: 0,
+  }];
+
+  if (hasProperty) {
+    datasets.push({
+      label: 'Loans outstanding',
+      data: liabData.map(v => -(v / 100)),
+      borderColor: red,
+      backgroundColor: isDark ? 'rgba(248,113,113,0.06)' : 'rgba(239,68,68,0.04)',
+      fill: true,
+      tension: 0.35,
+      pointRadius: 0,
+      pointHoverRadius: 4,
+      borderWidth: 1.5,
+      borderDash: [4, 3],
+      order: 1,
+    });
+  }
 
   new Chart(ctx, {
     type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Net Worth (€)',
-        data: data.map(v => v / 100),
-        borderColor: accent,
-        backgroundColor: isDark ? 'rgba(105,121,248,0.08)' : 'rgba(67,85,232,0.06)',
-        fill: true,
-        tension: 0.35,
-        pointRadius: data.length > 24 ? 0 : 3,
-        pointHoverRadius: 5,
-        borderWidth: 2,
-      }]
-    },
+    data: { labels, datasets },
     options: {
       responsive: true,
       interaction: { intersect: false, mode: 'index' },
       plugins: {
-        legend: { display: false },
+        legend: { display: hasProperty, labels: { color: isDark ? '#8892b0' : '#64748b', boxWidth: 12, font: { size: 12 } } },
         tooltip: {
           callbacks: {
-            label: ctx => '€' + ctx.parsed.y.toLocaleString('pt-PT', {minimumFractionDigits:2})
+            label: c => c.dataset.label + ': €' + Math.abs(c.parsed.y).toLocaleString('pt-PT', {minimumFractionDigits:2})
           }
         }
       },
