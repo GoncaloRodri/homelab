@@ -248,7 +248,7 @@ func (m *mockStore) deleteAuthSession(_ context.Context, _ string) error { retur
 // ── helpers ───────────────────────────────────────────────────────────────────
 
 func newHandler(store *mockStore) *Handler {
-	return &Handler{store: store, secret: "test-secret"}
+	return &Handler{store: store, secret: "test-secret", loginRL: newLoginRateLimiter()}
 }
 
 func authReq(method, path string, body url.Values) *http.Request {
