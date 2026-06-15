@@ -1,9 +1,7 @@
 package main
 
 import (
-	"crypto/rand"
 	"encoding/csv"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"log/slog"
@@ -31,7 +29,7 @@ var slugRe = regexp.MustCompile(`^[a-z0-9-]{2,40}$`)
 func (h *Handler) requireOrgMember(next func(w http.ResponseWriter, r *http.Request, org *Org, me *OrgMember)) http.HandlerFunc {
 	return h.authMW(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		a := getAuth(r)
+		a := h.getAuth(r)
 		slug := r.PathValue("slug")
 
 		org, err := h.store.getOrgBySlug(ctx, slug)
@@ -71,7 +69,7 @@ func canManageOrg(role OrgRole) bool {
 
 func (h *Handler) OrgList(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	a := getAuth(r)
+	a := h.getAuth(r)
 
 	orgs, err := h.store.getOrgsForUser(ctx, a.UserID)
 	if err != nil {
@@ -90,7 +88,7 @@ func (h *Handler) OrgList(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) OrgCreate(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	a := getAuth(r)
+	a := h.getAuth(r)
 
 	if r.Method == http.MethodGet {
 		render(w, orgCreateTmpl, map[string]any{
@@ -309,7 +307,7 @@ func (h *Handler) OrgMemberRemove(w http.ResponseWriter, r *http.Request) {
 	h.requireOrgRole(OrgRoleAdmin)(func(w http.ResponseWriter, r *http.Request, org *Org, me *OrgMember) {
 		memberID := r.PathValue("member_id")
 		// prevent removing yourself
-		a := getAuth(r)
+		a := h.getAuth(r)
 		if me.UserID == a.UserID && memberID == me.ID {
 			http.Error(w, "cannot remove yourself", http.StatusBadRequest)
 			return
@@ -417,7 +415,7 @@ func (h *Handler) OrgInviteRevoke(w http.ResponseWriter, r *http.Request) {
 // OrgJoin handles the invite link: GET shows a confirmation page, POST accepts.
 func (h *Handler) OrgJoin(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	a := getAuth(r)
+	a := h.getAuth(r)
 	token := r.PathValue("token")
 
 	inv, err := h.store.getInviteByToken(ctx, token)
@@ -1966,12 +1964,6 @@ func (h *Handler) RegisterOrgRoutes(mux *http.ServeMux) {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-func randomHex(n int) string {
-	b := make([]byte, n)
-	_, _ = rand.Read(b)
-	return hex.EncodeToString(b)
-}
 
 // parseEuroAmount converts a user-entered decimal string (e.g. "12.50") to cents.
 func parseEuroAmount(s string) (int64, error) {

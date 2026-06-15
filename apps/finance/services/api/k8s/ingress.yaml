@@ -3,8 +3,6 @@ kind: Ingress
 metadata:
   name: api
   namespace: finance
-  annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: auth-forward-auth@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:

@@ -32,10 +32,20 @@ func main() {
 	defer db.Close(ctx)
 
 	store := NewStore(db)
+	store.ensureAuthIndexes(ctx)
 
 	go SeedAdmin(ctx, store)
 
-	handler := NewHandler(store)
+	secret := os.Getenv("SESSION_SECRET")
+	if secret == "" {
+		secret = "dev-secret-change-in-production-32x"
+		slog.Warn("SESSION_SECRET not set — using insecure default, set it before deploying")
+	}
+	handler := NewHandler(store, secret,
+		os.Getenv("GOOGLE_CLIENT_ID"),
+		os.Getenv("GOOGLE_CLIENT_SECRET"),
+		os.Getenv("BASE_URL"),
+	)
 
 	mux := http.NewServeMux()
 	handler.RegisterRoutes(mux)
