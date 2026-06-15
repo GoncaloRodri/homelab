@@ -170,6 +170,19 @@ func (m *mockStore) getImportSchedules(_ context.Context, _ string) ([]ImportSch
 func (m *mockStore) createImportSchedule(_ context.Context, _ *ImportSchedule) error { return nil }
 func (m *mockStore) deleteImportSchedule(_ context.Context, _, _ string) error        { return nil }
 
+// ── Property & Loan stubs ─────────────────────────────────────────────────────
+
+func (m *mockStore) getProperties(_ context.Context, _ string) ([]Property, error)            { return nil, nil }
+func (m *mockStore) getProperty(_ context.Context, _, _ string) (*Property, error)            { return nil, nil }
+func (m *mockStore) createProperty(_ context.Context, _ *Property) error                      { return nil }
+func (m *mockStore) updateProperty(_ context.Context, _, _ string, _ bson.M) error            { return nil }
+func (m *mockStore) deleteProperty(_ context.Context, _, _ string) error                      { return nil }
+func (m *mockStore) getLoans(_ context.Context, _ string) ([]Loan, error)                     { return nil, nil }
+func (m *mockStore) getLoan(_ context.Context, _, _ string) (*Loan, error)                    { return nil, nil }
+func (m *mockStore) createLoan(_ context.Context, _ *Loan) error                              { return nil }
+func (m *mockStore) updateLoan(_ context.Context, _, _ string, _ bson.M) error                { return nil }
+func (m *mockStore) deleteLoan(_ context.Context, _, _ string) error                          { return nil }
+
 // ── Org stubs (not exercised in unit tests) ───────────────────────────────────
 
 func (m *mockStore) getOrgsForUser(_ context.Context, _ string) ([]OrgWithRole, error) {

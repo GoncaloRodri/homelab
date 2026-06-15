@@ -287,6 +287,18 @@ type storeIface interface {
 	createImportSchedule(ctx context.Context, sched *ImportSchedule) error
 	deleteImportSchedule(ctx context.Context, id, userID string) error
 
+	// Property & Loan
+	getProperties(ctx context.Context, userID string) ([]Property, error)
+	getProperty(ctx context.Context, id, userID string) (*Property, error)
+	createProperty(ctx context.Context, p *Property) error
+	updateProperty(ctx context.Context, id, userID string, update bson.M) error
+	deleteProperty(ctx context.Context, id, userID string) error
+	getLoans(ctx context.Context, userID string) ([]Loan, error)
+	getLoan(ctx context.Context, id, userID string) (*Loan, error)
+	createLoan(ctx context.Context, l *Loan) error
+	updateLoan(ctx context.Context, id, userID string, update bson.M) error
+	deleteLoan(ctx context.Context, id, userID string) error
+
 	// Org
 	getOrgsForUser(ctx context.Context, userID string) ([]OrgWithRole, error)
 	getOrg(ctx context.Context, orgID string) (*Org, error)
@@ -2691,6 +2703,8 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /tax", h.Tax)
 	mux.HandleFunc("GET /tax/export.csv", h.TaxExport)
 	mux.HandleFunc("GET /auto-import", h.AutoImport)
+	mux.HandleFunc("GET /property", h.Properties)
+	mux.HandleFunc("POST /property", h.Properties)
 
 	h.RegisterOrgRoutes(mux)
 }
