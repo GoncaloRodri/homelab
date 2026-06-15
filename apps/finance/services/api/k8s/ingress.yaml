@@ -3,8 +3,6 @@ kind: Ingress
 metadata:
   name: api
   namespace: finance
-  annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: auth-forward-auth@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
@@ -13,30 +11,6 @@ spec:
         paths:
           - path: /
             pathType: Prefix
-            backend:
-              service:
-                name: api
-                port:
-                  name: http
----
-# Public homepage — no auth middleware so unauthenticated visitors can reach it.
-# Traefik ranks routers by rule-string length; PathPrefix(`/`) beats Path(`/`)
-# by default, so we set an explicit higher priority here to win for exact /.
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: api-public
-  namespace: finance
-  annotations:
-    traefik.ingress.kubernetes.io/router.priority: "100"
-spec:
-  ingressClassName: traefik
-  rules:
-    - host: finance.homelab.local
-      http:
-        paths:
-          - path: /
-            pathType: Exact
             backend:
               service:
                 name: api
