@@ -408,16 +408,19 @@ type NetWorthPoint struct {
 }
 
 type NetWorthData struct {
-	UserID   string
-	Email    string
-	Title    string
-	Route    string
+	UserID string
+	Email  string
+	Title  string
+	Route  string
 
 	// current snapshot
-	CashCents      int64 // running balance of all non-credit accounts
-	PortfolioCents int64 // market value (or cost basis)
-	CreditCents    int64 // total outstanding on credit accounts (positive = owed)
-	NetWorthCents  int64 // cash + portfolio − credit
+	CashCents           int64 // running balance of all non-credit accounts
+	PortfolioCents      int64 // market value (or cost basis)
+	CreditCents         int64 // total outstanding on credit accounts (positive = owed)
+	PropertyValueCents  int64 // sum of current value of non-sold properties
+	LoanBalanceCents    int64 // sum of active loan balances
+	PropertyEquityCents int64 // PropertyValueCents - LoanBalanceCents
+	NetWorthCents       int64 // cash + portfolio + propertyEquity − credit
 
 	PortfolioPricesAvailable bool
 
