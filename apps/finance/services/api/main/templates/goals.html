@@ -1,11 +1,26 @@
 {{define "content"}}
 {{$d := .}}
 
-<div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:8px;">
+<div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:8px;">
   <h1>Goals</h1>
-  <button onclick="document.getElementById('new-goal-modal').style.display='flex'"
-          class="btn btn-primary btn-sm">+ New goal</button>
 </div>
+
+<!-- Tab bar -->
+<div style="display:flex; gap:4px; margin-bottom:24px; border-bottom:1px solid var(--border); padding-bottom:0;">
+  <a href="/goals?tab=goals"
+     style="padding:8px 16px; font-size:14px; font-weight:500; border-radius:6px 6px 0 0; text-decoration:none;
+            {{if eq $d.Tab "goals"}}background:var(--bg2); color:var(--text1); border:1px solid var(--border); border-bottom:1px solid var(--bg2); margin-bottom:-1px;{{else}}color:var(--text3);{{end}}">
+    Committed goals
+  </a>
+  <a href="/goals?tab=planner"
+     style="padding:8px 16px; font-size:14px; font-weight:500; border-radius:6px 6px 0 0; text-decoration:none;
+            {{if eq $d.Tab "planner"}}background:var(--bg2); color:var(--text1); border:1px solid var(--border); border-bottom:1px solid var(--bg2); margin-bottom:-1px;{{else}}color:var(--text3);{{end}}">
+    Goal Planner
+  </a>
+</div>
+
+{{if eq $d.Tab "goals"}}
+{{/* ─── GOALS TAB ─────────────────────────────────────────────────────── */}}
 
 {{if $d.ConflictWarning}}
 <div style="padding:14px 18px; border-radius:10px; margin-bottom:16px; font-size:13px;
@@ -48,7 +63,6 @@
   <div class="card animate-on-scroll">
     <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
 
-      <!-- left: name + type + progress -->
       <div style="flex:1; min-width:200px;">
         <div style="display:flex; align-items:center; gap:10px; margin-bottom:4px;">
           <span style="font-size:18px;">{{if eq .Type "once"}}🎯{{else if eq .Type "deposit"}}🏠{{else if eq .Type "emergency"}}🛡️{{else}}📈{{end}}</span>
@@ -73,20 +87,16 @@
         </div>
       </div>
 
-      <!-- right: projection numbers -->
       <div style="display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start;">
-
         <div style="text-align:center;">
           <div style="font-size:11px; color:var(--text3); margin-bottom:3px;">Need per month</div>
           <div class="animate-counter" style="font-size:18px; font-weight:600; color:var(--text);"
                data-target="{{.MonthlyCents}}" data-prefix="€">€0</div>
         </div>
-
         <div style="text-align:center;">
           <div style="font-size:11px; color:var(--text3); margin-bottom:3px;">Months left</div>
           <div style="font-size:18px; font-weight:600; color:var(--text);">{{.MonthsLeft}}</div>
         </div>
-
         <div style="text-align:center;">
           <div style="font-size:11px; color:var(--text3); margin-bottom:3px;">At current rate</div>
           {{if gt .MonthsAtCurrentRate 0}}
@@ -98,14 +108,12 @@
           <div style="font-size:14px; color:var(--text3);">—</div>
           {{end}}
         </div>
-
         <div style="text-align:center;">
           <div style="font-size:11px; color:var(--text3); margin-bottom:3px;">Disposable after</div>
           <div class="animate-counter" style="font-size:18px; font-weight:600;
                {{if ge .ImpactOnDisposable 0}}color:var(--green){{else}}color:var(--red){{end}};"
                data-target="{{.ImpactOnDisposable}}" data-prefix="€">€0</div>
         </div>
-
       </div>
     </div>
 
@@ -113,11 +121,23 @@
     <div style="margin-top:14px; padding:10px 14px; border-radius:8px; font-size:13px;
          background:{{if .Feasible}}rgba(74,222,128,0.08){{else}}rgba(248,113,113,0.08){{end}};
          border:1px solid {{if .Feasible}}rgba(74,222,128,0.2){{else}}rgba(248,113,113,0.2){{end}};
-         color:{{if .Feasible}}var(--green){{else}}var(--red){{end}};">
+         color:{{if .Feasible}}var(--green){{else}}var(--red){{end}}; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+      <span>
       {{if .Feasible}}
-        ✓ On track — your current savings rate covers the required €{{cents .MonthlyCents}}/month with {{.MonthsLeft}} months to go.
+        ✓ On track — your current savings rate covers €{{cents .MonthlyCents}}/month with {{.MonthsLeft}} months to go.
       {{else}}
-        ⚠ At your current savings rate (€{{cents $d.AvgMonthlySavings}}/mo) you'd reach this in {{.MonthsAtCurrentRate}} months, missing the deadline by {{sub .MonthsAtCurrentRate .MonthsLeft}} months.
+        ⚠ At your current rate (€{{cents $d.AvgMonthlySavings}}/mo) you'd reach this in {{.MonthsAtCurrentRate}} months — {{sub .MonthsAtCurrentRate .MonthsLeft}} months late.
+      {{end}}
+      </span>
+      {{if and (not .Feasible) (gt .MonthsAtCurrentRate 0)}}
+      <form method="POST" action="/goals" style="margin:0;">
+        <input type="hidden" name="action" value="adjust_deadline">
+        <input type="hidden" name="id" value="{{.ID}}">
+        <input type="hidden" name="months" value="{{.MonthsAtCurrentRate}}">
+        <button type="submit" class="btn btn-outline btn-sm" style="color:var(--red); border-color:var(--red)44; white-space:nowrap;">
+          Adjust deadline →
+        </button>
+      </form>
       {{end}}
     </div>
 
@@ -131,9 +151,7 @@
           ✓ Committed — click to uncommit
         </button>
         {{else}}
-        <button type="submit" class="btn btn-primary btn-sm">
-          Commit to this goal
-        </button>
+        <button type="submit" class="btn btn-primary btn-sm">Commit to this goal</button>
         {{end}}
       </form>
       <form method="POST" action="/goals">
@@ -151,127 +169,411 @@
 <div class="card empty-state animate-on-scroll">
   <div style="font-size:48px; margin-bottom:16px;">🎯</div>
   <h3>No goals yet</h3>
-  <p style="margin-bottom:20px;">Plan a purchase, a house deposit, or an emergency fund.<br>See exactly how much you need to save each month to get there.</p>
-  <button onclick="document.getElementById('new-goal-modal').style.display='flex'" class="btn btn-primary">
-    Add your first goal
-  </button>
+  <p style="margin-bottom:20px;">Use the <strong>Goal Planner</strong> tab to simulate a goal and save it here.</p>
+  <a href="/goals?tab=planner" class="btn btn-primary">Open Goal Planner →</a>
 </div>
 {{end}}
 
-<!-- New goal modal -->
-<div id="new-goal-modal" style="display:none; position:fixed; inset:0; z-index:1000;
-     background:rgba(0,0,0,0.6); backdrop-filter:blur(4px);
-     align-items:center; justify-content:center; padding:20px;">
-  <div style="background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius);
-              padding:28px; width:100%; max-width:460px; position:relative;">
-    <h2 style="margin-bottom:20px;">New goal</h2>
+{{else}}
+{{/* ─── PLANNER TAB ─────────────────────────────────────────────────────── */}}
+{{$r := $d.PlanResult}}
+{{$pr := $d.PurchaseResult}}
 
-    <form method="POST" action="/goals" style="display:flex; flex-direction:column; gap:16px;">
-
-      <div>
-        <label style="font-size:12px; color:var(--text2); display:block; margin-bottom:6px;">Goal name</label>
-        <input name="name" required placeholder="e.g. Nintendo Switch, House deposit…"
-               style="width:100%; padding:9px 12px; background:var(--bg3); border:1px solid var(--border);
-                      border-radius:8px; color:var(--text); font-size:14px;">
-      </div>
-
-      <div>
-        <label style="font-size:12px; color:var(--text2); display:block; margin-bottom:6px;">Type</label>
-        <select name="type" id="goal-type" onchange="updateTypeHint(this.value)"
-                style="width:100%; padding:9px 12px; background:var(--bg3); border:1px solid var(--border);
-                       border-radius:8px; color:var(--text); font-size:14px;">
-          <option value="once">🎯 One-off purchase</option>
-          <option value="deposit">🏠 Deposit / down-payment</option>
-          <option value="emergency">🛡️ Emergency fund</option>
-          <option value="investment">📈 Recurring investment</option>
-        </select>
-        <p id="type-hint" style="font-size:12px; color:var(--text3); margin-top:5px;">
-          A specific purchase you want to save up for.
-        </p>
-      </div>
-
-      <div>
-        <label style="font-size:12px; color:var(--text2); display:block; margin-bottom:6px;">Target amount (€)</label>
-        <input name="target_euros" type="number" min="1" step="0.01" required placeholder="500"
-               style="width:100%; padding:9px 12px; background:var(--bg3); border:1px solid var(--border);
-                      border-radius:8px; color:var(--text); font-size:14px;">
-      </div>
-
-      <div>
-        <label style="font-size:12px; color:var(--text2); display:block; margin-bottom:6px;">Target date</label>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-          <select id="deadline-month"
-                  style="padding:9px 12px; background:var(--bg3); border:1px solid var(--border);
-                         border-radius:8px; color:var(--text); font-size:14px;">
-            <option value="01">January</option>
-            <option value="02">February</option>
-            <option value="03">March</option>
-            <option value="04">April</option>
-            <option value="05">May</option>
-            <option value="06">June</option>
-            <option value="07">July</option>
-            <option value="08">August</option>
-            <option value="09">September</option>
-            <option value="10">October</option>
-            <option value="11">November</option>
-            <option value="12">December</option>
-          </select>
-          <select id="deadline-year"
-                  style="padding:9px 12px; background:var(--bg3); border:1px solid var(--border);
-                         border-radius:8px; color:var(--text); font-size:14px;">
-          </select>
-        </div>
-        <!-- hidden field submitted to server -->
-        <input type="hidden" name="deadline" id="deadline-value">
-      </div>
-
-      <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:4px;">
-        <button type="button" onclick="document.getElementById('new-goal-modal').style.display='none'"
-                class="btn btn-outline">Cancel</button>
-        <button type="submit" class="btn btn-primary">Save goal</button>
-      </div>
-    </form>
+<!-- Type selector -->
+<div class="card animate-on-scroll" style="margin-bottom:20px;">
+  <h2 style="margin-bottom:14px;">What kind of goal?</h2>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+    <a href="/goals?tab=planner&planner_type=purchase"
+       style="display:block; padding:16px 18px; border-radius:var(--radius); border:2px solid {{if eq $d.PlannerType "purchase"}}var(--accent){{else}}var(--border){{end}}; text-decoration:none; transition:border-color 0.15s;">
+      <div style="font-size:22px; margin-bottom:8px;">🛒</div>
+      <div style="font-weight:600; font-size:14px; color:var(--text1); margin-bottom:4px;">Save for a purchase</div>
+      <div style="font-size:12px; color:var(--text3);">Car, trip, gadget, fund — save up to a target by a date.</div>
+    </a>
+    <a href="/goals?tab=planner&planner_type=transition"
+       style="display:block; padding:16px 18px; border-radius:var(--radius); border:2px solid {{if eq $d.PlannerType "transition"}}var(--accent){{else}}var(--border){{end}}; text-decoration:none; transition:border-color 0.15s;">
+      <div style="font-size:22px; margin-bottom:8px;">🔄</div>
+      <div style="font-weight:600; font-size:14px; color:var(--text1); margin-bottom:4px;">Sell &amp; upgrade</div>
+      <div style="font-size:12px; color:var(--text3);">Own an asset with a loan, acquire something new, sell the old to fund it.</div>
+    </a>
   </div>
 </div>
 
+{{if eq $d.PlannerType "purchase"}}
+<!-- ── PURCHASE FORM ──────────────────────────────────────────────────────── -->
+<div class="card animate-on-scroll" style="margin-bottom:20px;">
+  <h2 style="margin-bottom:16px;">Your purchase goal</h2>
+  <form method="GET" action="/goals">
+    <input type="hidden" name="tab" value="planner">
+    <input type="hidden" name="planner_type" value="purchase">
+    <input type="hidden" name="run" value="1">
+    <div style="display:flex; flex-direction:column; gap:14px; margin-bottom:16px;">
+
+      <div>
+        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">Goal name</label>
+        <input name="name" placeholder="e.g. New car, Europe trip, Emergency fund…"
+          value="{{if $d.HasPurchaseResult}}{{$pr.Name}}{{end}}"
+          style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px; box-sizing:border-box;">
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div>
+          <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">Target amount (€)</label>
+          <input type="number" name="target" min="0" step="100"
+            value="{{if $d.HasPurchaseResult}}{{div $pr.TargetCents 100}}{{end}}"
+            placeholder="e.g. 12000"
+            style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px; box-sizing:border-box;">
+        </div>
+        <div>
+          <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">Monthly savings (€)</label>
+          <input type="number" name="monthly_savings" min="0" step="50"
+            value="{{if $d.HasPurchaseResult}}{{div $pr.MonthlySavingsCents 100}}{{end}}"
+            placeholder="e.g. 400"
+            style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px; box-sizing:border-box;">
+        </div>
+      </div>
+
+      <div>
+        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">Target date (optional — leave blank to see when you'll get there)</label>
+        <input type="month" name="deadline"
+          value="{{if and $d.HasPurchaseResult $pr.HasDeadline}}{{$pr.DeadlineDate.Format "2006-01"}}{{end}}"
+          style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px; box-sizing:border-box;">
+      </div>
+
+    </div>
+    <button type="submit" class="btn btn-primary" style="width:100%;">Calculate →</button>
+  </form>
+</div>
+
+{{if $d.HasPurchaseResult}}
+<!-- Purchase result -->
+<div class="grid" style="margin-bottom:20px;">
+  <div class="card value-card animate-on-scroll">
+    <h2>At your savings rate</h2>
+    {{if gt $pr.MonthsNeeded 0}}
+    <div class="value positive">{{$pr.YearsNeeded}}y {{$pr.RemMonths}}m</div>
+    <p style="font-size:12px; color:var(--text3); margin-top:6px;">reach {{dateShort $pr.ReachDate}}</p>
+    {{else}}
+    <div class="value" style="color:var(--text3); font-size:18px;">—</div>
+    <p style="font-size:12px; color:var(--text3); margin-top:6px;">enter monthly savings</p>
+    {{end}}
+  </div>
+  <div class="card value-card animate-on-scroll">
+    <h2>Monthly needed</h2>
+    {{if $pr.HasDeadline}}
+    <div class="value {{if $pr.Feasible}}positive{{else}}negative{{end}}">€{{cents $pr.MonthlyNeededForDeadline}}</div>
+    <p style="font-size:12px; color:var(--text3); margin-top:6px;">to hit {{dateShort $pr.DeadlineDate}}</p>
+    {{else}}
+    <div class="value" style="color:var(--text3); font-size:18px;">—</div>
+    <p style="font-size:12px; color:var(--text3); margin-top:6px;">set a target date above</p>
+    {{end}}
+  </div>
+  <div class="card value-card animate-on-scroll">
+    <h2>Target</h2>
+    <div class="value positive">€{{cents $pr.TargetCents}}</div>
+    <p style="font-size:12px; color:var(--text3); margin-top:6px;">your goal amount</p>
+  </div>
+</div>
+
+{{if $pr.HasDeadline}}
+<div style="padding:12px 16px; border-radius:var(--radius); margin-bottom:20px; font-size:13px;
+     background:{{if $pr.Feasible}}rgba(74,222,128,0.08){{else}}rgba(248,113,113,0.08){{end}};
+     border:1px solid {{if $pr.Feasible}}rgba(74,222,128,0.25){{else}}rgba(248,113,113,0.25){{end}};
+     color:{{if $pr.Feasible}}var(--green){{else}}var(--red){{end}};">
+  {{if $pr.Feasible}}
+    ✓ On track — €{{cents $pr.MonthlySavingsCents}}/mo covers the required €{{cents $pr.MonthlyNeededForDeadline}}/mo.
+  {{else}}
+    ⚠ You need €{{cents $pr.MonthlyNeededForDeadline}}/mo to hit the deadline but you're saving €{{cents $pr.MonthlySavingsCents}}/mo. At your current rate you'll get there in {{$pr.MonthsNeeded}} months ({{dateShort $pr.ReachDate}}).
+  {{end}}
+</div>
+{{end}}
+
+<!-- Save as goal -->
+<div class="card animate-on-scroll">
+  <h2 style="margin-bottom:4px;">Save as a goal</h2>
+  <p style="font-size:13px; color:var(--text3); margin-bottom:14px;">Adds this to your Goals tab so you can commit to it.</p>
+  <form method="POST" action="/goals" style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+    <input type="hidden" name="type" value="once">
+    <input type="hidden" name="target_euros" value="{{div $pr.TargetCents 100}}">
+    <input type="hidden" name="deadline" value="{{if $pr.HasDeadline}}{{$pr.DeadlineDate.Format "2006-01"}}{{else}}{{$pr.ReachDate.Format "2006-01"}}{{end}}">
+    <div style="flex:1; min-width:200px;">
+      <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">Goal name</label>
+      <input name="name" required value="{{$pr.Name}}" placeholder="e.g. New car"
+             style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px; box-sizing:border-box;">
+    </div>
+    <button type="submit" class="btn btn-primary" style="white-space:nowrap;">Save goal →</button>
+  </form>
+</div>
+{{end}}
+
+{{else if eq $d.PlannerType "transition"}}
+<!-- ── TRANSITION FORM ───────────────────────────────────────────────────── -->
+<div class="card animate-on-scroll" style="margin-bottom:20px;">
+  <h2 style="margin-bottom:16px;">Your transition scenario</h2>
+  <form method="GET" action="/goals">
+    <input type="hidden" name="tab" value="planner">
+    <input type="hidden" name="planner_type" value="transition">
+    <input type="hidden" name="run" value="1">
+
+    <div class="grid" style="gap:14px; margin-bottom:16px;">
+
+      <div>
+        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">Current asset (optional)</label>
+        <select name="property_id" style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px;">
+          <option value="">— none selected —</option>
+          {{range $d.PlanProperties}}
+          <option value="{{.ID}}" {{if and $d.HasPlanResult (eq $d.PlanForm.PropertyID .ID)}}selected{{end}}>{{.Name}} (€{{cents .CurrentValueCents}})</option>
+          {{end}}
+        </select>
+      </div>
+
+      <div>
+        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">Current loan (optional)</label>
+        <select name="loan_id" style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px;">
+          <option value="">— none selected —</option>
+          {{range $d.PlanLoans}}
+          <option value="{{.ID}}" {{if and $d.HasPlanResult (eq $d.PlanForm.LoanID .ID)}}selected{{end}}>{{.Name}} (€{{cents .BalanceCents}} left)</option>
+          {{end}}
+        </select>
+      </div>
+
+      <div>
+        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">New goal cost (€)</label>
+        <input type="number" name="dream_cost" min="0" step="1000"
+          value="{{if $d.HasPlanResult}}{{div $d.PlanForm.DreamCostCents 100}}{{end}}"
+          placeholder="e.g. 350000"
+          style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px; box-sizing:border-box;">
+      </div>
+
+      <div>
+        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">Down payment (%)</label>
+        <input type="number" name="down_pct" min="0" max="100" step="1"
+          value="{{if $d.HasPlanResult}}{{round $d.PlanForm.DownPaymentPct}}{{else}}20{{end}}"
+          style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px; box-sizing:border-box;">
+      </div>
+
+      <div>
+        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">New loan rate (% annual)</label>
+        <input type="number" name="const_rate" min="0" max="30" step="0.1"
+          value="{{if $d.HasPlanResult}}{{$d.PlanForm.ConstructionRatePct}}{{else}}4.0{{end}}"
+          style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px; box-sizing:border-box;">
+      </div>
+
+      <div>
+        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">New loan term (years)</label>
+        <input type="number" name="const_term" min="1" max="40" step="1"
+          value="{{if $d.HasPlanResult}}{{$d.PlanForm.ConstructionTermYears}}{{else}}30{{end}}"
+          style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px; box-sizing:border-box;">
+      </div>
+
+      <div>
+        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">Acquisition / build period (months)</label>
+        <input type="number" name="build_months" min="1" max="60" step="1"
+          value="{{if $d.HasPlanResult}}{{$d.PlanForm.BuildMonths}}{{else}}18{{end}}"
+          style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px; box-sizing:border-box;">
+      </div>
+
+      <div>
+        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">Monthly savings available (€)</label>
+        <input type="number" name="monthly_savings" min="0" step="100"
+          value="{{if $d.HasPlanResult}}{{div $d.PlanForm.MonthlySavingsCents 100}}{{end}}"
+          placeholder="e.g. 800"
+          style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px; box-sizing:border-box;">
+      </div>
+
+      <div>
+        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">Expected sale price of current asset (€)</label>
+        <input type="number" name="sale_price" min="0" step="1000"
+          value="{{if $d.HasPlanResult}}{{div $d.PlanForm.ExpectedSalePriceCents 100}}{{end}}"
+          placeholder="leave blank to use current value"
+          style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px; box-sizing:border-box;">
+      </div>
+
+    </div>
+
+    <button type="submit" class="btn btn-primary" style="width:100%;">Run simulation →</button>
+  </form>
+</div>
+
+{{if $d.HasPlanResult}}
+
+{{if $r.Warning}}
+<div style="background:rgba(251,191,36,0.12); border:1px solid rgba(251,191,36,0.4); border-radius:var(--radius); padding:12px 16px; margin-bottom:16px; font-size:13px; color:var(--text2);">
+  ⚠️ {{$r.Warning}}
+</div>
+{{end}}
+
+<!-- Summary cards -->
+<div class="grid" style="margin-bottom:20px;">
+  <div class="card value-card animate-on-scroll">
+    <h2>Total timeline</h2>
+    <div class="value positive">{{$r.TotalYears}}y {{$r.TotalRemMonths}}m</div>
+    <p style="font-size:12px; color:var(--text3); margin-top:6px;">until goal is fully paid off</p>
+  </div>
+  <div class="card value-card animate-on-scroll">
+    <h2>Final monthly cost</h2>
+    <div class="value positive">€{{cents $r.Phase4MonthlyCents}}</div>
+    <p style="font-size:12px; color:var(--text3); margin-top:6px;">after selling current asset</p>
+  </div>
+  <div class="card value-card animate-on-scroll">
+    <h2>Total interest</h2>
+    <div class="value" style="color:var(--red);">€{{cents $r.TotalInterestCents}}</div>
+    <p style="font-size:12px; color:var(--text3); margin-top:6px;">across both loans</p>
+  </div>
+  <div class="card value-card animate-on-scroll">
+    <h2>Free by</h2>
+    <div class="value positive" style="font-size:24px;">{{dateShort $r.FinalDate}}</div>
+    <p style="font-size:12px; color:var(--text3); margin-top:6px;">fully paid off</p>
+  </div>
+</div>
+
+<!-- Phase timeline -->
+<div class="card animate-on-scroll" style="margin-bottom:20px;">
+  <h2 style="margin-bottom:20px;">Your roadmap</h2>
+  <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:0; position:relative;">
+    <div style="position:absolute; top:20px; left:12.5%; right:12.5%; height:3px; background:var(--border); z-index:0; border-radius:2px;"></div>
+
+    <!-- Phase 1 -->
+    <div style="text-align:center; position:relative; padding:0 8px;">
+      <div style="width:40px; height:40px; border-radius:50%; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-size:18px; margin:0 auto 12px; position:relative; z-index:1;">1</div>
+      <div style="font-weight:600; font-size:13px; color:var(--text1); margin-bottom:6px;">Save down payment</div>
+      {{if gt $r.Phase1Months 0}}
+      <div style="font-size:22px; font-weight:500; color:var(--accent); margin-bottom:4px;">{{$r.Phase1Months}}mo</div>
+      <div style="font-size:11px; color:var(--text3);">until {{dateShort $r.Phase1EndDate}}</div>
+      <div style="margin-top:10px; font-size:12px; color:var(--text2); background:var(--bg3); border-radius:var(--radius-sm); padding:8px 10px; text-align:left;">
+        <div>Target: <strong>€{{cents $r.DownPaymentCents}}</strong></div>
+        <div>Already have: <strong>€{{cents $r.AlreadyHaveCents}}</strong></div>
+        <div>Still need: <strong>€{{cents $r.StillNeededCents}}</strong></div>
+        <div>Saving: <strong>€{{cents $r.Form.MonthlySavingsCents}}/mo</strong></div>
+      </div>
+      {{else}}
+      <div style="font-size:16px; font-weight:600; color:var(--green); margin-bottom:4px;">Ready now!</div>
+      <div style="font-size:11px; color:var(--text3);">equity covers down payment</div>
+      <div style="margin-top:10px; font-size:12px; color:var(--text2); background:var(--bg3); border-radius:var(--radius-sm); padding:8px 10px; text-align:left;">
+        <div>Down payment: <strong>€{{cents $r.DownPaymentCents}}</strong></div>
+        <div>Your equity: <strong style="color:var(--green);">€{{cents $r.AlreadyHaveCents}}</strong></div>
+      </div>
+      {{end}}
+    </div>
+
+    <!-- Phase 2 -->
+    <div style="text-align:center; position:relative; padding:0 8px;">
+      <div style="width:40px; height:40px; border-radius:50%; background:#f97316; color:#fff; display:flex; align-items:center; justify-content:center; font-size:18px; margin:0 auto 12px; position:relative; z-index:1;">2</div>
+      <div style="font-weight:600; font-size:13px; color:var(--text1); margin-bottom:6px;">Acquire / build</div>
+      <div style="font-size:22px; font-weight:500; color:#f97316; margin-bottom:4px;">{{$r.Phase2Months}}mo</div>
+      <div style="font-size:11px; color:var(--text3);">until {{dateShort $r.Phase2EndDate}}</div>
+      <div style="margin-top:10px; font-size:12px; color:var(--text2); background:var(--bg3); border-radius:var(--radius-sm); padding:8px 10px; text-align:left;">
+        <div>New loan: <strong>€{{cents $r.ConstructionLoanCents}}</strong></div>
+        {{if $r.CurrentLoan}}<div>Existing loan: <strong>€{{cents $r.CurrentMonthlyCents}}/mo</strong></div>{{end}}
+        <div>New EMI: <strong>€{{cents $r.ConstructionMonthly}}/mo</strong></div>
+        <div style="border-top:1px solid var(--border); margin-top:6px; padding-top:6px;">Total burden: <strong style="color:#f97316;">€{{cents $r.Phase2MonthlyCents}}/mo</strong></div>
+      </div>
+    </div>
+
+    <!-- Phase 3 -->
+    <div style="text-align:center; position:relative; padding:0 8px;">
+      <div style="width:40px; height:40px; border-radius:50%; background:#14b8a6; color:#fff; display:flex; align-items:center; justify-content:center; font-size:18px; margin:0 auto 12px; position:relative; z-index:1;">3</div>
+      <div style="font-weight:600; font-size:13px; color:var(--text1); margin-bottom:6px;">Sell &amp; transition</div>
+      <div style="font-size:16px; font-weight:600; color:#14b8a6; margin-bottom:4px;">One-time event</div>
+      <div style="font-size:11px; color:var(--text3);">after acquisition completes</div>
+      <div style="margin-top:10px; font-size:12px; color:var(--text2); background:var(--bg3); border-radius:var(--radius-sm); padding:8px 10px; text-align:left;">
+        <div>Sale price: <strong>€{{cents $r.SalePriceCents}}</strong></div>
+        <div>Pay off loan: <strong style="color:var(--red);">-€{{cents $r.MortgagePayoffCents}}</strong></div>
+        <div style="border-top:1px solid var(--border); margin-top:6px; padding-top:6px;">Net proceeds: <strong style="color:var(--green);">€{{cents $r.NetProceedsCents}}</strong></div>
+        <div>Applied to new loan</div>
+      </div>
+    </div>
+
+    <!-- Phase 4 -->
+    <div style="text-align:center; position:relative; padding:0 8px;">
+      <div style="width:40px; height:40px; border-radius:50%; background:var(--green); color:#fff; display:flex; align-items:center; justify-content:center; font-size:18px; margin:0 auto 12px; position:relative; z-index:1;">4</div>
+      <div style="font-weight:600; font-size:13px; color:var(--text1); margin-bottom:6px;">Goal achieved</div>
+      {{if gt $r.Phase4Months 0}}
+      <div style="font-size:22px; font-weight:500; color:var(--green); margin-bottom:4px;">{{$r.Phase4Months}}mo</div>
+      <div style="font-size:11px; color:var(--text3);">paid off {{dateShort $r.Phase4EndDate}}</div>
+      <div style="margin-top:10px; font-size:12px; color:var(--text2); background:var(--bg3); border-radius:var(--radius-sm); padding:8px 10px; text-align:left;">
+        <div>Remaining loan: <strong>€{{cents $r.RemainingBalanceCents}}</strong></div>
+        <div>Monthly: <strong style="color:var(--green);">€{{cents $r.Phase4MonthlyCents}}/mo</strong></div>
+      </div>
+      {{else}}
+      <div style="font-size:16px; font-weight:600; color:var(--green); margin-bottom:4px;">Fully paid!</div>
+      <div style="font-size:11px; color:var(--text3);">sale proceeds cleared the loan</div>
+      <div style="margin-top:10px; font-size:12px; color:var(--text2); background:var(--bg3); border-radius:var(--radius-sm); padding:8px 10px; text-align:left;">
+        <div style="color:var(--green); font-weight:600;">No remaining loan!</div>
+      </div>
+      {{end}}
+    </div>
+  </div>
+</div>
+
+<!-- Monthly cost chart -->
+<div class="card animate-on-scroll" style="margin-bottom:20px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+    <h2>Monthly cost over time</h2>
+    <span style="font-size:11px; color:var(--text3);">what you pay each month</span>
+  </div>
+  <canvas id="cost-chart" height="160"></canvas>
+</div>
+
 <script>
-const typeHints = {
-  once:       'A specific purchase you want to save up for.',
-  deposit:    'A lump sum needed for a house deposit or down-payment.',
-  emergency:  'A safety net covering several months of expenses.',
-  investment: 'A recurring investment target (e.g. ETF monthly contribution).',
-};
-function updateTypeHint(v) {
-  document.getElementById('type-hint').textContent = typeHints[v] || '';
-}
-
-// populate year dropdown: current year + 10 years ahead
 (function() {
-  const now = new Date();
-  const yearSel = document.getElementById('deadline-year');
-  const monthSel = document.getElementById('deadline-month');
-  for (let y = now.getFullYear(); y <= now.getFullYear() + 10; y++) {
-    const opt = document.createElement('option');
-    opt.value = String(y);
-    opt.textContent = String(y);
-    yearSel.appendChild(opt);
-  }
-  // default month to next month
-  const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-  monthSel.value = String(nextMonth.getMonth() + 1).padStart(2, '0');
-  yearSel.value = String(nextMonth.getFullYear());
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const style  = getComputedStyle(document.documentElement);
+  const accent = style.getPropertyValue('--accent').trim() || '#6979f8';
+  const green  = style.getPropertyValue('--green').trim()  || '#4ade80';
+
+  const phase1Months    = {{$r.Phase1Months}};
+  const phase2Months    = {{$r.Phase2Months}};
+  const phase4Months    = {{$r.Phase4Months}};
+  const existingMonthly = {{$r.CurrentMonthlyCents}} / 100;
+  const phase2Monthly   = {{$r.Phase2MonthlyCents}} / 100;
+  const phase4Monthly   = {{$r.Phase4MonthlyCents}} / 100;
+
+  const labels = [], costs = [], colors = [];
+  for (let i = 0; i < phase1Months; i++) { labels.push('Save '+(i+1)); costs.push(existingMonthly); colors.push(accent); }
+  for (let i = 0; i < phase2Months; i++) { labels.push('Acquire '+(i+1)); costs.push(phase2Monthly); colors.push('#f97316'); }
+  for (let i = 0; i < phase4Months; i++) { labels.push('Goal '+(i+1)); costs.push(phase4Monthly); colors.push(green); }
+
+  const step = Math.ceil(labels.length / 24);
+  const displayLabels = labels.map((l, i) => i % step === 0 ? l : '');
+
+  new Chart(document.getElementById('cost-chart').getContext('2d'), {
+    type: 'bar',
+    data: { labels: displayLabels, datasets: [{ data: costs, backgroundColor: colors, borderRadius: 3, borderSkipped: false }] },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { title: i => labels[i[0].dataIndex], label: c => '€'+c.parsed.y.toLocaleString('pt-PT',{minimumFractionDigits:2})+'/mo' } }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: isDark?'#5c6585':'#9fa8c7', font:{size:10} } },
+        y: { grid: { color: isDark?'rgba(255,255,255,0.04)':'rgba(0,0,0,0.05)' }, ticks: { color: isDark?'#5c6585':'#9fa8c7', callback: v=>'€'+(v/1000).toFixed(0)+'k' } }
+      }
+    }
+  });
 })();
-
-// wire hidden field before submit
-document.querySelector('#new-goal-modal form').addEventListener('submit', function() {
-  const m = document.getElementById('deadline-month').value;
-  const y = document.getElementById('deadline-year').value;
-  document.getElementById('deadline-value').value = y + '-' + m;
-});
-
-// close modal on backdrop click
-document.getElementById('new-goal-modal').addEventListener('click', function(e) {
-  if (e.target === this) this.style.display = 'none';
-});
 </script>
+
+<!-- Save as goal (transition) -->
+<div class="card animate-on-scroll">
+  <h2 style="margin-bottom:4px;">Save as a goal</h2>
+  <p style="font-size:13px; color:var(--text3); margin-bottom:14px;">Adds this to your Goals tab so you can commit to it.</p>
+  <form method="POST" action="/goals" style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+    <input type="hidden" name="type" value="deposit">
+    <input type="hidden" name="target_euros" value="{{div $r.Form.DreamCostCents 100}}">
+    <input type="hidden" name="deadline" value="{{$r.FinalDate.Format "2006-01"}}">
+    <div style="flex:1; min-width:200px;">
+      <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">Goal name</label>
+      <input name="name" required placeholder="e.g. New property, Upgrade car…"
+             style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px; box-sizing:border-box;">
+    </div>
+    <button type="submit" class="btn btn-primary" style="white-space:nowrap;">Save goal →</button>
+  </form>
+</div>
+
+{{end}}{{/* end HasPlanResult */}}
+
+{{end}}{{/* end planner_type transition */}}
+
+{{end}}{{/* end tab */}}
 {{end}}
