@@ -2763,6 +2763,7 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /auto-import", h.AutoImport)
 	mux.HandleFunc("GET /property", h.Properties)
 	mux.HandleFunc("POST /property", h.Properties)
+	mux.HandleFunc("GET /dream", h.Dream)
 
 	h.RegisterOrgRoutes(mux)
 }

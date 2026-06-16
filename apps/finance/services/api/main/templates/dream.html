@@ -1,0 +1,361 @@
+{{define "content"}}
+{{$d := .}}
+{{$r := .Result}}
+
+<div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:8px;">
+  <h1>Dream House Simulator</h1>
+  <span class="text-muted">{{if $d.Email}}{{$d.Email}}{{end}}</span>
+</div>
+
+<!-- Inputs form -->
+<div class="card animate-on-scroll" style="margin-bottom:20px;">
+  <h2 style="margin-bottom:16px;">Your scenario</h2>
+  <form method="GET" action="/dream">
+    <input type="hidden" name="run" value="1">
+
+    <div class="grid" style="gap:14px; margin-bottom:16px;">
+
+      <!-- Current property -->
+      <div>
+        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">Current property</label>
+        <select name="property_id" style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px;">
+          <option value="">— none selected —</option>
+          {{range $d.Properties}}
+          <option value="{{.ID}}" {{if and $d.HasResult (eq $d.Form.PropertyID .ID)}}selected{{end}}>{{.Name}} (€{{cents .CurrentValueCents}})</option>
+          {{end}}
+        </select>
+      </div>
+
+      <!-- Linked loan -->
+      <div>
+        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">Current mortgage / loan</label>
+        <select name="loan_id" style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px;">
+          <option value="">— none selected —</option>
+          {{range $d.Loans}}
+          <option value="{{.ID}}" {{if and $d.HasResult (eq $d.Form.LoanID .ID)}}selected{{end}}>{{.Name}} (€{{cents .BalanceCents}} left)</option>
+          {{end}}
+        </select>
+      </div>
+
+      <!-- Dream cost -->
+      <div>
+        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">Dream house build cost (€)</label>
+        <input type="number" name="dream_cost" min="0" step="1000"
+          value="{{if $d.HasResult}}{{div $d.Form.DreamCostCents 100}}{{end}}"
+          placeholder="e.g. 350000"
+          style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px; box-sizing:border-box;">
+      </div>
+
+      <!-- Down payment % -->
+      <div>
+        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">Down payment (%)</label>
+        <input type="number" name="down_pct" min="0" max="100" step="1"
+          value="{{if $d.HasResult}}{{round $d.Form.DownPaymentPct}}{{else}}20{{end}}"
+          style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px; box-sizing:border-box;">
+      </div>
+
+      <!-- Construction rate -->
+      <div>
+        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">Construction loan rate (% annual)</label>
+        <input type="number" name="const_rate" min="0" max="30" step="0.1"
+          value="{{if $d.HasResult}}{{$d.Form.ConstructionRatePct}}{{else}}4.0{{end}}"
+          style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px; box-sizing:border-box;">
+      </div>
+
+      <!-- Construction term -->
+      <div>
+        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">Construction loan term (years)</label>
+        <input type="number" name="const_term" min="1" max="40" step="1"
+          value="{{if $d.HasResult}}{{$d.Form.ConstructionTermYears}}{{else}}30{{end}}"
+          placeholder="30"
+          style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px; box-sizing:border-box;">
+      </div>
+
+      <!-- Build duration -->
+      <div>
+        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">Construction duration (months)</label>
+        <input type="number" name="build_months" min="1" max="60" step="1"
+          value="{{if $d.HasResult}}{{$d.Form.BuildMonths}}{{else}}18{{end}}"
+          style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px; box-sizing:border-box;">
+      </div>
+
+      <!-- Monthly savings -->
+      <div>
+        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">Monthly savings available (€)</label>
+        <input type="number" name="monthly_savings" min="0" step="100"
+          value="{{if $d.HasResult}}{{div $d.Form.MonthlySavingsCents 100}}{{end}}"
+          placeholder="e.g. 800"
+          style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px; box-sizing:border-box;">
+      </div>
+
+      <!-- Expected sale price -->
+      <div>
+        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">Expected sale price of current house (€)</label>
+        <input type="number" name="sale_price" min="0" step="1000"
+          value="{{if $d.HasResult}}{{div $d.Form.ExpectedSalePriceCents 100}}{{end}}"
+          placeholder="leave blank to use current value"
+          style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px; box-sizing:border-box;">
+      </div>
+
+    </div>
+
+    <button type="submit" class="btn btn-primary" style="width:100%;">Run simulation →</button>
+  </form>
+</div>
+
+{{if $d.HasResult}}
+
+{{if $r.Warning}}
+<div style="background:rgba(251,191,36,0.12); border:1px solid rgba(251,191,36,0.4); border-radius:var(--radius); padding:12px 16px; margin-bottom:16px; font-size:13px; color:var(--text2);">
+  ⚠️ {{$r.Warning}}
+</div>
+{{end}}
+
+<!-- Summary bar -->
+<div class="grid" style="margin-bottom:20px;">
+  <div class="card value-card animate-on-scroll">
+    <h2>Total timeline</h2>
+    <div class="value positive">{{$r.TotalYears}}y {{$r.TotalRemMonths}}m</div>
+    <p style="font-size:12px; color:var(--text3); margin-top:6px;">until dream house is fully yours</p>
+  </div>
+  <div class="card value-card animate-on-scroll">
+    <h2>Final monthly cost</h2>
+    <div class="value positive">€{{cents $r.Phase4MonthlyCents}}</div>
+    <p style="font-size:12px; color:var(--text3); margin-top:6px;">after selling current house</p>
+  </div>
+  <div class="card value-card animate-on-scroll">
+    <h2>Total interest</h2>
+    <div class="value" style="color:var(--red);">€{{cents $r.TotalInterestCents}}</div>
+    <p style="font-size:12px; color:var(--text3); margin-top:6px;">across both loans combined</p>
+  </div>
+  <div class="card value-card animate-on-scroll">
+    <h2>Dream house free by</h2>
+    <div class="value positive" style="font-size:24px;">{{dateShort $r.FinalDate}}</div>
+    <p style="font-size:12px; color:var(--text3); margin-top:6px;">fully paid off</p>
+  </div>
+</div>
+
+<!-- Phase timeline -->
+<div class="card animate-on-scroll" style="margin-bottom:20px;">
+  <h2 style="margin-bottom:20px;">Your roadmap</h2>
+
+  <!-- Phase connector line (desktop) -->
+  <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:0; position:relative;">
+
+    <!-- connector bar -->
+    <div style="position:absolute; top:20px; left:12.5%; right:12.5%; height:3px; background:var(--border); z-index:0; border-radius:2px;"></div>
+
+    <!-- Phase 1 -->
+    <div style="text-align:center; position:relative; padding:0 8px;">
+      <div style="width:40px; height:40px; border-radius:50%; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-size:18px; margin:0 auto 12px; position:relative; z-index:1;">1</div>
+      <div style="font-weight:600; font-size:13px; color:var(--text1); margin-bottom:6px;">Save down payment</div>
+      {{if gt $r.Phase1Months 0}}
+      <div style="font-size:22px; font-weight:500; color:var(--accent); margin-bottom:4px;">{{$r.Phase1Months}}mo</div>
+      <div style="font-size:11px; color:var(--text3);">until {{dateShort $r.Phase1EndDate}}</div>
+      <div style="margin-top:10px; font-size:12px; color:var(--text2); background:var(--bg3); border-radius:var(--radius-sm); padding:8px 10px; text-align:left;">
+        <div>Target: <strong>€{{cents $r.DownPaymentCents}}</strong></div>
+        <div>Already have: <strong>€{{cents $r.AlreadyHaveCents}}</strong></div>
+        <div>Still need: <strong>€{{cents $r.StillNeededCents}}</strong></div>
+        <div>Saving: <strong>€{{cents $r.Form.MonthlySavingsCents}}/mo</strong></div>
+      </div>
+      {{else}}
+      <div style="font-size:16px; font-weight:600; color:var(--green); margin-bottom:4px;">Ready now!</div>
+      <div style="font-size:11px; color:var(--text3);">equity covers down payment</div>
+      <div style="margin-top:10px; font-size:12px; color:var(--text2); background:var(--bg3); border-radius:var(--radius-sm); padding:8px 10px; text-align:left;">
+        <div>Down payment: <strong>€{{cents $r.DownPaymentCents}}</strong></div>
+        <div>Your equity: <strong style="color:var(--green);">€{{cents $r.AlreadyHaveCents}}</strong></div>
+      </div>
+      {{end}}
+    </div>
+
+    <!-- Phase 2 -->
+    <div style="text-align:center; position:relative; padding:0 8px;">
+      <div style="width:40px; height:40px; border-radius:50%; background:var(--orange, #f97316); color:#fff; display:flex; align-items:center; justify-content:center; font-size:18px; margin:0 auto 12px; position:relative; z-index:1;">2</div>
+      <div style="font-weight:600; font-size:13px; color:var(--text1); margin-bottom:6px;">Build</div>
+      <div style="font-size:22px; font-weight:500; color:var(--orange, #f97316); margin-bottom:4px;">{{$r.Phase2Months}}mo</div>
+      <div style="font-size:11px; color:var(--text3);">until {{dateShort $r.Phase2EndDate}}</div>
+      <div style="margin-top:10px; font-size:12px; color:var(--text2); background:var(--bg3); border-radius:var(--radius-sm); padding:8px 10px; text-align:left;">
+        <div>Construction loan: <strong>€{{cents $r.ConstructionLoanCents}}</strong></div>
+        {{if $r.CurrentLoan}}
+        <div>Existing mortgage: <strong>€{{cents $r.CurrentMonthlyCents}}/mo</strong></div>
+        {{end}}
+        <div>New EMI: <strong>€{{cents $r.ConstructionMonthly}}/mo</strong></div>
+        <div style="border-top:1px solid var(--border); margin-top:6px; padding-top:6px;">Total burden: <strong style="color:var(--orange, #f97316);">€{{cents $r.Phase2MonthlyCents}}/mo</strong></div>
+      </div>
+    </div>
+
+    <!-- Phase 3 -->
+    <div style="text-align:center; position:relative; padding:0 8px;">
+      <div style="width:40px; height:40px; border-radius:50%; background:var(--teal, #14b8a6); color:#fff; display:flex; align-items:center; justify-content:center; font-size:18px; margin:0 auto 12px; position:relative; z-index:1;">3</div>
+      <div style="font-weight:600; font-size:13px; color:var(--text1); margin-bottom:6px;">Sell & transition</div>
+      <div style="font-size:16px; font-weight:600; color:var(--teal, #14b8a6); margin-bottom:4px;">One-time event</div>
+      <div style="font-size:11px; color:var(--text3);">after construction completes</div>
+      <div style="margin-top:10px; font-size:12px; color:var(--text2); background:var(--bg3); border-radius:var(--radius-sm); padding:8px 10px; text-align:left;">
+        <div>Sale price: <strong>€{{cents $r.SalePriceCents}}</strong></div>
+        <div>Pay off mortgage: <strong style="color:var(--red);">-€{{cents $r.MortgagePayoffCents}}</strong></div>
+        <div style="border-top:1px solid var(--border); margin-top:6px; padding-top:6px;">Net proceeds: <strong style="color:var(--green);">€{{cents $r.NetProceedsCents}}</strong></div>
+        <div>Applied to construction loan</div>
+      </div>
+    </div>
+
+    <!-- Phase 4 -->
+    <div style="text-align:center; position:relative; padding:0 8px;">
+      <div style="width:40px; height:40px; border-radius:50%; background:var(--green); color:#fff; display:flex; align-items:center; justify-content:center; font-size:18px; margin:0 auto 12px; position:relative; z-index:1;">4</div>
+      <div style="font-weight:600; font-size:13px; color:var(--text1); margin-bottom:6px;">Dream house life</div>
+      {{if gt $r.Phase4Months 0}}
+      <div style="font-size:22px; font-weight:500; color:var(--green); margin-bottom:4px;">{{$r.Phase4Months}}mo</div>
+      <div style="font-size:11px; color:var(--text3);">paid off {{dateShort $r.Phase4EndDate}}</div>
+      <div style="margin-top:10px; font-size:12px; color:var(--text2); background:var(--bg3); border-radius:var(--radius-sm); padding:8px 10px; text-align:left;">
+        <div>Remaining loan: <strong>€{{cents $r.RemainingBalanceCents}}</strong></div>
+        <div>Monthly payment: <strong style="color:var(--green);">€{{cents $r.Phase4MonthlyCents}}/mo</strong></div>
+        <div style="font-size:11px; color:var(--text3); margin-top:4px;">just the construction loan</div>
+      </div>
+      {{else}}
+      <div style="font-size:16px; font-weight:600; color:var(--green); margin-bottom:4px;">Fully paid!</div>
+      <div style="font-size:11px; color:var(--text3);">sale proceeds cleared the loan</div>
+      <div style="margin-top:10px; font-size:12px; color:var(--text2); background:var(--bg3); border-radius:var(--radius-sm); padding:8px 10px; text-align:left;">
+        <div style="color:var(--green); font-weight:600;">No remaining mortgage!</div>
+        <div>The sale covers everything.</div>
+      </div>
+      {{end}}
+    </div>
+
+  </div>
+</div>
+
+<!-- Monthly cost chart -->
+<div class="card animate-on-scroll" style="margin-bottom:20px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+    <h2>Monthly cost over time</h2>
+    <span style="font-size:11px; color:var(--text3);">what you pay each month</span>
+  </div>
+  <canvas id="cost-chart" height="160"></canvas>
+</div>
+
+<script>
+(function() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const style  = getComputedStyle(document.documentElement);
+  const accent = style.getPropertyValue('--accent').trim() || '#6979f8';
+  const green  = style.getPropertyValue('--green').trim()  || '#4ade80';
+  const red    = style.getPropertyValue('--red').trim()    || '#f87171';
+  const orange = '#f97316';
+  const teal   = '#14b8a6';
+
+  const phase1Months = {{$r.Phase1Months}};
+  const phase2Months = {{$r.Phase2Months}};
+  const phase4Months = {{$r.Phase4Months}};
+  const existingMonthly = {{$r.CurrentMonthlyCents}} / 100;
+  const phase2Monthly   = {{$r.Phase2MonthlyCents}} / 100;
+  const phase4Monthly   = {{$r.Phase4MonthlyCents}} / 100;
+
+  const labels = [];
+  const costs  = [];
+  const colors = [];
+
+  for (let i = 0; i < phase1Months; i++) {
+    labels.push('Save ' + (i+1));
+    costs.push(existingMonthly);
+    colors.push(accent);
+  }
+  for (let i = 0; i < phase2Months; i++) {
+    labels.push('Build ' + (i+1));
+    costs.push(phase2Monthly);
+    colors.push(orange);
+  }
+  // Phase 3 = one event, no monthly cost change shown
+  for (let i = 0; i < phase4Months; i++) {
+    labels.push('Dream ' + (i+1));
+    costs.push(phase4Monthly);
+    colors.push(green);
+  }
+
+  // Collapse labels if too many
+  const maxLabels = 24;
+  const step = Math.ceil(labels.length / maxLabels);
+  const displayLabels = labels.map((l, i) => i % step === 0 ? l : '');
+
+  new Chart(document.getElementById('cost-chart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: displayLabels,
+      datasets: [{
+        data: costs,
+        backgroundColor: colors,
+        borderRadius: 3,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: (items) => labels[items[0].dataIndex],
+            label: (c) => '€' + c.parsed.y.toLocaleString('pt-PT', {minimumFractionDigits:2}) + '/mo'
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { color: isDark ? '#5c6585' : '#9fa8c7', font: { size: 10 } }
+        },
+        y: {
+          grid: { color: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.05)' },
+          ticks: {
+            color: isDark ? '#5c6585' : '#9fa8c7',
+            callback: v => '€' + (v/1000).toFixed(0) + 'k'
+          }
+        }
+      }
+    }
+  });
+})();
+</script>
+
+<!-- Key levers -->
+<div class="card animate-on-scroll">
+  <h2 style="margin-bottom:14px;">Key levers</h2>
+  <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; font-size:13px; color:var(--text2);">
+    <div style="background:var(--bg3); border-radius:var(--radius-sm); padding:12px 14px;">
+      <div style="font-weight:600; color:var(--text1); margin-bottom:6px;">Save more monthly</div>
+      <div>Each extra €100/mo saved shortens Phase 1 and gets you building sooner.</div>
+    </div>
+    <div style="background:var(--bg3); border-radius:var(--radius-sm); padding:12px 14px;">
+      <div style="font-weight:600; color:var(--text1); margin-bottom:6px;">Increase the down payment</div>
+      <div>A higher down % reduces the construction loan and lowers the double-burden in Phase 2.</div>
+    </div>
+    <div style="background:var(--bg3); border-radius:var(--radius-sm); padding:12px 14px;">
+      <div style="font-weight:600; color:var(--text1); margin-bottom:6px;">Sell at a higher price</div>
+      <div>Every extra euro from the sale goes straight to reducing the construction loan balance.</div>
+    </div>
+    <div style="background:var(--bg3); border-radius:var(--radius-sm); padding:12px 14px;">
+      <div style="font-weight:600; color:var(--text1); margin-bottom:6px;">Negotiate the rate</div>
+      <div>Even 0.5% less on the construction loan saves thousands over the loan term.</div>
+    </div>
+  </div>
+</div>
+
+{{else}}
+
+<!-- Empty state -->
+<div class="card empty-state animate-on-scroll">
+  <div style="font-size:48px; margin-bottom:16px;">🏡</div>
+  <h3>Plan your dream house</h3>
+  <p style="margin-bottom:8px; max-width:480px; margin-left:auto; margin-right:auto;">
+    Fill in the form above to simulate your path from today's house and loan
+    to the dream house you want to build — including the double-mortgage period,
+    the sale, and the final payoff date.
+  </p>
+  {{if not $d.Properties}}
+  <p style="font-size:13px; color:var(--text3); margin-top:12px;">
+    Tip: <a href="/property" style="color:var(--accent);">add your current property and loan</a> first so the simulator can pre-fill the numbers.
+  </p>
+  {{end}}
+</div>
+
+{{end}}
+
+{{end}}

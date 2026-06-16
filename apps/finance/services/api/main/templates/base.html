@@ -579,6 +579,7 @@
     <a href="/portfolio"    class="{{if eq .Route "portfolio"}}active{{end}}">Portfolio</a>
     <a href="/goals"        class="{{if eq .Route "goals"}}active{{end}}">Goals</a>
     <a href="/property"     class="{{if eq .Route "property"}}active{{end}}">Property</a>
+    <a href="/dream"        class="{{if eq .Route "dream"}}active{{end}}">Dream House</a>
 
     {{$analysisActive := or (eq .Route "reports") (eq .Route "projections") (eq .Route "networth") (eq .Route "simulator") (eq .Route "tax")}}
     <div class="nav-group">
@@ -624,6 +625,7 @@
     <a href="/portfolio"    class="{{if eq .Route "portfolio"}}active{{end}}">Portfolio</a>
     <a href="/goals"        class="{{if eq .Route "goals"}}active{{end}}">Goals</a>
     <a href="/property"     class="{{if eq .Route "property"}}active{{end}}">Property</a>
+    <a href="/dream"        class="{{if eq .Route "dream"}}active{{end}}">Dream House</a>
     <a href="/people"       class="{{if eq .Route "people"}}active{{end}}">People</a>
     <hr>
     <span class="nav-drawer-section-label">Analysis</span>
