@@ -35,6 +35,7 @@ func main() {
 	store.ensureAuthIndexes(ctx)
 
 	go SeedAdmin(ctx, store)
+	go SeedExtras(ctx, store)
 
 	secret := os.Getenv("SESSION_SECRET")
 	if secret == "" {
