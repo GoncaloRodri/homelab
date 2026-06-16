@@ -7,12 +7,12 @@ import (
 	"time"
 )
 
-var dreamTmpl = parseTmpl("templates/base.html", "templates/dream.html")
+var dreamTmpl = parseTmpl("templates/base.html", "templates/plan.html")
 
 func (h *Handler) Dream(w http.ResponseWriter, r *http.Request) {
 	auth := h.getAuth(r)
 	if auth.UserID == "" {
-		http.Redirect(w, r, "/auth/login?next=/dream", http.StatusSeeOther)
+		http.Redirect(w, r, "/auth/login?next=/plan", http.StatusSeeOther)
 		return
 	}
 
@@ -36,7 +36,7 @@ func (h *Handler) Dream(w http.ResponseWriter, r *http.Request) {
 		UserID:     auth.UserID,
 		Email:      auth.Email,
 		Title:      "Dream House",
-		Route:      "dream",
+		Route:      "plan",
 		Properties: propViews,
 		Loans:      loanViews,
 	}
