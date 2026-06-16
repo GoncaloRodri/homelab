@@ -1793,27 +1793,35 @@ func (h *Handler) Goals(w http.ResponseWriter, r *http.Request) {
 		action := r.FormValue("action")
 
 		if action == "delete" {
-			id := r.FormValue("id")
-			h.store.deleteGoal(ctx, id, a.UserID)
+			h.store.deleteGoal(ctx, r.FormValue("id"), a.UserID)
 			http.Redirect(w, r, "/goals", http.StatusSeeOther)
 			return
 		}
 
 		if action == "commit" || action == "uncommit" {
-			id := r.FormValue("id")
-			h.store.updateGoal(ctx, id, a.UserID, bson.M{"committed": action == "commit"})
+			h.store.updateGoal(ctx, r.FormValue("id"), a.UserID, bson.M{"committed": action == "commit"})
 			http.Redirect(w, r, "/goals", http.StatusSeeOther)
 			return
 		}
 
-		// create goal
+		if action == "adjust_deadline" {
+			months := parseIntParam(r.FormValue("months"), 0)
+			if months > 0 {
+				newDeadline := time.Now().AddDate(0, months, 0)
+				h.store.updateGoal(ctx, r.FormValue("id"), a.UserID, bson.M{"deadline": newDeadline})
+			}
+			http.Redirect(w, r, "/goals", http.StatusSeeOther)
+			return
+		}
+
+		// create goal (from planner tab or direct)
 		name := r.FormValue("name")
 		goalType := GoalType(r.FormValue("type"))
-		targetStr := r.FormValue("target_euros")
-		deadlineStr := r.FormValue("deadline")
-
-		targetEuros := parseFloat(targetStr)
-		deadline, _ := time.Parse("2006-01", deadlineStr)
+		if goalType == "" {
+			goalType = GoalTypeOnce
+		}
+		targetEuros := parseFloat(r.FormValue("target_euros"))
+		deadline, _ := time.Parse("2006-01", r.FormValue("deadline"))
 
 		g := &Goal{
 			ID:          bson.NewObjectID().Hex(),
@@ -1938,18 +1946,57 @@ func (h *Handler) Goals(w http.ResponseWriter, r *http.Request) {
 		_ = conflictNames
 	}
 
-	render(w, goalsTmpl, &GoalsData{
+	data := &GoalsData{
 		UserID:                a.UserID,
 		Email:                 a.Email,
 		Title:                 "Goals",
 		Route:                 "goals",
+		Tab:                   r.URL.Query().Get("tab"),
 		Goals:                 plans,
 		AvgMonthlySavings:     avgMonthlySavings,
 		DisposableIncome:      disposable,
 		CommittedMonthlyCents: committedTotal,
 		RemainingDisposable:   remainingDisposable,
 		ConflictWarning:       conflictWarning,
-	})
+	}
+	if data.Tab == "" {
+		data.Tab = "goals"
+	}
+
+	// Planner tab: load properties/loans and optionally run simulation
+	if data.Tab == "planner" {
+		props, _ := h.store.getProperties(ctx, a.UserID)
+		loans, _ := h.store.getLoans(ctx, a.UserID)
+		for _, p := range props {
+			data.PlanProperties = append(data.PlanProperties, toPropertyView(p, loans))
+		}
+		for _, l := range loans {
+			if l.Status == LoanActive {
+				data.PlanLoans = append(data.PlanLoans, toLoanView(l))
+			}
+		}
+		q := r.URL.Query()
+		if q.Get("run") == "1" {
+			termYears := parseIntParam(q.Get("const_term"), 30)
+			form := DreamForm{
+				PropertyID:             q.Get("property_id"),
+				LoanID:                 q.Get("loan_id"),
+				DreamCostCents:         parseFormCents(q.Get("dream_cost")),
+				DownPaymentPct:         parseFloatParam(q.Get("down_pct"), 20),
+				ConstructionRatePct:    parseFloatParam(q.Get("const_rate"), 4.0),
+				ConstructionTermYears:  termYears,
+				ConstructionTermMonths: termYears * 12,
+				BuildMonths:            parseIntParam(q.Get("build_months"), 18),
+				MonthlySavingsCents:    parseFormCents(q.Get("monthly_savings")),
+				ExpectedSalePriceCents: parseFormCents(q.Get("sale_price")),
+			}
+			data.PlanForm = form
+			data.PlanResult = runDreamSim(form, data.PlanProperties, data.PlanLoans)
+			data.HasPlanResult = true
+		}
+	}
+
+	render(w, goalsTmpl, data)
 }
 
 func monthsBetween(from, to time.Time) int {

@@ -466,10 +466,17 @@ type GoalsData struct {
 	Email                   string
 	Title                   string
 	Route                   string
+	Tab                     string // "goals" or "planner"
 	Goals                   []GoalPlan
 	AvgMonthlySavings       int64
 	DisposableIncome        int64
 	CommittedMonthlyCents   int64  // sum of all committed goal contributions
 	RemainingDisposable     int64  // disposable after committed goals
 	ConflictWarning         string // set when committing would exceed disposable
+	// Planner tab
+	PlanProperties []PropertyView
+	PlanLoans      []LoanView
+	HasPlanResult  bool
+	PlanResult     *DreamSimResult
+	PlanForm       DreamForm
 }
