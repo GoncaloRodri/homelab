@@ -5,6 +5,9 @@ metadata:
   namespace: finance
 spec:
   ingressClassName: traefik
+  tls:
+    - hosts:
+        - finance.homelab.local
   rules:
     - host: finance.homelab.local
       http:
