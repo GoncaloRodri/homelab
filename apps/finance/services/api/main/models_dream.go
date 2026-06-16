@@ -65,7 +65,25 @@ type DreamSimResult struct {
 	Warning string
 }
 
-// DreamData is passed to the dream.html template.
+// PurchaseSimResult is the computed output for a simple save-for-purchase goal.
+type PurchaseSimResult struct {
+	Name                string
+	TargetCents         int64
+	MonthlySavingsCents int64
+	// At-current-savings projection
+	MonthsNeeded int
+	YearsNeeded  int
+	RemMonths    int
+	ReachDate    time.Time
+	// Deadline projection (only set when a deadline was provided)
+	HasDeadline              bool
+	DeadlineDate             time.Time
+	DeadlineMonths           int
+	MonthlyNeededForDeadline int64
+	Feasible                 bool // monthly savings >= monthly needed for deadline
+}
+
+// DreamData is passed to the dream.html template (kept for compat; redirect goes to /goals).
 type DreamData struct {
 	UserID string
 	Email  string

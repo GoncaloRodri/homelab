@@ -1965,6 +1965,9 @@ func (h *Handler) Goals(w http.ResponseWriter, r *http.Request) {
 
 	// Planner tab: load properties/loans and optionally run simulation
 	if data.Tab == "planner" {
+		q := r.URL.Query()
+		data.PlannerType = q.Get("planner_type")
+
 		props, _ := h.store.getProperties(ctx, a.UserID)
 		loans, _ := h.store.getLoans(ctx, a.UserID)
 		for _, p := range props {
@@ -1975,24 +1978,35 @@ func (h *Handler) Goals(w http.ResponseWriter, r *http.Request) {
 				data.PlanLoans = append(data.PlanLoans, toLoanView(l))
 			}
 		}
-		q := r.URL.Query()
+
 		if q.Get("run") == "1" {
-			termYears := parseIntParam(q.Get("const_term"), 30)
-			form := DreamForm{
-				PropertyID:             q.Get("property_id"),
-				LoanID:                 q.Get("loan_id"),
-				DreamCostCents:         parseFormCents(q.Get("dream_cost")),
-				DownPaymentPct:         parseFloatParam(q.Get("down_pct"), 20),
-				ConstructionRatePct:    parseFloatParam(q.Get("const_rate"), 4.0),
-				ConstructionTermYears:  termYears,
-				ConstructionTermMonths: termYears * 12,
-				BuildMonths:            parseIntParam(q.Get("build_months"), 18),
-				MonthlySavingsCents:    parseFormCents(q.Get("monthly_savings")),
-				ExpectedSalePriceCents: parseFormCents(q.Get("sale_price")),
+			switch data.PlannerType {
+			case "purchase":
+				data.PurchaseResult = runPurchaseSim(
+					q.Get("name"),
+					parseFormCents(q.Get("target")),
+					parseFormCents(q.Get("monthly_savings")),
+					q.Get("deadline"),
+				)
+				data.HasPurchaseResult = true
+			case "transition":
+				termYears := parseIntParam(q.Get("const_term"), 30)
+				form := DreamForm{
+					PropertyID:             q.Get("property_id"),
+					LoanID:                 q.Get("loan_id"),
+					DreamCostCents:         parseFormCents(q.Get("dream_cost")),
+					DownPaymentPct:         parseFloatParam(q.Get("down_pct"), 20),
+					ConstructionRatePct:    parseFloatParam(q.Get("const_rate"), 4.0),
+					ConstructionTermYears:  termYears,
+					ConstructionTermMonths: termYears * 12,
+					BuildMonths:            parseIntParam(q.Get("build_months"), 18),
+					MonthlySavingsCents:    parseFormCents(q.Get("monthly_savings")),
+					ExpectedSalePriceCents: parseFormCents(q.Get("sale_price")),
+				}
+				data.PlanForm = form
+				data.PlanResult = runDreamSim(form, data.PlanProperties, data.PlanLoans)
+				data.HasPlanResult = true
 			}
-			data.PlanForm = form
-			data.PlanResult = runDreamSim(form, data.PlanProperties, data.PlanLoans)
-			data.HasPlanResult = true
 		}
 	}
 

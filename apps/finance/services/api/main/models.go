@@ -474,9 +474,14 @@ type GoalsData struct {
 	RemainingDisposable     int64  // disposable after committed goals
 	ConflictWarning         string // set when committing would exceed disposable
 	// Planner tab
-	PlanProperties []PropertyView
-	PlanLoans      []LoanView
+	PlannerType       string // "purchase" or "transition"
+	PlanProperties    []PropertyView
+	PlanLoans         []LoanView
+	// Transition simulation
 	HasPlanResult  bool
 	PlanResult     *DreamSimResult
 	PlanForm       DreamForm
+	// Purchase simulation
+	HasPurchaseResult  bool
+	PurchaseResult     *PurchaseSimResult
 }

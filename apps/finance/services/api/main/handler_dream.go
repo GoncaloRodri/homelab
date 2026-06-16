@@ -129,6 +129,42 @@ func runDreamSim(form DreamForm, props []PropertyView, loans []LoanView) *DreamS
 	return res
 }
 
+// runPurchaseSim computes a simple save-for-purchase projection.
+func runPurchaseSim(name string, targetCents, monthlyCents int64, deadlineStr string) *PurchaseSimResult {
+	res := &PurchaseSimResult{
+		Name:                name,
+		TargetCents:         targetCents,
+		MonthlySavingsCents: monthlyCents,
+	}
+	if targetCents <= 0 {
+		return res
+	}
+
+	// At-current-savings: how long to reach target
+	if monthlyCents > 0 {
+		res.MonthsNeeded = int(math.Ceil(float64(targetCents) / float64(monthlyCents)))
+		res.YearsNeeded = res.MonthsNeeded / 12
+		res.RemMonths = res.MonthsNeeded % 12
+		res.ReachDate = time.Now().AddDate(0, res.MonthsNeeded, 0)
+	}
+
+	// Deadline projection
+	if deadlineStr != "" {
+		dl, err := time.Parse("2006-01", deadlineStr)
+		if err == nil && !dl.IsZero() {
+			res.HasDeadline = true
+			res.DeadlineDate = dl
+			res.DeadlineMonths = monthsBetween(time.Now(), dl)
+			if res.DeadlineMonths < 1 {
+				res.DeadlineMonths = 1
+			}
+			res.MonthlyNeededForDeadline = int64(math.Ceil(float64(targetCents) / float64(res.DeadlineMonths)))
+			res.Feasible = monthlyCents >= res.MonthlyNeededForDeadline
+		}
+	}
+	return res
+}
+
 func parseFloatParam(s string, def float64) float64 {
 	if s == "" {
 		return def
