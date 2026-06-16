@@ -246,6 +246,40 @@
 
 </div>
 
+{{if $d.DashGoals}}
+<div class="card animate-on-scroll" style="margin-top:16px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+    <h2>Committed goals</h2>
+    <a href="/goals" style="font-size:12px; color:var(--text3);">→ all goals</a>
+  </div>
+  <div style="display:flex; flex-direction:column; gap:14px;">
+    {{range $d.DashGoals}}
+    <div>
+      <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:15px;">{{if eq .Type "once"}}🎯{{else if eq .Type "deposit"}}🏠{{else if eq .Type "emergency"}}🛡️{{else}}📈{{end}}</span>
+          <span style="font-size:13px; font-weight:500; color:var(--text);">{{.Name}}</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:12px;">
+          <span style="font-size:12px; color:var(--text3);">{{.MonthsLeft}}mo left</span>
+          <span style="font-size:12px; font-weight:600; color:{{if .Feasible}}var(--green){{else}}var(--red){{end}};">{{.ProgressPct}}%</span>
+        </div>
+      </div>
+      <div style="background:var(--bg3); border-radius:99px; height:5px; overflow:hidden;">
+        <div style="height:100%; border-radius:99px; width:{{.ProgressPct}}%;
+             background:{{if .Feasible}}var(--green){{else}}var(--accent){{end}};
+             transition:width 1s ease;"></div>
+      </div>
+      <div style="display:flex; justify-content:space-between; margin-top:4px; font-size:11px; color:var(--text3);">
+        <span>€{{cents .SavedCents}} of €{{cents .TargetCents}}</span>
+        <span style="color:{{if .Feasible}}var(--green){{else}}var(--red){{end}};">€{{cents .MonthlyCents}}/mo needed</span>
+      </div>
+    </div>
+    {{end}}
+  </div>
+</div>
+{{end}}
+
 {{if $d.RecurringExpenses}}
 <div class="card animate-on-scroll" style="margin-top:16px;">
   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">

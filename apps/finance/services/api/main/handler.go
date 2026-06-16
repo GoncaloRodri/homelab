@@ -705,6 +705,44 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// ── Committed goals for dashboard widget ─────────────────────────────
+	var dashGoals []GoalPlan
+	if allGoals, err2 := h.store.getGoals(ctx, a.UserID); err2 == nil {
+		for _, g := range allGoals {
+			if !g.Committed {
+				continue
+			}
+			remaining := g.TargetCents - g.SavedCents
+			if remaining < 0 {
+				remaining = 0
+			}
+			ml := int64(monthsBetween(now, g.Deadline))
+			if ml < 1 {
+				ml = 1
+			}
+			monthly := remaining / ml
+			var atRate int64
+			if avgSavingsForGoals := disposableIncome; avgSavingsForGoals > 0 {
+				atRate = remaining / avgSavingsForGoals
+			}
+			pct := int64(0)
+			if g.TargetCents > 0 {
+				pct = g.SavedCents * 100 / g.TargetCents
+				if pct > 100 {
+					pct = 100
+				}
+			}
+			dashGoals = append(dashGoals, GoalPlan{
+				Goal:                g,
+				MonthsLeft:          ml,
+				MonthlyCents:        monthly,
+				MonthsAtCurrentRate: atRate,
+				Feasible:            disposableIncome >= monthly,
+				ProgressPct:         pct,
+			})
+		}
+	}
+
 	// ── Alerts ──────────────────────────────────────────────────────────
 	var alerts []Alert
 
@@ -810,6 +848,7 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 		PortfolioPricesAvailable:     portfolioPricesAvailable,
 		NetWorthCents:                portfolioValueCents + running + dashPropertyEquity,
 		Alerts:                       alerts,
+		DashGoals:                    dashGoals,
 	})
 }
 
