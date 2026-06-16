@@ -157,7 +157,8 @@ type DashboardData struct {
 
 	NetWorthCents int64
 
-	Alerts []Alert
+	Alerts    []Alert
+	DashGoals []GoalPlan // committed goals for the dashboard widget
 }
 
 type PeriodSummary struct {

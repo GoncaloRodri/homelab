@@ -63,6 +63,135 @@ func lookupUserByEmailMongo(ctx context.Context, store *Store, email string) (st
 	return legacy.ID, nil
 }
 
+// SeedExtras seeds goals, property, and loan data if not already present.
+// Called independently so it runs even when transactions already exist.
+func SeedExtras(ctx context.Context, store *Store) {
+	email := os.Getenv("SEED_USER_EMAIL")
+	if email == "" {
+		email = "admin@homelab.local"
+	}
+	userID, err := lookupUserByEmailMongo(ctx, store, email)
+	if err != nil {
+		slog.Warn("seed extras: could not resolve user, skipping", "email", email, "err", err)
+		return
+	}
+	slog.Info("seed extras: checking for goals/property", "user_id", userID)
+
+	// goals
+	goals, _ := store.getGoals(ctx, userID)
+	if len(goals) == 0 {
+		slog.Info("seed: seeding goals", "user_id", userID)
+		if err := seedGoals(ctx, store, userID); err != nil {
+			slog.Error("seed: goals failed", "err", err)
+		}
+	}
+
+	// properties & loans
+	props, _ := store.getProperties(ctx, userID)
+	if len(props) == 0 {
+		slog.Info("seed: seeding property + loan", "user_id", userID)
+		if err := seedProperty(ctx, store, userID); err != nil {
+			slog.Error("seed: property failed", "err", err)
+		}
+	}
+}
+
+func seedGoals(ctx context.Context, store *Store, userID string) error {
+	now := time.Now()
+	goals := []*Goal{
+		{
+			ID:          bson.NewObjectID().Hex(),
+			UserID:      userID,
+			Name:        "Emergency fund (3 months)",
+			Type:        GoalTypeEmergency,
+			TargetCents: 390000, // €3,900
+			SavedCents:  210000, // €2,100 already set aside
+			Deadline:    now.AddDate(1, 0, 0),
+			Committed:   true,
+			CreatedAt:   now.AddDate(0, -4, 0),
+		},
+		{
+			ID:          bson.NewObjectID().Hex(),
+			UserID:      userID,
+			Name:        "Japan trip",
+			Type:        GoalTypeOnce,
+			TargetCents: 350000, // €3,500
+			SavedCents:  80000,  // €800 saved
+			Deadline:    now.AddDate(1, 6, 0),
+			Committed:   false,
+			CreatedAt:   now.AddDate(0, -2, 0),
+		},
+		{
+			ID:          bson.NewObjectID().Hex(),
+			UserID:      userID,
+			Name:        "MacBook Pro",
+			Type:        GoalTypeOnce,
+			TargetCents: 250000, // €2,500
+			SavedCents:  40000,  // €400
+			Deadline:    now.AddDate(0, 10, 0),
+			Committed:   false,
+			CreatedAt:   now.AddDate(0, -1, 0),
+		},
+		{
+			ID:          bson.NewObjectID().Hex(),
+			UserID:      userID,
+			Name:        "House down payment",
+			Type:        GoalTypeDeposit,
+			TargetCents: 4000000, // €40,000
+			SavedCents:  500000,  // €5,000 saved
+			Deadline:    now.AddDate(5, 0, 0),
+			Committed:   true,
+			CreatedAt:   now.AddDate(0, -6, 0),
+		},
+	}
+	for _, g := range goals {
+		if err := store.createGoal(ctx, g); err != nil {
+			return fmt.Errorf("create goal %q: %w", g.Name, err)
+		}
+	}
+	return nil
+}
+
+func seedProperty(ctx context.Context, store *Store, userID string) error {
+	now := time.Now()
+	propID := bson.NewObjectID().Hex()
+	loanID := bson.NewObjectID().Hex()
+
+	prop := &Property{
+		ID:                 propID,
+		UserID:             userID,
+		Name:               "Apartamento T2 — Porto",
+		Address:            "Rua de Santa Catarina, Porto",
+		PurchasePriceCents: 18000000, // €180,000
+		CurrentValueCents:  22000000, // €220,000
+		AppreciationPct:    3.0,
+		PurchaseDate:       now.AddDate(-4, 0, 0),
+		Status:             PropertyOwned,
+		CreatedAt:          now.AddDate(-4, 0, 0),
+	}
+	if err := store.createProperty(ctx, prop); err != nil {
+		return fmt.Errorf("create property: %w", err)
+	}
+
+	// 25-year mortgage, started 4 years ago, ~€900/month at 3.5%
+	loan := &Loan{
+		ID:                  loanID,
+		UserID:              userID,
+		PropertyID:          propID,
+		Name:                "Hipoteca CGD — Porto",
+		Type:                LoanMortgage,
+		PrincipalCents:      18000000,
+		BalanceCents:        16068700, // after 48 payments
+		InterestRatePct:     3.5,
+		TermMonths:          300, // 25 years
+		StartDate:           now.AddDate(-4, 0, 0),
+		MonthlyPaymentCents: 90070, // €900.70 EMI
+		Status:              LoanActive,
+		CreatedAt:           now.AddDate(-4, 0, 0),
+	}
+	return store.createLoan(ctx, loan)
+}
+
 func seedAll(ctx context.Context, store *Store, userID string) error {
 	// ── Accounts ─────────────────────────────────────────────────────────
 	checkingID := bson.NewObjectID().Hex()
