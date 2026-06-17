@@ -601,7 +601,7 @@
     {{$settingsActive := or (eq .Route "settings") (eq .Route "auto-import")}}
     <div class="nav-group">
       <button class="nav-group-btn {{if $settingsActive}}active{{end}}">
-        {{.T.Get "nav.settings"}} <svg viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 1l4 4 4-4"/></svg>
+        {{.T.Get "nav.drawer.settings_label"}} <svg viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 1l4 4 4-4"/></svg>
       </button>
       <div class="nav-dropdown">
         <a href="/settings?tab=accounts"    class="{{if eq .Route "settings"}}active{{end}}">{{.T.Get "nav.settings.accounts_categories"}}</a>
