@@ -65,8 +65,9 @@ func flattenTOML(prefix string, node map[string]any, out catalogue) {
 // Translator wraps a locale lookup and exposes a Get method callable from
 // Go templates as {{.T.Get "key"}}.
 type Translator struct {
-	cat catalogue
-	en  catalogue
+	lang string
+	cat  catalogue
+	en   catalogue
 }
 
 func (tr *Translator) Get(key string) string {
@@ -79,13 +80,19 @@ func (tr *Translator) Get(key string) string {
 	return key
 }
 
+// Lang returns the active language code for use in templates (e.g. {{.T.Lang}}).
+func (tr *Translator) Lang() string {
+	return tr.lang
+}
+
 // newT returns a Translator for the given language.
 func newT(lang string) *Translator {
 	cat, ok := catalogues[lang]
 	if !ok {
+		lang = defaultLang
 		cat = catalogues[defaultLang]
 	}
-	return &Translator{cat: cat, en: catalogues[defaultLang]}
+	return &Translator{lang: lang, cat: cat, en: catalogues[defaultLang]}
 }
 
 // detectLang reads the lang from a cookie, falling back to Accept-Language,

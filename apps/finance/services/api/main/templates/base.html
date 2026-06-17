@@ -584,7 +584,7 @@
     {{$analysisActive := or (eq .Route "reports") (eq .Route "projections") (eq .Route "networth") (eq .Route "simulator") (eq .Route "tax")}}
     <div class="nav-group">
       <button class="nav-group-btn {{if $analysisActive}}active{{end}}">
-        {{.T.Get "nav.analysis"}} <svg viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 1l4 4 4-4"/></svg>
+        {{.T.Get "nav.drawer.analysis_label"}} <svg viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 1l4 4 4-4"/></svg>
       </button>
       <div class="nav-dropdown">
         <a href="/reports"     class="{{if eq .Route "reports"}}active{{end}}">{{.T.Get "nav.analysis.reports"}}</a>
@@ -614,8 +614,8 @@
     <span class="nav-email">{{.Email}}</span>
     <form method="POST" action="/lang" style="display:inline;">
       <select name="lang" onchange="this.form.submit()" style="font-size:12px; background:var(--bg2); color:var(--text2); border:1px solid var(--border2); border-radius:var(--radius-sm); padding:4px 6px; cursor:pointer;">
-        <option value="en" {{if eq .Lang "en"}}selected{{end}}>EN</option>
-        <option value="pt" {{if eq .Lang "pt"}}selected{{end}}>PT</option>
+        <option value="en" {{if eq (.T.Lang) "en"}}selected{{end}}>EN</option>
+        <option value="pt" {{if eq (.T.Lang) "pt"}}selected{{end}}>PT</option>
       </select>
     </form>
     <button class="theme-btn" id="theme-toggle" title="{{.T.Get "nav.theme.toggle_title"}}">🌙</button>
