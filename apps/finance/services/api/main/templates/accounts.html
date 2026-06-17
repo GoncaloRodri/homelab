@@ -1,24 +1,24 @@
 {{define "content"}}
 {{$d := .}}
-<h1 style="margin-bottom:24px;">Accounts</h1>
+<h1 style="margin-bottom:24px;">{{$d.T.Get "accounts.title"}}</h1>
 
 <div class="card animate-on-scroll">
-  <h2 style="margin-bottom:16px;">Add Account</h2>
+  <h2 style="margin-bottom:16px;">{{$d.T.Get "accounts.add_title"}}</h2>
   <form method="POST" class="flex flex-wrap" style="gap:10px; align-items:flex-end;">
     <div class="form-group" style="margin-bottom:0; flex:1; min-width:180px;">
-      <label>Account Name</label>
-      <input type="text" name="name" placeholder="e.g. CGD Checking" required>
+      <label>{{$d.T.Get "accounts.label_name"}}</label>
+      <input type="text" name="name" placeholder="{{$d.T.Get "accounts.placeholder_name"}}" required>
     </div>
     <div class="form-group" style="margin-bottom:0; min-width:160px;">
-      <label>Type</label>
+      <label>{{$d.T.Get "accounts.label_type"}}</label>
       <select name="type">
-        <option value="checking">Checking</option>
-        <option value="savings">Savings</option>
-        <option value="credit">Credit Card</option>
-        <option value="securities">Securities</option>
+        <option value="checking">{{$d.T.Get "accounts.type_checking"}}</option>
+        <option value="savings">{{$d.T.Get "accounts.type_savings"}}</option>
+        <option value="credit">{{$d.T.Get "accounts.type_credit"}}</option>
+        <option value="securities">{{$d.T.Get "accounts.type_securities"}}</option>
       </select>
     </div>
-    <button type="submit" class="btn btn-primary">Add</button>
+    <button type="submit" class="btn btn-primary">{{$d.T.Get "accounts.btn_add"}}</button>
   </form>
 </div>
 
@@ -27,8 +27,8 @@
     <table>
       <thead>
         <tr>
-          <th>Name</th>
-          <th>Type</th>
+          <th>{{$d.T.Get "accounts.col_name"}}</th>
+          <th>{{$d.T.Get "accounts.col_type"}}</th>
           <th></th>
         </tr>
       </thead>
@@ -46,12 +46,12 @@
             </span>
           </td>
           <td class="text-right">
-            <button class="btn btn-danger btn-sm" onclick="delAccount('{{.ID}}')">Delete</button>
+            <button class="btn btn-danger btn-sm" onclick="delAccount('{{.ID}}')">{{$d.T.Get "accounts.btn_delete"}}</button>
           </td>
         </tr>
         {{else}}
         <tr>
-          <td colspan="3" class="text-center text-muted" style="padding:36px;">No accounts yet.</td>
+          <td colspan="3" class="text-center text-muted" style="padding:36px;">{{$d.T.Get "accounts.empty_msg"}}</td>
         </tr>
         {{end}}
       </tbody>
@@ -60,8 +60,9 @@
 </div>
 
 <script>
+const CONFIRM_DELETE = {{$d.T.Get "accounts.confirm_delete" | printf "%q"}};
 function delAccount(id) {
-  if (!confirm('Delete this account?')) return;
+  if (!confirm(CONFIRM_DELETE)) return;
   fetch('/accounts/' + id, {method: 'DELETE'}).then(r => {
     if (r.ok) document.getElementById('acct-row-' + id).remove();
   });

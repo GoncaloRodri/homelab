@@ -28,34 +28,34 @@
 .badge-committed { display:inline-block; padding:2px 7px; border-radius:20px; font-size:0.7rem; font-weight:600; background:rgba(76,175,80,0.15); color:#4caf50; }
 </style>
 
-<h1 style="margin:0 0 20px;">People</h1>
+<h1 style="margin:0 0 20px;">{{$d.T.Get "people.title"}}</h1>
 
 <div class="tab-bar">
-  <a href="/people?tab=sharing"   class="{{if eq $d.Tab "sharing"}}active{{end}}">Sharing</a>
-  <a href="/people?tab=household" class="{{if eq $d.Tab "household"}}active{{end}}">Household</a>
+  <a href="/people?tab=sharing"   class="{{if eq $d.Tab "sharing"}}active{{end}}">{{$d.T.Get "people.tab_sharing"}}</a>
+  <a href="/people?tab=household" class="{{if eq $d.Tab "household"}}active{{end}}">{{$d.T.Get "people.tab_household"}}</a>
 </div>
 
 {{if eq $d.Tab "sharing"}}
 
 <div class="people-card">
-  <h3>Grant read access</h3>
-  <p style="font-size:0.83rem; color:var(--muted); margin:0 0 14px;">Enter another user's ID to let them view your finances in read-only mode.</p>
+  <h3>{{$d.T.Get "people.sharing.grant_title"}}</h3>
+  <p style="font-size:0.83rem; color:var(--muted); margin:0 0 14px;">{{$d.T.Get "people.sharing.grant_desc"}}</p>
   <form method="post" action="/people?tab=sharing">
     <input type="hidden" name="_action" value="share">
     <div class="form-row">
-      <input type="text" name="viewer_id" placeholder="User ID or email" required>
-      <button type="submit" class="btn btn-primary">Add</button>
+      <input type="text" name="viewer_id" placeholder="{{$d.T.Get "people.sharing.placeholder_viewer"}}" required>
+      <button type="submit" class="btn btn-primary">{{$d.T.Get "people.sharing.btn_add"}}</button>
     </div>
   </form>
 </div>
 
 {{if $d.Viewers}}
 <div class="people-card">
-  <h3>People with access to your data</h3>
+  <h3>{{$d.T.Get "people.sharing.viewers_title"}}</h3>
   {{range $d.Viewers}}
   <div class="viewer-row">
     <span>{{.Email}}</span>
-    <button class="btn btn-danger" onclick="revokeShare('{{.ID}}')">Revoke</button>
+    <button class="btn btn-danger" onclick="revokeShare('{{.ID}}')">{{$d.T.Get "people.sharing.btn_revoke"}}</button>
   </div>
   {{end}}
 </div>
@@ -63,31 +63,31 @@
 
 {{if $d.Granted}}
 <div class="people-card">
-  <h3>Accounts you can view</h3>
+  <h3>{{$d.T.Get "people.sharing.granted_title"}}</h3>
   {{range $d.Granted}}
   <div class="viewer-row">
     <span style="color:var(--muted);">{{.OwnerID}}</span>
-    <a href="/?as={{.OwnerID}}" style="font-size:0.8rem; color:var(--accent);">View →</a>
+    <a href="/?as={{.OwnerID}}" style="font-size:0.8rem; color:var(--accent);">{{$d.T.Get "people.sharing.view_link"}}</a>
   </div>
   {{end}}
 </div>
 {{end}}
 
 {{if and (not $d.Viewers) (not $d.Granted)}}
-<div class="people-card"><div class="empty-state">No sharing configured yet.</div></div>
+<div class="people-card"><div class="empty-state">{{$d.T.Get "people.sharing.no_sharing_msg"}}</div></div>
 {{end}}
 
 {{else}}{{/* household tab */}}
 
 {{if not $d.HasHousehold}}
 <div class="people-card" style="max-width:480px;">
-  <h3>Link a partner account</h3>
-  <p style="font-size:0.83rem; color:var(--muted); margin:0 0 16px;">Combine finances with a partner to see a shared monthly overview and goals.</p>
+  <h3>{{$d.T.Get "people.household.link_title"}}</h3>
+  <p style="font-size:0.83rem; color:var(--muted); margin:0 0 16px;">{{$d.T.Get "people.household.link_desc"}}</p>
   <form method="post" action="/people?tab=household">
     <input type="hidden" name="_action" value="household">
     <div class="form-row">
-      <input type="email" name="partner_email" placeholder="Partner's email" required>
-      <button type="submit" class="btn btn-primary">Link</button>
+      <input type="email" name="partner_email" placeholder="{{$d.T.Get "people.household.placeholder_email"}}" required>
+      <button type="submit" class="btn btn-primary">{{$d.T.Get "people.household.btn_link"}}</button>
     </div>
   </form>
 </div>
@@ -95,31 +95,31 @@
 
 <div class="people-card" style="display:flex; align-items:center; gap:14px;">
   <div style="flex:1;">
-    <div style="font-size:0.78rem; color:var(--muted); margin-bottom:2px;">Linked partner</div>
+    <div style="font-size:0.78rem; color:var(--muted); margin-bottom:2px;">{{$d.T.Get "people.household.linked_partner"}}</div>
     <div style="font-weight:600;">{{$d.PartnerEmail}}</div>
   </div>
-  <button class="btn btn-danger" onclick="unlinkHousehold()">Unlink</button>
+  <button class="btn btn-danger" onclick="unlinkHousehold()">{{$d.T.Get "people.household.btn_unlink"}}</button>
 </div>
 
 <div class="stat-row">
   <div class="stat">
-    <label>Combined Income</label>
+    <label>{{$d.T.Get "people.household.stat_combined_income"}}</label>
     <div class="val" style="color:#4caf50;">€{{cents $d.CombinedIncomeCents}}</div>
   </div>
   <div class="stat">
-    <label>My Income</label>
+    <label>{{$d.T.Get "people.household.stat_my_income"}}</label>
     <div class="val">€{{cents $d.MyIncomeCents}}</div>
   </div>
   <div class="stat">
-    <label>Partner Income</label>
+    <label>{{$d.T.Get "people.household.stat_partner_income"}}</label>
     <div class="val">€{{cents $d.PartnerIncomeCents}}</div>
   </div>
   <div class="stat">
-    <label>Combined Expenses</label>
+    <label>{{$d.T.Get "people.household.stat_combined_expenses"}}</label>
     <div class="val" style="color:#f44336;">€{{cents $d.CombinedExpenseCents}}</div>
   </div>
   <div class="stat">
-    <label>Disposable</label>
+    <label>{{$d.T.Get "people.household.stat_disposable"}}</label>
     <div class="val" style="{{if ge $d.CombinedDisposable 0}}color:#4caf50{{else}}color:#f44336{{end}};">
       {{if lt $d.CombinedDisposable 0}}-{{end}}€{{cents (centsAbs $d.CombinedDisposable)}}
     </div>
@@ -129,22 +129,22 @@
 {{if or $d.MyGoals $d.PartnerGoals}}
 <div class="goals-grid">
   <div class="people-card" style="margin-bottom:0;">
-    <h3>Your Goals</h3>
+    <h3>{{$d.T.Get "people.household.your_goals"}}</h3>
     {{range $d.MyGoals}}
     <div class="goal-item">
       <span>{{.Name}}</span>
-      {{if .Committed}}<span class="badge-committed">committed</span>{{end}}
+      {{if .Committed}}<span class="badge-committed">{{$d.T.Get "people.household.committed_badge"}}</span>{{end}}
     </div>
-    {{else}}<div style="color:var(--muted); font-size:0.83rem;">No goals</div>{{end}}
+    {{else}}<div style="color:var(--muted); font-size:0.83rem;">{{$d.T.Get "people.household.no_goals"}}</div>{{end}}
   </div>
   <div class="people-card" style="margin-bottom:0;">
-    <h3>Partner Goals</h3>
+    <h3>{{$d.T.Get "people.household.partner_goals"}}</h3>
     {{range $d.PartnerGoals}}
     <div class="goal-item">
       <span>{{.Name}}</span>
-      {{if .Committed}}<span class="badge-committed">committed</span>{{end}}
+      {{if .Committed}}<span class="badge-committed">{{$d.T.Get "people.household.committed_badge"}}</span>{{end}}
     </div>
-    {{else}}<div style="color:var(--muted); font-size:0.83rem;">No goals</div>{{end}}
+    {{else}}<div style="color:var(--muted); font-size:0.83rem;">{{$d.T.Get "people.household.no_goals"}}</div>{{end}}
   </div>
 </div>
 {{end}}
@@ -153,13 +153,16 @@
 {{end}}{{/* tab */}}
 
 <script>
+const CONFIRM_REVOKE  = {{$d.T.Get "people.sharing.confirm_revoke" | printf "%q"}};
+const CONFIRM_UNLINK  = {{$d.T.Get "people.household.confirm_unlink" | printf "%q"}};
+
 function revokeShare(id) {
-  if (!confirm('Revoke access for this user?')) return;
+  if (!confirm(CONFIRM_REVOKE)) return;
   fetch('/people/' + id + '?kind=share', { method: 'DELETE' })
     .then(r => { if (r.ok) location.reload(); });
 }
 function unlinkHousehold() {
-  if (!confirm('Unlink household? This only removes the link, not any data.')) return;
+  if (!confirm(CONFIRM_UNLINK)) return;
   fetch('/people/_?kind=household', { method: 'DELETE' })
     .then(r => { if (r.ok) location.href = '/people?tab=household'; });
 }

@@ -24,27 +24,27 @@ tr:last-child td { border-bottom:none; }
 .empty-state { padding:32px; text-align:center; color:var(--muted); font-size:0.875rem; }
 </style>
 
-<h1 style="margin:0 0 20px;">Settings</h1>
+<h1 style="margin:0 0 20px;">{{$d.T.Get "settings.title"}}</h1>
 
 <div class="tab-bar">
-  <a href="/settings?tab=accounts"    class="{{if eq $d.Tab "accounts"}}active{{end}}">Accounts</a>
-  <a href="/settings?tab=categories"  class="{{if eq $d.Tab "categories"}}active{{end}}">Categories</a>
+  <a href="/settings?tab=accounts"    class="{{if eq $d.Tab "accounts"}}active{{end}}">{{$d.T.Get "settings.tab_accounts"}}</a>
+  <a href="/settings?tab=categories"  class="{{if eq $d.Tab "categories"}}active{{end}}">{{$d.T.Get "settings.tab_categories"}}</a>
 </div>
 
 {{if eq $d.Tab "accounts"}}
 
 <div class="s-card">
-  <h3>Add account</h3>
+  <h3>{{$d.T.Get "settings.accounts.card_add_title"}}</h3>
   <form method="post" action="/accounts" id="add-account-form">
     <div class="form-row">
-      <input type="text" name="name" placeholder="Account name" required>
+      <input type="text" name="name" placeholder="{{$d.T.Get "settings.accounts.placeholder_name"}}" required>
       <select name="type">
-        <option value="checking">Checking</option>
-        <option value="savings">Savings</option>
-        <option value="credit">Credit card</option>
-        <option value="securities">Securities</option>
+        <option value="checking">{{$d.T.Get "settings.accounts.type_checking"}}</option>
+        <option value="savings">{{$d.T.Get "settings.accounts.type_savings"}}</option>
+        <option value="credit">{{$d.T.Get "settings.accounts.type_credit"}}</option>
+        <option value="securities">{{$d.T.Get "settings.accounts.type_securities"}}</option>
       </select>
-      <button type="submit" class="btn btn-primary">Add</button>
+      <button type="submit" class="btn btn-primary">{{$d.T.Get "settings.accounts.btn_add"}}</button>
     </div>
   </form>
 </div>
@@ -52,34 +52,34 @@ tr:last-child td { border-bottom:none; }
 <div class="s-card">
   {{if $d.Accounts}}
   <table>
-    <thead><tr><th>Name</th><th>Type</th><th></th></tr></thead>
+    <thead><tr><th>{{$d.T.Get "settings.accounts.col_name"}}</th><th>{{$d.T.Get "settings.accounts.col_type"}}</th><th></th></tr></thead>
     <tbody>
     {{range $d.Accounts}}
     <tr>
       <td style="font-weight:500;">{{.Name}}</td>
       <td><span class="type-badge">{{.Type}}</span></td>
       <td style="text-align:right;">
-        <button class="btn btn-danger" onclick="deleteAccount('{{.ID}}')">Delete</button>
+        <button class="btn btn-danger" onclick="deleteAccount('{{.ID}}')">{{$d.T.Get "settings.accounts.btn_delete"}}</button>
       </td>
     </tr>
     {{end}}
     </tbody>
   </table>
   {{else}}
-  <div class="empty-state">No accounts yet — add one above.</div>
+  <div class="empty-state">{{$d.T.Get "settings.accounts.empty_msg"}}</div>
   {{end}}
 </div>
 
 {{else}}{{/* categories tab */}}
 
 <div class="s-card">
-  <h3>Add category</h3>
+  <h3>{{$d.T.Get "settings.categories.card_add_title"}}</h3>
   <form method="post" action="/categories" id="add-cat-form">
     <div class="form-row">
-      <input type="text"   name="name"  placeholder="Category name" required>
-      <input type="number" name="budget_cents" placeholder="Monthly budget (cents)" min="0">
+      <input type="text"   name="name"  placeholder="{{$d.T.Get "settings.categories.placeholder_name"}}" required>
+      <input type="number" name="budget_cents" placeholder="{{$d.T.Get "settings.categories.placeholder_budget"}}" min="0">
       <input type="color"  name="color" value="#6366f1" style="flex:0; width:44px; padding:4px; border-radius:8px; cursor:pointer;">
-      <button type="submit" class="btn btn-primary">Add</button>
+      <button type="submit" class="btn btn-primary">{{$d.T.Get "settings.categories.btn_add"}}</button>
     </div>
   </form>
 </div>
@@ -87,7 +87,7 @@ tr:last-child td { border-bottom:none; }
 <div class="s-card">
   {{if $d.Categories}}
   <table>
-    <thead><tr><th>Category</th><th style="text-align:right;">Monthly Budget</th><th></th></tr></thead>
+    <thead><tr><th>{{$d.T.Get "settings.categories.col_category"}}</th><th style="text-align:right;">{{$d.T.Get "settings.categories.col_budget"}}</th><th></th></tr></thead>
     <tbody>
     {{range $d.Categories}}
     <tr id="cat-row-{{.ID}}">
@@ -105,14 +105,14 @@ tr:last-child td { border-bottom:none; }
                 style="margin-left:8px; background:none; border:none; cursor:pointer; color:var(--muted); font-size:0.85rem;">✎</button>
       </td>
       <td style="text-align:right;">
-        <button class="btn btn-danger" onclick="deleteCat('{{.ID}}')">Delete</button>
+        <button class="btn btn-danger" onclick="deleteCat('{{.ID}}')">{{$d.T.Get "settings.categories.btn_delete"}}</button>
       </td>
     </tr>
     {{end}}
     </tbody>
   </table>
   {{else}}
-  <div class="empty-state">No categories yet — add one above.</div>
+  <div class="empty-state">{{$d.T.Get "settings.categories.empty_msg"}}</div>
   {{end}}
 </div>
 
@@ -122,32 +122,34 @@ tr:last-child td { border-bottom:none; }
 <div id="edit-cat-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); z-index:300; align-items:center; justify-content:center;">
   <div class="s-card" style="width:380px; max-width:95vw; margin:0; box-shadow:var(--shadow-lg);">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-      <span style="font-weight:700;">Edit Category</span>
+      <span style="font-weight:700;">{{$d.T.Get "settings.categories.modal_edit.title"}}</span>
       <button onclick="closeEditCat()" style="background:none; border:none; cursor:pointer; color:var(--muted); font-size:1.1rem;">✕</button>
     </div>
     <div style="display:flex; flex-direction:column; gap:10px;">
-      <input id="edit-cat-name"   type="text"   placeholder="Name" style="padding:8px 12px; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text);">
-      <input id="edit-cat-budget" type="number" placeholder="Budget (cents)" min="0" style="padding:8px 12px; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text);">
+      <input id="edit-cat-name"   type="text"   placeholder="{{$d.T.Get "settings.categories.modal_edit.placeholder_name"}}" style="padding:8px 12px; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text);">
+      <input id="edit-cat-budget" type="number" placeholder="{{$d.T.Get "settings.categories.modal_edit.placeholder_budget"}}" min="0" style="padding:8px 12px; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text);">
       <input id="edit-cat-color"  type="color"  style="width:100%; height:38px; padding:4px; border:1px solid var(--border); border-radius:8px; cursor:pointer;">
     </div>
     <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:16px;">
-      <button onclick="closeEditCat()" class="btn" style="background:var(--bg); border:1px solid var(--border); color:var(--text);">Cancel</button>
-      <button onclick="saveEditCat()" class="btn btn-primary">Save</button>
+      <button onclick="closeEditCat()" class="btn" style="background:var(--bg); border:1px solid var(--border); color:var(--text);">{{$d.T.Get "settings.categories.modal_edit.btn_cancel"}}</button>
+      <button onclick="saveEditCat()" class="btn btn-primary">{{$d.T.Get "settings.categories.modal_edit.btn_save"}}</button>
     </div>
   </div>
 </div>
 
 <script>
+const CONFIRM_DELETE_ACCOUNT = {{$d.T.Get "settings.accounts.confirm_delete" | printf "%q"}};
+const CONFIRM_DELETE_CAT     = {{$d.T.Get "settings.categories.confirm_delete" | printf "%q"}};
 let editingCatID = null;
 
 function deleteAccount(id) {
-  if (!confirm('Delete this account?')) return;
+  if (!confirm(CONFIRM_DELETE_ACCOUNT)) return;
   fetch('/accounts/' + id, { method: 'DELETE' })
     .then(r => { if (r.ok) location.reload(); });
 }
 
 function deleteCat(id) {
-  if (!confirm('Delete this category?')) return;
+  if (!confirm(CONFIRM_DELETE_CAT)) return;
   fetch('/categories/' + id, { method: 'DELETE' })
     .then(r => { if (r.ok) location.reload(); });
 }
@@ -176,7 +178,6 @@ function saveEditCat() {
     .then(r => { if (r.ok) { closeEditCat(); location.reload(); } });
 }
 
-// After adding account/category, redirect back to same tab
 document.getElementById('add-account-form')?.addEventListener('submit', function(e) {
   e.preventDefault();
   fetch(this.action, { method: 'POST', body: new FormData(this) })

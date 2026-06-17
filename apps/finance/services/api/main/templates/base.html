@@ -572,76 +572,82 @@
   <nav class="nav">
     <a href="/dashboard" class="nav-brand">
       <div class="nav-brand-icon">₣</div>
-      Personal
+      {{.T.Get "nav.brand"}}
     </a>
-    <a href="/dashboard"    class="{{if eq .Route "dashboard"}}active{{end}}">Dashboard</a>
-    <a href="/transactions" class="{{if eq .Route "transactions"}}active{{end}}">Transactions</a>
-    <a href="/portfolio"    class="{{if eq .Route "portfolio"}}active{{end}}">Portfolio</a>
-    <a href="/goals"        class="{{if eq .Route "goals"}}active{{end}}">Goals</a>
-    <a href="/property"     class="{{if eq .Route "property"}}active{{end}}">Property</a>
+    <a href="/dashboard"    class="{{if eq .Route "dashboard"}}active{{end}}">{{.T.Get "nav.dashboard"}}</a>
+    <a href="/transactions" class="{{if eq .Route "transactions"}}active{{end}}">{{.T.Get "nav.transactions"}}</a>
+    <a href="/portfolio"    class="{{if eq .Route "portfolio"}}active{{end}}">{{.T.Get "nav.portfolio"}}</a>
+    <a href="/goals"        class="{{if eq .Route "goals"}}active{{end}}">{{.T.Get "nav.goals"}}</a>
+    <a href="/property"     class="{{if eq .Route "property"}}active{{end}}">{{.T.Get "nav.property"}}</a>
 
 
     {{$analysisActive := or (eq .Route "reports") (eq .Route "projections") (eq .Route "networth") (eq .Route "simulator") (eq .Route "tax")}}
     <div class="nav-group">
       <button class="nav-group-btn {{if $analysisActive}}active{{end}}">
-        Analysis <svg viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 1l4 4 4-4"/></svg>
+        {{.T.Get "nav.analysis"}} <svg viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 1l4 4 4-4"/></svg>
       </button>
       <div class="nav-dropdown">
-        <a href="/reports"     class="{{if eq .Route "reports"}}active{{end}}">Reports</a>
-        <a href="/projections" class="{{if eq .Route "projections"}}active{{end}}">Projections</a>
-        <a href="/tax"         class="{{if eq .Route "tax"}}active{{end}}">Tax</a>
+        <a href="/reports"     class="{{if eq .Route "reports"}}active{{end}}">{{.T.Get "nav.analysis.reports"}}</a>
+        <a href="/projections" class="{{if eq .Route "projections"}}active{{end}}">{{.T.Get "nav.analysis.projections"}}</a>
+        <a href="/tax"         class="{{if eq .Route "tax"}}active{{end}}">{{.T.Get "nav.analysis.tax"}}</a>
         <hr>
-        <a href="/networth"    class="{{if eq .Route "networth"}}active{{end}}">Net Worth</a>
-        <a href="/simulator"   class="{{if eq .Route "simulator"}}active{{end}}">What If</a>
+        <a href="/networth"    class="{{if eq .Route "networth"}}active{{end}}">{{.T.Get "nav.analysis.networth"}}</a>
+        <a href="/simulator"   class="{{if eq .Route "simulator"}}active{{end}}">{{.T.Get "nav.analysis.simulator"}}</a>
       </div>
     </div>
 
-    <a href="/people"       class="{{if eq .Route "people"}}active{{end}}">People</a>
+    <a href="/people"       class="{{if eq .Route "people"}}active{{end}}">{{.T.Get "nav.people"}}</a>
 
     {{$settingsActive := or (eq .Route "settings") (eq .Route "auto-import")}}
     <div class="nav-group">
       <button class="nav-group-btn {{if $settingsActive}}active{{end}}">
-        Settings <svg viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 1l4 4 4-4"/></svg>
+        {{.T.Get "nav.settings"}} <svg viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 1l4 4 4-4"/></svg>
       </button>
       <div class="nav-dropdown">
-        <a href="/settings?tab=accounts"    class="{{if eq .Route "settings"}}active{{end}}">Accounts & Categories</a>
-        <a href="/import"                   class="{{if eq .Route "import"}}active{{end}}">Import CSV</a>
-        <a href="/auto-import"              class="{{if eq .Route "auto-import"}}active{{end}}">Import Guide</a>
+        <a href="/settings?tab=accounts"    class="{{if eq .Route "settings"}}active{{end}}">{{.T.Get "nav.settings.accounts_categories"}}</a>
+        <a href="/import"                   class="{{if eq .Route "import"}}active{{end}}">{{.T.Get "nav.settings.import_csv"}}</a>
+        <a href="/auto-import"              class="{{if eq .Route "auto-import"}}active{{end}}">{{.T.Get "nav.settings.import_guide"}}</a>
       </div>
     </div>
     <div class="nav-spacer"></div>
-    <a href="/orgs" style="font-size:12px; color:var(--text3); padding:5px 9px; border:1px solid var(--border); border-radius:var(--radius-sm); text-decoration:none; transition:all 0.18s;" onmouseover="this.style.color='var(--text2)';this.style.borderColor='var(--border2)'" onmouseout="this.style.color='var(--text3)';this.style.borderColor='var(--border)'">🏢 Business</a>
+    <a href="/orgs" style="font-size:12px; color:var(--text3); padding:5px 9px; border:1px solid var(--border); border-radius:var(--radius-sm); text-decoration:none; transition:all 0.18s;" onmouseover="this.style.color='var(--text2)';this.style.borderColor='var(--border2)'" onmouseout="this.style.color='var(--text3)';this.style.borderColor='var(--border)'">{{.T.Get "nav.business"}}</a>
     <span class="nav-email">{{.Email}}</span>
-    <button class="theme-btn" id="theme-toggle" title="Toggle dark/light mode">🌙</button>
-    <button class="nav-hamburger" id="nav-hamburger" aria-label="Menu">
+    <form method="POST" action="/lang" style="display:inline;">
+      <select name="lang" onchange="this.form.submit()" style="font-size:12px; background:var(--bg2); color:var(--text2); border:1px solid var(--border2); border-radius:var(--radius-sm); padding:4px 6px; cursor:pointer;">
+        <option value="en" {{if eq .Lang "en"}}selected{{end}}>EN</option>
+        <option value="pt" {{if eq .Lang "pt"}}selected{{end}}>PT</option>
+      </select>
+    </form>
+    <button class="theme-btn" id="theme-toggle" title="{{.T.Get "nav.theme.toggle_title"}}">🌙</button>
+    <button class="nav-hamburger" id="nav-hamburger" aria-label="{{.T.Get "nav.theme.menu_aria"}}">
       <span></span><span></span><span></span>
     </button>
   </nav>
 
   <!-- Mobile drawer -->
   <div class="nav-drawer" id="nav-drawer">
-    <a href="/dashboard"    class="{{if eq .Route "dashboard"}}active{{end}}">Dashboard</a>
-    <a href="/transactions" class="{{if eq .Route "transactions"}}active{{end}}">Transactions</a>
-    <a href="/portfolio"    class="{{if eq .Route "portfolio"}}active{{end}}">Portfolio</a>
-    <a href="/goals"        class="{{if eq .Route "goals"}}active{{end}}">Goals</a>
-    <a href="/property"     class="{{if eq .Route "property"}}active{{end}}">Property</a>
+    <a href="/dashboard"    class="{{if eq .Route "dashboard"}}active{{end}}">{{.T.Get "nav.dashboard"}}</a>
+    <a href="/transactions" class="{{if eq .Route "transactions"}}active{{end}}">{{.T.Get "nav.transactions"}}</a>
+    <a href="/portfolio"    class="{{if eq .Route "portfolio"}}active{{end}}">{{.T.Get "nav.portfolio"}}</a>
+    <a href="/goals"        class="{{if eq .Route "goals"}}active{{end}}">{{.T.Get "nav.goals"}}</a>
+    <a href="/property"     class="{{if eq .Route "property"}}active{{end}}">{{.T.Get "nav.property"}}</a>
 
-    <a href="/people"       class="{{if eq .Route "people"}}active{{end}}">People</a>
+    <a href="/people"       class="{{if eq .Route "people"}}active{{end}}">{{.T.Get "nav.people"}}</a>
     <hr>
-    <span class="nav-drawer-section-label">Analysis</span>
-    <a href="/reports"     class="{{if eq .Route "reports"}}active{{end}}">Reports</a>
-    <a href="/projections" class="{{if eq .Route "projections"}}active{{end}}">Projections</a>
-    <a href="/tax"         class="{{if eq .Route "tax"}}active{{end}}">Tax</a>
-    <a href="/networth"    class="{{if eq .Route "networth"}}active{{end}}">Net Worth</a>
-    <a href="/simulator"   class="{{if eq .Route "simulator"}}active{{end}}">What If</a>
+    <span class="nav-drawer-section-label">{{.T.Get "nav.drawer.analysis_label"}}</span>
+    <a href="/reports"     class="{{if eq .Route "reports"}}active{{end}}">{{.T.Get "nav.analysis.reports"}}</a>
+    <a href="/projections" class="{{if eq .Route "projections"}}active{{end}}">{{.T.Get "nav.analysis.projections"}}</a>
+    <a href="/tax"         class="{{if eq .Route "tax"}}active{{end}}">{{.T.Get "nav.analysis.tax"}}</a>
+    <a href="/networth"    class="{{if eq .Route "networth"}}active{{end}}">{{.T.Get "nav.analysis.networth"}}</a>
+    <a href="/simulator"   class="{{if eq .Route "simulator"}}active{{end}}">{{.T.Get "nav.analysis.simulator"}}</a>
     <hr>
-    <span class="nav-drawer-section-label">Settings</span>
-    <a href="/settings?tab=accounts" class="{{if eq .Route "settings"}}active{{end}}">Accounts &amp; Categories</a>
-    <a href="/import"                class="{{if eq .Route "import"}}active{{end}}">Import CSV</a>
-    <a href="/auto-import"           class="{{if eq .Route "auto-import"}}active{{end}}">Import Guide</a>
+    <span class="nav-drawer-section-label">{{.T.Get "nav.drawer.settings_label"}}</span>
+    <a href="/settings?tab=accounts" class="{{if eq .Route "settings"}}active{{end}}">{{.T.Get "nav.settings.accounts_categories"}}</a>
+    <a href="/import"                class="{{if eq .Route "import"}}active{{end}}">{{.T.Get "nav.settings.import_csv"}}</a>
+    <a href="/auto-import"           class="{{if eq .Route "auto-import"}}active{{end}}">{{.T.Get "nav.settings.import_guide"}}</a>
     <hr>
-    <a href="/orgs">🏢 Business</a>
-    <a href="/">← Hub</a>
+    <a href="/orgs">{{.T.Get "nav.business"}}</a>
+    <a href="/">{{.T.Get "nav.hub_back"}}</a>
   </div>
 
   <div class="container">

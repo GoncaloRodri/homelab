@@ -184,6 +184,7 @@ func (h *Handler) propertiesGET(w http.ResponseWriter, r *http.Request, auth aut
 	}
 
 	render(w, propertyTmpl, PropertyData{
+		T:                       h.t(r),
 		UserID:                  auth.UserID,
 		Email:                   auth.Email,
 		Title:                   "Property",

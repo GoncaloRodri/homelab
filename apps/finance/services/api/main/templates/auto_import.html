@@ -18,29 +18,29 @@ code { font-family:monospace; font-size:0.82rem; background:var(--bg); border:1p
 
 <div style="display:flex; align-items:center; gap:14px; margin-bottom:28px;">
   <div>
-    <h1 style="margin:0 0 4px;">Import Guide</h1>
-    <p style="margin:0; font-size:0.85rem; color:var(--muted);">How to get your bank transactions into the app</p>
+    <h1 style="margin:0 0 4px;">{{$d.T.Get "auto_import.title"}}</h1>
+    <p style="margin:0; font-size:0.85rem; color:var(--muted);">{{$d.T.Get "auto_import.subtitle"}}</p>
   </div>
-  <a href="/import" class="btn btn-primary" style="margin-left:auto;">Upload CSV →</a>
+  <a href="/import" class="btn btn-primary" style="margin-left:auto;">{{$d.T.Get "auto_import.btn_upload"}}</a>
 </div>
 
 <div class="guide-step">
   <div class="step-num">1</div>
   <div class="step-body">
-    <h3>Export a CSV from your bank</h3>
-    <p>Log into your bank's online portal and download a transaction extract for the period you want. Most Portuguese banks offer this under <em>Movimentos</em> or <em>Extratos</em>.</p>
+    <h3>{{$d.T.Get "auto_import.steps.step1_title"}}</h3>
+    <p>{{$d.T.Get "auto_import.steps.step1_body"}}</p>
     <div class="format-grid" style="margin-top:14px;">
       <div class="format-card">
-        <div class="name">CGD (Caixa Geral de Depósitos)</div>
-        <div class="desc">Netbanco → Consultas → Movimentos de Conta → Exportar. Choose <strong>CSV</strong>.</div>
+        <div class="name">{{$d.T.Get "auto_import.steps.step1_cgd_name"}}</div>
+        <div class="desc">{{$d.T.Get "auto_import.steps.step1_cgd_desc"}}</div>
       </div>
       <div class="format-card">
-        <div class="name">Trade Republic</div>
-        <div class="desc">App → Profile → Documents → Activity. Export as CSV.</div>
+        <div class="name">{{$d.T.Get "auto_import.steps.step1_tr_name"}}</div>
+        <div class="desc">{{$d.T.Get "auto_import.steps.step1_tr_desc"}}</div>
       </div>
       <div class="format-card">
-        <div class="name">Generic / Other banks</div>
-        <div class="desc">Any CSV with columns: <code>Date</code>, <code>Description</code>, <code>Amount</code>. The importer auto-detects column order.</div>
+        <div class="name">{{$d.T.Get "auto_import.steps.step1_generic_name"}}</div>
+        <div class="desc">{{$d.T.Get "auto_import.steps.step1_generic_desc"}}</div>
       </div>
     </div>
   </div>
@@ -49,27 +49,27 @@ code { font-family:monospace; font-size:0.82rem; background:var(--bg); border:1p
 <div class="guide-step">
   <div class="step-num">2</div>
   <div class="step-body">
-    <h3>Upload and preview</h3>
-    <p>Go to <a href="/import" style="color:var(--accent);">Import</a>, pick the account and format, then select your file. You'll see a preview of every row with auto-suggested categories. Rows already in the database are shown greyed out and will be skipped automatically — safe to re-upload the same file.</p>
+    <h3>{{$d.T.Get "auto_import.steps.step2_title"}}</h3>
+    <p>{{$d.T.Get "auto_import.steps.step2_body"}}</p>
   </div>
 </div>
 
 <div class="guide-step">
   <div class="step-num">3</div>
   <div class="step-body">
-    <h3>Review categories and confirm</h3>
-    <p>Adjust any auto-categorised rows using the dropdown selectors, then click <strong>Confirm Import</strong>. Only new transactions are saved.</p>
+    <h3>{{$d.T.Get "auto_import.steps.step3_title"}}</h3>
+    <p>{{$d.T.Get "auto_import.steps.step3_body"}}</p>
   </div>
 </div>
 
 <div class="tip">
-  <strong>Tip — avoid duplicates:</strong> the importer fingerprints each row by date, description, amount, and account. Re-uploading a file that overlaps with a previous import is safe; duplicates are detected and skipped at both preview and confirm time.
+  <strong>{{$d.T.Get "auto_import.tip.title"}}</strong> {{$d.T.Get "auto_import.tip.body"}}
 </div>
 
 <div style="margin-top:28px; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:20px 24px;">
-  <h3 style="margin:0 0 8px; font-size:0.95rem;">Automate with a script</h3>
+  <h3 style="margin:0 0 8px; font-size:0.95rem;">{{$d.T.Get "auto_import.api.title"}}</h3>
   <p style="font-size:0.85rem; color:var(--muted); margin:0 0 14px;">
-    If you export your CSV on a schedule (e.g. via a cron job or n8n), you can push it directly to the import endpoint without going through the UI:
+    {{$d.T.Get "auto_import.api.body"}}
   </p>
   <pre style="background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:14px 16px; font-size:0.8rem; overflow-x:auto; margin:0;">curl -X POST https://&lt;your-host&gt;/import/preview \
   -H "X-Auth-User-Id: &lt;user-id&gt;" \
@@ -77,6 +77,6 @@ code { font-family:monospace; font-size:0.82rem; background:var(--bg); border:1p
   -F "account_id=&lt;account-id&gt;" \
   -F "format=cgd" \
   -F "file=@movements.csv"</pre>
-  <p style="font-size:0.8rem; color:var(--muted); margin:12px 0 0;">The preview endpoint returns an HTML page; for headless import pipe the confirmed rows to <code>POST /import/confirm</code> with the same <code>account_id</code>, <code>format</code>, <code>raw_data</code>, and <code>categories[]</code> fields.</p>
+  <p style="font-size:0.8rem; color:var(--muted); margin:12px 0 0;">{{$d.T.Get "auto_import.api.footer"}}</p>
 </div>
 {{end}}

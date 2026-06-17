@@ -1,6 +1,6 @@
 {{define "content"}}
 {{$d := .}}
-<h1 style="margin-bottom:24px;">Import</h1>
+<h1 style="margin-bottom:24px;">{{$d.T.Get "import.title"}}</h1>
 
 {{if $d.Error}}
 <div class="card" style="border-color:var(--red); background:var(--red-dim);">
@@ -13,15 +13,15 @@
 <div class="card animate-on-scroll">
   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:8px;">
     <div>
-      <h2 style="font-size:15px; font-weight:700; color:var(--text); text-transform:none; letter-spacing:0;">Preview</h2>
+      <h2 style="font-size:15px; font-weight:700; color:var(--text); text-transform:none; letter-spacing:0;">{{$d.T.Get "import.preview.section_title"}}</h2>
       <p class="text-muted" style="margin-top:3px;">
-        {{$d.Preview.Total}} rows
+        {{$d.Preview.Total}} {{$d.T.Get "import.preview.rows_label"}}
         {{if $d.DuplicateCount}}
-        — <span style="color:var(--yellow, #f59e0b); font-weight:600;">{{$d.DuplicateCount}} already imported</span> (shown greyed out, will be skipped)
+        — <span style="color:var(--yellow, #f59e0b); font-weight:600;">{{$d.DuplicateCount}} {{$d.T.Get "import.preview.already_imported"}}</span> {{$d.T.Get "import.preview.skip_note"}}
         {{end}}
       </p>
     </div>
-    <a href="/import" class="btn btn-outline btn-sm">← Back</a>
+    <a href="/import" class="btn btn-outline btn-sm">{{$d.T.Get "import.preview.btn_back"}}</a>
   </div>
 
   <form method="POST" action="/import/confirm">
@@ -33,10 +33,10 @@
       <table>
         <thead>
           <tr>
-            <th>Date</th>
-            <th>Description</th>
-            <th class="text-right">Amount</th>
-            <th>Category</th>
+            <th>{{$d.T.Get "import.preview.col_date"}}</th>
+            <th>{{$d.T.Get "import.preview.col_description"}}</th>
+            <th class="text-right">{{$d.T.Get "import.preview.col_amount"}}</th>
+            <th>{{$d.T.Get "import.preview.col_category"}}</th>
           </tr>
         </thead>
         <tbody>
@@ -45,7 +45,7 @@
             <td style="white-space:nowrap; color:var(--text2);">{{$row.Date}}</td>
             <td style="max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
               {{$row.Description}}
-              {{if $row.Duplicate}}<span style="font-size:11px; font-weight:600; color:var(--muted); margin-left:6px;">duplicate</span>{{end}}
+              {{if $row.Duplicate}}<span style="font-size:11px; font-weight:600; color:var(--muted); margin-left:6px;">{{$d.T.Get "import.preview.duplicate_label"}}</span>{{end}}
             </td>
             <td class="cents {{if lt $row.AmountCents 0}}negative{{else}}positive{{end}}" style="font-weight:600; white-space:nowrap;">
               {{if lt $row.AmountCents 0}}−{{else}}+{{end}}€{{cents (centsAbs $row.AmountCents)}}
@@ -71,8 +71,8 @@
     </div>
 
     <div style="display:flex; gap:10px; margin-top:18px; flex-wrap:wrap;">
-      <button type="submit" class="btn btn-primary">✓ Confirm Import</button>
-      <a href="/import" class="btn btn-outline">Cancel</a>
+      <button type="submit" class="btn btn-primary">{{$d.T.Get "import.preview.btn_confirm"}}</button>
+      <a href="/import" class="btn btn-outline">{{$d.T.Get "import.preview.btn_cancel"}}</a>
     </div>
   </form>
 </div>
@@ -94,54 +94,54 @@ document.querySelectorAll('.cat-select').forEach(sel => {
 <div class="grid-2" style="align-items:start;">
   <div class="card animate-on-scroll">
     <h2 style="font-size:15px; font-weight:700; color:var(--text); text-transform:none; letter-spacing:0; margin-bottom:18px;">
-      Bank Transactions
+      {{$d.T.Get "import.upload.bank_section_title"}}
     </h2>
     <form method="POST" action="/import/preview" enctype="multipart/form-data">
       <div class="form-group">
-        <label>Account</label>
+        <label>{{$d.T.Get "import.upload.label_account"}}</label>
         <select name="account_id" required>
-          <option value="">Select account…</option>
+          <option value="">{{$d.T.Get "import.upload.placeholder_account"}}</option>
           {{range $d.Accounts}}
           <option value="{{.ID}}">{{.Name}} ({{.Type}})</option>
           {{end}}
         </select>
       </div>
       <div class="form-group">
-        <label>Bank / Format</label>
+        <label>{{$d.T.Get "import.upload.label_format"}}</label>
         <select name="format">
-          <option value="cgd">Caixa Geral de Depósitos (CGD)</option>
-          <option value="traderepublic">Trade Republic Card</option>
-          <option value="generic">Generic CSV</option>
+          <option value="cgd">{{$d.T.Get "import.upload.format_cgd"}}</option>
+          <option value="traderepublic">{{$d.T.Get "import.upload.format_tr"}}</option>
+          <option value="generic">{{$d.T.Get "import.upload.format_generic"}}</option>
         </select>
       </div>
       <div class="form-group">
-        <label>CSV File</label>
+        <label>{{$d.T.Get "import.upload.label_csv_file"}}</label>
         <input type="file" name="file" accept=".csv,.txt" required
                style="padding:10px; cursor:pointer; font-size:13px;">
       </div>
-      <button type="submit" class="btn btn-primary" style="width:100%;">Preview Import</button>
+      <button type="submit" class="btn btn-primary" style="width:100%;">{{$d.T.Get "import.upload.btn_preview"}}</button>
     </form>
   </div>
 
   <div class="card animate-on-scroll">
     <h2 style="font-size:15px; font-weight:700; color:var(--text); text-transform:none; letter-spacing:0; margin-bottom:18px;">
-      Securities Trades
+      {{$d.T.Get "import.upload.securities_title"}}
     </h2>
     <p class="text-muted" style="margin-bottom:16px; font-size:13px; line-height:1.6;">
-      Upload your Trade Republic securities CSV to import buy/sell trades into your portfolio.
+      {{$d.T.Get "import.upload.securities_desc"}}
     </p>
     <form method="POST" action="/import/securities" enctype="multipart/form-data">
       <div class="form-group">
-        <label>Trade Republic Securities CSV</label>
+        <label>{{$d.T.Get "import.upload.label_securities_file"}}</label>
         <input type="file" name="file" accept=".csv,.txt" required
                style="padding:10px; cursor:pointer; font-size:13px;">
       </div>
-      <button type="submit" class="btn btn-primary" style="width:100%;">Import Trades</button>
+      <button type="submit" class="btn btn-primary" style="width:100%;">{{$d.T.Get "import.upload.btn_import_trades"}}</button>
     </form>
 
     <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--border);">
       <p class="text-muted" style="font-size:12px; line-height:1.6;">
-        After importing, visit <a href="/portfolio" style="color:var(--accent);">Portfolio</a> to see live prices and P&L.
+        {{$d.T.Get "import.upload.after_import_note"}} <a href="/portfolio" style="color:var(--accent);">Portfolio</a>
       </p>
     </div>
   </div>

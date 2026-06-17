@@ -121,6 +121,7 @@ type RecurringExpense struct {
 }
 
 type DashboardData struct {
+	T             *Translator
 	UserID        string
 	Email         string
 	Title         string
@@ -173,6 +174,7 @@ type BalancePoint struct {
 }
 
 type ReportData struct {
+	T            *Translator
 	UserID       string
 	Email        string
 	Title        string
@@ -188,6 +190,7 @@ type MonthlyCategorySummary struct {
 }
 
 type ProjectionData struct {
+	T             *Translator
 	UserID        string
 	Email         string
 	Title         string
@@ -198,6 +201,7 @@ type ProjectionData struct {
 }
 
 type PortfolioData struct {
+	T           *Translator
 	UserID      string
 	Email       string
 	Title       string
@@ -213,6 +217,7 @@ type PortfolioData struct {
 }
 
 type SharingData struct {
+	T        *Translator
 	UserID   string
 	Email    string
 	Title    string
@@ -244,6 +249,7 @@ type CapitalGainEntry struct {
 }
 
 type TaxData struct {
+	T        *Translator
 	UserID   string
 	Email    string
 	Title    string
@@ -275,6 +281,7 @@ type Household struct {
 
 // PeopleData combines Sharing and Household into a single page.
 type PeopleData struct {
+	T      *Translator
 	UserID string
 	Email  string
 	Title  string
@@ -302,6 +309,7 @@ type PeopleData struct {
 
 // SettingsData combines Accounts and Categories into a single page.
 type SettingsData struct {
+	T          *Translator
 	UserID     string
 	Email      string
 	Title      string
@@ -312,6 +320,7 @@ type SettingsData struct {
 }
 
 type HouseholdData struct {
+	T        *Translator
 	UserID   string
 	Email    string
 	Title    string
@@ -348,6 +357,7 @@ type ImportSchedule struct {
 }
 
 type AutoImportData struct {
+	T         *Translator
 	UserID    string
 	Email     string
 	Title     string
@@ -377,6 +387,7 @@ type SimulatorGoal struct {
 }
 
 type SimulatorData struct {
+	T        *Translator
 	UserID   string
 	Email    string
 	Title    string
@@ -409,6 +420,7 @@ type NetWorthPoint struct {
 }
 
 type NetWorthData struct {
+	T      *Translator
 	UserID string
 	Email  string
 	Title  string
@@ -463,6 +475,7 @@ type GoalPlan struct {
 }
 
 type GoalsData struct {
+	T                       *Translator
 	UserID                  string
 	Email                   string
 	Title                   string

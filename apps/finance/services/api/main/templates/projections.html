@@ -1,25 +1,25 @@
 {{define "content"}}
 {{$d := .}}
-<h1 style="margin-bottom:24px;">Projections</h1>
+<h1 style="margin-bottom:24px;">{{$d.T.Get "projections.title"}}</h1>
 
 {{if $d.Projections}}
 
 <div class="grid">
   <div class="card value-card animate-on-scroll">
-    <h2>Projected Annual Spend</h2>
+    <h2>{{$d.T.Get "projections.card_annual_spend"}}</h2>
     <div class="value negative animate-counter" data-target="{{$d.AnnualTotal}}" data-prefix="€">€0.00</div>
-    <p class="text-muted" style="margin-top:8px; font-size:12px;">Based on 6-month average</p>
+    <p class="text-muted" style="margin-top:8px; font-size:12px;">{{$d.T.Get "projections.card_annual_sub"}}</p>
   </div>
   <div class="card value-card animate-on-scroll">
-    <h2>Projected Monthly Spend</h2>
+    <h2>{{$d.T.Get "projections.card_monthly_spend"}}</h2>
     {{$monthly := div $d.AnnualTotal 12}}
     <div class="value negative animate-counter" data-target="{{$monthly}}" data-prefix="€">€0.00</div>
-    <p class="text-muted" style="margin-top:8px; font-size:12px;">Average across all categories</p>
+    <p class="text-muted" style="margin-top:8px; font-size:12px;">{{$d.T.Get "projections.card_monthly_sub"}}</p>
   </div>
 </div>
 
 <div class="card animate-on-scroll">
-  <h2 style="margin-bottom:16px;">Monthly Average by Category — Last 6 Months</h2>
+  <h2 style="margin-bottom:16px;">{{$d.T.Get "projections.chart_title"}}</h2>
   <div style="padding-top:4px;">
     <canvas id="projChart" height="250"></canvas>
   </div>
@@ -30,10 +30,10 @@
     <table>
       <thead>
         <tr>
-          <th>Category</th>
-          <th class="text-right">Monthly Avg</th>
-          <th class="text-right">Projected Annual</th>
-          <th style="width:180px;">Share of Spend</th>
+          <th>{{$d.T.Get "projections.table_col_category"}}</th>
+          <th class="text-right">{{$d.T.Get "projections.table_col_monthly_avg"}}</th>
+          <th class="text-right">{{$d.T.Get "projections.table_col_projected"}}</th>
+          <th style="width:180px;">{{$d.T.Get "projections.table_col_share"}}</th>
         </tr>
       </thead>
       <tbody>
@@ -105,9 +105,9 @@ new Chart(document.getElementById('projChart'), {
 {{else}}
 <div class="card empty-state animate-on-scroll">
   <div style="font-size:48px; margin-bottom:16px;">📊</div>
-  <h3>No spending data yet</h3>
-  <p>Import at least a month of transactions to see projections.</p>
-  <a href="/import" class="btn btn-primary" style="margin-top:20px;">Import Transactions</a>
+  <h3>{{$d.T.Get "projections.empty.title"}}</h3>
+  <p>{{$d.T.Get "projections.empty.desc"}}</p>
+  <a href="/import" class="btn btn-primary" style="margin-top:20px;">{{$d.T.Get "projections.empty.btn_import"}}</a>
 </div>
 {{end}}
 {{end}}
