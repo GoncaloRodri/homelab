@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Finance Hub — Personal &amp; Business Finance</title>
+  <title>{{.T.Get "homepage.title"}}</title>
   <meta name="description" content="A self-hosted finance platform for personal wealth and business finance management.">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -517,51 +517,49 @@
   <nav class="topnav">
     <a href="/" class="topnav-logo">
       <div class="topnav-logo-icon">₣</div>
-      Finance Hub
+      {{.T.Get "homepage.brand"}}
     </a>
     <div class="topnav-right">
       {{if .UserID}}
         <span class="topnav-email">{{.Email}}</span>
-        <a href="/dashboard" class="btn-open">Personal</a>
-        <a href="/orgs" class="btn-open">Business</a>
+        <a href="/dashboard" class="btn-open">{{.T.Get "homepage.nav.personal"}}</a>
+        <a href="/orgs" class="btn-open">{{.T.Get "homepage.nav.business"}}</a>
       {{else}}
-        <a href="/auth/login" class="btn-signin">Sign in <span>→</span></a>
+        <a href="/auth/login" class="btn-signin">{{.T.Get "homepage.nav.signin"}} <span>→</span></a>
       {{end}}
     </div>
   </nav>
 
   <!-- ── Hero ─────────────────────────────────────────────────────── -->
   <section class="hero">
-    <div class="hero-eyebrow"><span class="eyebrow-dot"></span>Self-hosted · Private · Open</div>
+    <div class="hero-eyebrow"><span class="eyebrow-dot"></span>{{.T.Get "homepage.hero.eyebrow"}}</div>
     <h1 class="hero-title">
-      <span class="hero-title-line1">Personal wealth.</span>
-      <span class="hero-title-line2">Business finances.</span>
+      <span class="hero-title-line1">{{.T.Get "homepage.hero.title_line1"}}</span>
+      <span class="hero-title-line2">{{.T.Get "homepage.hero.title_line2"}}</span>
     </h1>
-    <p class="hero-sub">
-      One self-hosted platform to track your personal wealth and manage your organisation's budget — without handing your data to anyone.
-    </p>
+    <p class="hero-sub">{{.T.Get "homepage.hero.subtitle"}}</p>
     <div class="hero-cta">
       {{if .UserID}}
-        <a href="/dashboard" class="cta-primary">Open personal <span class="arrow">→</span></a>
-        <a href="/orgs" class="cta-secondary">Open business</a>
+        <a href="/dashboard" class="cta-primary">{{.T.Get "homepage.hero.cta_open_personal"}} <span class="arrow">→</span></a>
+        <a href="/orgs" class="cta-secondary">{{.T.Get "homepage.hero.cta_open_business"}}</a>
       {{else}}
-        <a href="/auth/login" class="cta-primary">Get started <span class="arrow">→</span></a>
-        <a href="#products" class="cta-secondary">See what's inside</a>
+        <a href="/auth/login" class="cta-primary">{{.T.Get "homepage.hero.cta_get_started"}} <span class="arrow">→</span></a>
+        <a href="#products" class="cta-secondary">{{.T.Get "homepage.hero.cta_see_inside"}}</a>
       {{end}}
     </div>
   </section>
 
   <!-- ── Trust bar ────────────────────────────────────────────────── -->
   <div class="trust-bar">
-    <div class="trust-item"><span class="trust-icon">🔒</span> Your data, your server</div>
+    <div class="trust-item"><span class="trust-icon">🔒</span> {{.T.Get "homepage.trust.data_privacy"}}</div>
     <div class="trust-sep"></div>
-    <div class="trust-item"><span class="trust-icon">🏦</span> Multi-bank CSV import</div>
+    <div class="trust-item"><span class="trust-icon">🏦</span> {{.T.Get "homepage.trust.multi_bank"}}</div>
     <div class="trust-sep"></div>
-    <div class="trust-item"><span class="trust-icon">🌙</span> Dark &amp; light mode</div>
+    <div class="trust-item"><span class="trust-icon">🌙</span> {{.T.Get "homepage.trust.dark_light"}}</div>
     <div class="trust-sep"></div>
-    <div class="trust-item"><span class="trust-icon">👥</span> Role-based access</div>
+    <div class="trust-item"><span class="trust-icon">👥</span> {{.T.Get "homepage.trust.role_access"}}</div>
     <div class="trust-sep"></div>
-    <div class="trust-item"><span class="trust-icon">📊</span> Real-time analytics</div>
+    <div class="trust-item"><span class="trust-icon">📊</span> {{.T.Get "homepage.trust.analytics"}}</div>
   </div>
 
   <!-- ── Products ─────────────────────────────────────────────────── -->
@@ -571,39 +569,39 @@
       <a href="{{if .UserID}}/dashboard{{else}}/auth/login{{end}}"
          class="pcard pcard-teal reveal" id="card-personal">
         <div class="pcard-glow"></div>
-        <div class="pcard-badge">Personal</div>
+        <div class="pcard-badge">{{.T.Get "homepage.products.personal.badge"}}</div>
         <div class="pcard-icon">🏦</div>
-        <div class="pcard-name">My Finance</div>
-        <p class="pcard-desc">Full visibility into your personal wealth — spending, investments, goals, and net worth in one place.</p>
+        <div class="pcard-name">{{.T.Get "homepage.products.personal.name"}}</div>
+        <p class="pcard-desc">{{.T.Get "homepage.products.personal.desc"}}</p>
         <ul class="pcard-features">
-          <li>Spending dashboard &amp; monthly trends</li>
-          <li>Transactions with category budgets</li>
-          <li>Investment portfolio tracking</li>
-          <li>Financial goals with progress</li>
-          <li>Net worth &amp; what-if projections</li>
-          <li>Tax report export</li>
-          <li>Household sharing &amp; multi-user view</li>
+          <li>{{.T.Get "homepage.products.personal.feature_1"}}</li>
+          <li>{{.T.Get "homepage.products.personal.feature_2"}}</li>
+          <li>{{.T.Get "homepage.products.personal.feature_3"}}</li>
+          <li>{{.T.Get "homepage.products.personal.feature_4"}}</li>
+          <li>{{.T.Get "homepage.products.personal.feature_5"}}</li>
+          <li>{{.T.Get "homepage.products.personal.feature_6"}}</li>
+          <li>{{.T.Get "homepage.products.personal.feature_7"}}</li>
         </ul>
-        <span class="pcard-cta">{{if .UserID}}Open app{{else}}Sign in{{end}} <span class="cta-arr">→</span></span>
+        <span class="pcard-cta">{{if .UserID}}{{.T.Get "homepage.products.personal.cta_open"}}{{else}}{{.T.Get "homepage.products.personal.cta_signin"}}{{end}} <span class="cta-arr">→</span></span>
       </a>
 
       <a href="{{if .UserID}}/orgs{{else}}/auth/login{{end}}"
          class="pcard pcard-purple reveal" id="card-business">
         <div class="pcard-glow"></div>
-        <div class="pcard-badge">Business</div>
+        <div class="pcard-badge">{{.T.Get "homepage.products.business.badge"}}</div>
         <div class="pcard-icon">🏢</div>
-        <div class="pcard-name">Organisations</div>
-        <p class="pcard-desc">Manage organisations, plan fiscal years, control event budgets, and keep teams financially aligned.</p>
+        <div class="pcard-name">{{.T.Get "homepage.products.business.name"}}</div>
+        <p class="pcard-desc">{{.T.Get "homepage.products.business.desc"}}</p>
         <ul class="pcard-features">
-          <li>Multi-org with fiscal year lifecycle</li>
-          <li>Teams with emoji avatars &amp; roles</li>
-          <li>Events with budget lines &amp; goals</li>
-          <li>Purchase requests &amp; approval flow</li>
-          <li>Ledger &amp; bank CSV import</li>
-          <li>Variance analysis per event &amp; team</li>
-          <li>End-of-year narrative report</li>
+          <li>{{.T.Get "homepage.products.business.feature_1"}}</li>
+          <li>{{.T.Get "homepage.products.business.feature_2"}}</li>
+          <li>{{.T.Get "homepage.products.business.feature_3"}}</li>
+          <li>{{.T.Get "homepage.products.business.feature_4"}}</li>
+          <li>{{.T.Get "homepage.products.business.feature_5"}}</li>
+          <li>{{.T.Get "homepage.products.business.feature_6"}}</li>
+          <li>{{.T.Get "homepage.products.business.feature_7"}}</li>
         </ul>
-        <span class="pcard-cta">{{if .UserID}}Open orgs{{else}}Sign in{{end}} <span class="cta-arr">→</span></span>
+        <span class="pcard-cta">{{if .UserID}}{{.T.Get "homepage.products.business.cta_open"}}{{else}}{{.T.Get "homepage.products.business.cta_signin"}}{{end}} <span class="cta-arr">→</span></span>
       </a>
 
     </div>
@@ -614,29 +612,29 @@
   <!-- ── Personal features ─────────────────────────────────────────── -->
   <div class="feature-section">
     <div class="feature-text">
-      <p class="section-label teal">Personal Finance</p>
-      <h2 class="section-title">Complete visibility<br>over your wealth</h2>
-      <p class="section-sub">From daily coffee to long-term portfolio — everything in one dashboard, updated as you import.</p>
+      <p class="section-label teal">{{.T.Get "homepage.features.personal.section_label"}}</p>
+      <h2 class="section-title">{{.T.Get "homepage.features.personal.section_title"}}</h2>
+      <p class="section-sub">{{.T.Get "homepage.features.personal.section_sub"}}</p>
       <div class="feature-chips">
         <div class="feature-chip reveal">
           <div class="feature-chip-icon teal">📊</div>
           <div>
-            <div class="feature-chip-title">Smart dashboard</div>
-            <div class="feature-chip-desc">Monthly income vs spending, top categories, recent transactions, and budget health at a glance.</div>
+            <div class="feature-chip-title">{{.T.Get "homepage.features.personal.chip1_title"}}</div>
+            <div class="feature-chip-desc">{{.T.Get "homepage.features.personal.chip1_desc"}}</div>
           </div>
         </div>
         <div class="feature-chip reveal">
           <div class="feature-chip-icon teal">📈</div>
           <div>
-            <div class="feature-chip-title">Portfolio tracking</div>
-            <div class="feature-chip-desc">Import trades, track ISIN-mapped tickers, see P&amp;L and allocation by asset class.</div>
+            <div class="feature-chip-title">{{.T.Get "homepage.features.personal.chip2_title"}}</div>
+            <div class="feature-chip-desc">{{.T.Get "homepage.features.personal.chip2_desc"}}</div>
           </div>
         </div>
         <div class="feature-chip reveal">
           <div class="feature-chip-icon teal">🎯</div>
           <div>
-            <div class="feature-chip-title">Goals &amp; projections</div>
-            <div class="feature-chip-desc">Set savings goals, model scenarios, and see your projected net worth over time.</div>
+            <div class="feature-chip-title">{{.T.Get "homepage.features.personal.chip3_title"}}</div>
+            <div class="feature-chip-desc">{{.T.Get "homepage.features.personal.chip3_desc"}}</div>
           </div>
         </div>
       </div>
@@ -651,31 +649,31 @@
       <div class="mock-body">
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">
           <div class="mock-stat">
-            <div class="mock-stat-label">Net income</div>
-            <div class="mock-stat-value teal">+€2,840</div>
-            <div class="mock-stat-sub">vs last month +12%</div>
+            <div class="mock-stat-label">{{.T.Get "homepage.mock.net_income_label"}}</div>
+            <div class="mock-stat-value teal">{{.T.Get "homepage.mock.net_income_value"}}</div>
+            <div class="mock-stat-sub">{{.T.Get "homepage.mock.net_income_sub"}}</div>
           </div>
           <div class="mock-stat">
-            <div class="mock-stat-label">Net worth</div>
+            <div class="mock-stat-label">{{.T.Get "homepage.mock.net_worth_label"}}</div>
             <div class="mock-stat-value" style="font-size:18px;">€47,320</div>
-            <div class="mock-stat-sub">↑ €1,240 this month</div>
+            <div class="mock-stat-sub">{{.T.Get "homepage.mock.net_worth_sub"}}</div>
           </div>
         </div>
-        <div style="font-size:10px; color:var(--text3); font-weight:700; letter-spacing:0.06em; text-transform:uppercase; margin-bottom:8px;">Budget health</div>
+        <div style="font-size:10px; color:var(--text3); font-weight:700; letter-spacing:0.06em; text-transform:uppercase; margin-bottom:8px;">{{.T.Get "homepage.mock.budget_health"}}</div>
         <div class="mock-row">
-          <span class="mock-row-label">Groceries</span>
+          <span class="mock-row-label">{{.T.Get "homepage.mock.groceries"}}</span>
           <span class="mock-row-val green">€182 / €250</span>
         </div>
         <div class="mock-row">
-          <span class="mock-row-label">Dining out</span>
+          <span class="mock-row-label">{{.T.Get "homepage.mock.dining_out"}}</span>
           <span class="mock-row-val red">€148 / €100</span>
         </div>
         <div class="mock-row">
-          <span class="mock-row-label">Transport</span>
+          <span class="mock-row-label">{{.T.Get "homepage.mock.transport"}}</span>
           <span class="mock-row-val green">€64 / €120</span>
         </div>
         <div class="mock-row">
-          <span class="mock-row-label">Entertainment</span>
+          <span class="mock-row-label">{{.T.Get "homepage.mock.entertainment"}}</span>
           <span class="mock-row-val" style="color:var(--teal);">€38 / €80</span>
         </div>
       </div>
@@ -689,16 +687,16 @@
         <div class="mock-dot" style="background:#f87171;"></div>
         <div class="mock-dot" style="background:#fbbf24;"></div>
         <div class="mock-dot" style="background:var(--green);"></div>
-        <span style="font-size:11px; color:var(--text3); margin-left:8px;">Events — Summer Festival 2025</span>
+        <span style="font-size:11px; color:var(--text3); margin-left:8px;">{{.T.Get "homepage.mock.events_label"}}</span>
       </div>
       <div class="mock-body">
         <div class="mock-stat" style="margin-bottom:14px;">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <div>
-              <div class="mock-stat-label">Budget</div>
+              <div class="mock-stat-label">{{.T.Get "homepage.mock.budget_label"}}</div>
               <div class="mock-stat-value purple" style="color:var(--purple2);">€12,500</div>
             </div>
-            <span class="mock-badge active">Active year</span>
+            <span class="mock-badge active">{{.T.Get "homepage.mock.active_year"}}</span>
           </div>
           <div class="mock-bar-wrap">
             <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--text3); margin-bottom:4px;">
@@ -709,45 +707,45 @@
             </div>
           </div>
         </div>
-        <div style="font-size:10px; color:var(--text3); font-weight:700; letter-spacing:0.06em; text-transform:uppercase; margin-bottom:8px;">Requests</div>
+        <div style="font-size:10px; color:var(--text3); font-weight:700; letter-spacing:0.06em; text-transform:uppercase; margin-bottom:8px;">{{.T.Get "homepage.mock.requests_label"}}</div>
         <div class="mock-row">
-          <span class="mock-row-label">Sound equipment rental</span>
-          <span class="mock-badge approved">Approved</span>
+          <span class="mock-row-label">{{.T.Get "homepage.mock.sound_equipment"}}</span>
+          <span class="mock-badge approved">{{.T.Get "homepage.mock.approved"}}</span>
         </div>
         <div class="mock-row">
-          <span class="mock-row-label">Catering deposit</span>
-          <span class="mock-badge pending">Pending</span>
+          <span class="mock-row-label">{{.T.Get "homepage.mock.catering_deposit"}}</span>
+          <span class="mock-badge pending">{{.T.Get "homepage.mock.pending"}}</span>
         </div>
         <div class="mock-row">
-          <span class="mock-row-label">Stage lighting</span>
-          <span class="mock-badge active">In transit</span>
+          <span class="mock-row-label">{{.T.Get "homepage.mock.stage_lighting"}}</span>
+          <span class="mock-badge active">{{.T.Get "homepage.mock.in_transit"}}</span>
         </div>
       </div>
     </div>
     <div class="feature-text">
-      <p class="section-label purple">Business Finance</p>
-      <h2 class="section-title">Budget control<br>for your org</h2>
-      <p class="section-sub">From fiscal year kick-off to the final report — with full traceability for every euro spent.</p>
+      <p class="section-label purple">{{.T.Get "homepage.features.business.section_label"}}</p>
+      <h2 class="section-title">{{.T.Get "homepage.features.business.section_title"}}</h2>
+      <p class="section-sub">{{.T.Get "homepage.features.business.section_sub"}}</p>
       <div class="feature-chips">
         <div class="feature-chip reveal">
           <div class="feature-chip-icon purple">📅</div>
           <div>
-            <div class="feature-chip-title">Fiscal year lifecycle</div>
-            <div class="feature-chip-desc">Plan events and budgets per year. Activate, lock, and close with an end-of-year report.</div>
+            <div class="feature-chip-title">{{.T.Get "homepage.features.business.chip1_title"}}</div>
+            <div class="feature-chip-desc">{{.T.Get "homepage.features.business.chip1_desc"}}</div>
           </div>
         </div>
         <div class="feature-chip reveal">
           <div class="feature-chip-icon purple">📋</div>
           <div>
-            <div class="feature-chip-title">Request &amp; approval flow</div>
-            <div class="feature-chip-desc">Teams submit purchase requests. Finance approves, tracks delivery, and settles against the ledger.</div>
+            <div class="feature-chip-title">{{.T.Get "homepage.features.business.chip2_title"}}</div>
+            <div class="feature-chip-desc">{{.T.Get "homepage.features.business.chip2_desc"}}</div>
           </div>
         </div>
         <div class="feature-chip reveal">
           <div class="feature-chip-icon purple">📊</div>
           <div>
-            <div class="feature-chip-title">Variance analysis</div>
-            <div class="feature-chip-desc">Compare planned vs actual per event and per team. Identify overspend before the year closes.</div>
+            <div class="feature-chip-title">{{.T.Get "homepage.features.business.chip3_title"}}</div>
+            <div class="feature-chip-desc">{{.T.Get "homepage.features.business.chip3_desc"}}</div>
           </div>
         </div>
       </div>
@@ -758,10 +756,10 @@
   {{if not .UserID}}
   <div class="signin-block">
     <div class="signin-card">
-      <h2>Ready to get started?</h2>
-      <p>Finance Hub is self-hosted on your homelab. Sign in with your account to access your personal and business dashboards.</p>
+      <h2>{{.T.Get "homepage.signin_block.title"}}</h2>
+      <p>{{.T.Get "homepage.signin_block.body"}}</p>
       <a href="/auth/login" class="cta-primary" style="margin: 0 auto;">
-        Sign in to Finance Hub <span class="arrow">→</span>
+        {{.T.Get "homepage.signin_block.cta"}} <span class="arrow">→</span>
       </a>
     </div>
   </div>
@@ -771,17 +769,17 @@
   <footer class="footer">
     <a href="/" class="footer-logo">
       <div style="width:22px; height:22px; background:linear-gradient(135deg,var(--teal),var(--purple2)); border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:11px;">₣</div>
-      Finance Hub
+      {{.T.Get "homepage.brand"}}
     </a>
     <div class="footer-links">
       {{if .UserID}}
-        <a href="/dashboard">Personal</a>
-        <a href="/orgs">Business</a>
+        <a href="/dashboard">{{.T.Get "homepage.nav.personal"}}</a>
+        <a href="/orgs">{{.T.Get "homepage.nav.business"}}</a>
       {{else}}
-        <a href="/auth/login">Sign in</a>
+        <a href="/auth/login">{{.T.Get "homepage.nav.signin"}}</a>
       {{end}}
     </div>
-    <span>Self-hosted homelab</span>
+    <span>{{.T.Get "homepage.footer_tagline"}}</span>
   </footer>
 
 </div><!-- .page -->

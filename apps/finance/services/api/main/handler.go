@@ -454,6 +454,7 @@ func (h *Handler) Homepage(w http.ResponseWriter, r *http.Request) {
 	renderRaw(w, homepageTmpl, map[string]interface{}{
 		"Email":  a.Email,
 		"UserID": a.UserID,
+		"T":      h.t(r),
 	})
 }
 

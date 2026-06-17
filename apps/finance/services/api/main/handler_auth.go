@@ -218,6 +218,7 @@ func (h *Handler) AuthLogin(w http.ResponseWriter, r *http.Request) {
 	renderRaw(w, authLoginTmpl, map[string]any{
 		"GoogleEnabled": h.googleID != "",
 		"Error":         errMsg,
+		"T":             h.t(r),
 	})
 }
 
@@ -232,6 +233,7 @@ func (h *Handler) authLoginPost(w http.ResponseWriter, r *http.Request) {
 			"Error":         msg,
 			"Email":         email,
 			"GoogleEnabled": h.googleID != "",
+			"T":             h.t(r),
 		})
 	}
 
@@ -281,7 +283,7 @@ func (h *Handler) AuthRegister(w http.ResponseWriter, r *http.Request) {
 		h.authRegisterPost(w, r)
 		return
 	}
-	renderRaw(w, authRegisterTmpl, map[string]any{"GoogleEnabled": h.googleID != ""})
+	renderRaw(w, authRegisterTmpl, map[string]any{"GoogleEnabled": h.googleID != "", "T": h.t(r)})
 }
 
 func (h *Handler) authRegisterPost(w http.ResponseWriter, r *http.Request) {
@@ -296,6 +298,7 @@ func (h *Handler) authRegisterPost(w http.ResponseWriter, r *http.Request) {
 			"Email":         email,
 			"Name":          name,
 			"GoogleEnabled": h.googleID != "",
+			"T":             h.t(r),
 		})
 	}
 
