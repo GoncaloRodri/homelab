@@ -3,106 +3,97 @@
 {{$r := .Result}}
 
 <div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:8px;">
-  <h1>Goal Planner</h1>
+  <h1>{{$d.T.Get "plan.title"}}</h1>
   <span class="text-muted">{{if $d.Email}}{{$d.Email}}{{end}}</span>
 </div>
 
 <!-- Inputs form -->
 <div class="card animate-on-scroll" style="margin-bottom:20px;">
-  <h2 style="margin-bottom:4px;">Your scenario</h2>
+  <h2 style="margin-bottom:4px;">{{$d.T.Get "plan.scenario_title"}}</h2>
   <p style="font-size:13px; color:var(--text3); margin-bottom:16px;">
-    Model any transition where you hold an asset with a loan, want to acquire a new one, then sell the old to fund the new.
+    {{$d.T.Get "plan.scenario_desc"}}
   </p>
   <form method="GET" action="/plan">
     <input type="hidden" name="run" value="1">
 
     <div class="grid" style="gap:14px; margin-bottom:16px;">
 
-      <!-- Current asset -->
       <div>
-        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">Current asset (optional)</label>
+        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">{{$d.T.Get "plan.label_current_asset"}}</label>
         <select name="property_id" style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px;">
-          <option value="">— none selected —</option>
+          <option value="">{{$d.T.Get "plan.option_none_asset"}}</option>
           {{range $d.Properties}}
           <option value="{{.ID}}" {{if and $d.HasResult (eq $d.Form.PropertyID .ID)}}selected{{end}}>{{.Name}} (€{{cents .CurrentValueCents}})</option>
           {{end}}
         </select>
       </div>
 
-      <!-- Current loan -->
       <div>
-        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">Current loan (optional)</label>
+        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">{{$d.T.Get "plan.label_current_loan"}}</label>
         <select name="loan_id" style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px;">
-          <option value="">— none selected —</option>
+          <option value="">{{$d.T.Get "plan.option_none_loan"}}</option>
           {{range $d.Loans}}
           <option value="{{.ID}}" {{if and $d.HasResult (eq $d.Form.LoanID .ID)}}selected{{end}}>{{.Name}} (€{{cents .BalanceCents}} left)</option>
           {{end}}
         </select>
       </div>
 
-      <!-- Goal cost -->
       <div>
-        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">New goal cost (€)</label>
+        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">{{$d.T.Get "plan.label_dream_cost"}}</label>
         <input type="number" name="dream_cost" min="0" step="1000"
           value="{{if $d.HasResult}}{{div $d.Form.DreamCostCents 100}}{{end}}"
-          placeholder="e.g. 350000"
+          placeholder="{{$d.T.Get "plan.placeholder_dream_cost"}}"
           style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px; box-sizing:border-box;">
       </div>
 
-      <!-- Down payment % -->
       <div>
-        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">Down payment (%)</label>
+        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">{{$d.T.Get "plan.label_down_pct"}}</label>
         <input type="number" name="down_pct" min="0" max="100" step="1"
           value="{{if $d.HasResult}}{{round $d.Form.DownPaymentPct}}{{else}}20{{end}}"
           style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px; box-sizing:border-box;">
       </div>
 
-      <!-- New loan rate -->
       <div>
-        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">New loan rate (% annual)</label>
+        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">{{$d.T.Get "plan.label_loan_rate"}}</label>
         <input type="number" name="const_rate" min="0" max="30" step="0.1"
           value="{{if $d.HasResult}}{{$d.Form.ConstructionRatePct}}{{else}}4.0{{end}}"
           style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px; box-sizing:border-box;">
       </div>
 
-      <!-- New loan term -->
       <div>
-        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">New loan term (years)</label>
+        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">{{$d.T.Get "plan.label_loan_term"}}</label>
         <input type="number" name="const_term" min="1" max="40" step="1"
           value="{{if $d.HasResult}}{{$d.Form.ConstructionTermYears}}{{else}}30{{end}}"
-          placeholder="30"
+          placeholder="{{$d.T.Get "plan.placeholder_loan_term"}}"
           style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px; box-sizing:border-box;">
       </div>
 
-      <!-- Acquisition period -->
       <div>
-        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">Acquisition / build period (months)</label>
+        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">{{$d.T.Get "plan.label_build_months"}}</label>
         <input type="number" name="build_months" min="1" max="60" step="1"
           value="{{if $d.HasResult}}{{$d.Form.BuildMonths}}{{else}}18{{end}}"
           style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px; box-sizing:border-box;">
       </div>
 
-      <!-- Monthly savings -->
       <div>
-        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">Monthly savings available (€)</label>
+        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">{{$d.T.Get "plan.label_monthly_savings"}}</label>
         <input type="number" name="monthly_savings" min="0" step="100"
           value="{{if $d.HasResult}}{{div $d.Form.MonthlySavingsCents 100}}{{end}}"
-          placeholder="e.g. 800"
+          placeholder="{{$d.T.Get "plan.placeholder_savings"}}"
           style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px; box-sizing:border-box;">
       </div>
 
-      <!-- Expected sale price -->
       <div>
-        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">Expected sale price of current asset (€)</label>
+        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">{{$d.T.Get "plan.label_sale_price"}}</label>
         <input type="number" name="sale_price" min="0" step="1000"
           value="{{if $d.HasResult}}{{div $d.Form.ExpectedSalePriceCents 100}}{{end}}"
-          placeholder="leave blank to use current value"
+          placeholder="{{$d.T.Get "plan.placeholder_sale_price"}}"
           style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px; box-sizing:border-box;">
       </div>
 
     </div>
 
-    <button type="submit" class="btn btn-primary" style="width:100%;">Run simulation →</button>
+    <button type="submit" class="btn btn-primary" style="width:100%;">{{$d.T.Get "plan.btn_run"}}</button>
   </form>
 </div>
 
@@ -117,30 +108,30 @@
 <!-- Summary bar -->
 <div class="grid" style="margin-bottom:20px;">
   <div class="card value-card animate-on-scroll">
-    <h2>Total timeline</h2>
+    <h2>{{$d.T.Get "plan.result_total_timeline"}}</h2>
     <div class="value positive">{{$r.TotalYears}}y {{$r.TotalRemMonths}}m</div>
-    <p style="font-size:12px; color:var(--text3); margin-top:6px;">until goal is fully paid off</p>
+    <p style="font-size:12px; color:var(--text3); margin-top:6px;">{{$d.T.Get "plan.result_until_paid"}}</p>
   </div>
   <div class="card value-card animate-on-scroll">
-    <h2>Final monthly cost</h2>
+    <h2>{{$d.T.Get "plan.result_final_monthly"}}</h2>
     <div class="value positive">€{{cents $r.Phase4MonthlyCents}}</div>
-    <p style="font-size:12px; color:var(--text3); margin-top:6px;">after selling current asset</p>
+    <p style="font-size:12px; color:var(--text3); margin-top:6px;">{{$d.T.Get "plan.result_after_selling"}}</p>
   </div>
   <div class="card value-card animate-on-scroll">
-    <h2>Total interest</h2>
+    <h2>{{$d.T.Get "plan.result_total_interest"}}</h2>
     <div class="value" style="color:var(--red);">€{{cents $r.TotalInterestCents}}</div>
-    <p style="font-size:12px; color:var(--text3); margin-top:6px;">across both loans combined</p>
+    <p style="font-size:12px; color:var(--text3); margin-top:6px;">{{$d.T.Get "plan.result_across_both"}}</p>
   </div>
   <div class="card value-card animate-on-scroll">
-    <h2>Free by</h2>
+    <h2>{{$d.T.Get "plan.result_free_by"}}</h2>
     <div class="value positive" style="font-size:24px;">{{dateShort $r.FinalDate}}</div>
-    <p style="font-size:12px; color:var(--text3); margin-top:6px;">fully paid off</p>
+    <p style="font-size:12px; color:var(--text3); margin-top:6px;">{{$d.T.Get "plan.result_fully_paid"}}</p>
   </div>
 </div>
 
 <!-- Phase timeline -->
 <div class="card animate-on-scroll" style="margin-bottom:20px;">
-  <h2 style="margin-bottom:20px;">Your roadmap</h2>
+  <h2 style="margin-bottom:20px;">{{$d.T.Get "plan.roadmap_title"}}</h2>
 
   <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:0; position:relative;">
 
@@ -150,22 +141,22 @@
     <!-- Phase 1 -->
     <div style="text-align:center; position:relative; padding:0 8px;">
       <div style="width:40px; height:40px; border-radius:50%; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-size:18px; margin:0 auto 12px; position:relative; z-index:1;">1</div>
-      <div style="font-weight:600; font-size:13px; color:var(--text1); margin-bottom:6px;">Save down payment</div>
+      <div style="font-weight:600; font-size:13px; color:var(--text1); margin-bottom:6px;">{{$d.T.Get "plan.phase1_title"}}</div>
       {{if gt $r.Phase1Months 0}}
       <div style="font-size:22px; font-weight:500; color:var(--accent); margin-bottom:4px;">{{$r.Phase1Months}}mo</div>
       <div style="font-size:11px; color:var(--text3);">until {{dateShort $r.Phase1EndDate}}</div>
       <div style="margin-top:10px; font-size:12px; color:var(--text2); background:var(--bg3); border-radius:var(--radius-sm); padding:8px 10px; text-align:left;">
-        <div>Target: <strong>€{{cents $r.DownPaymentCents}}</strong></div>
-        <div>Already have: <strong>€{{cents $r.AlreadyHaveCents}}</strong></div>
-        <div>Still need: <strong>€{{cents $r.StillNeededCents}}</strong></div>
-        <div>Saving: <strong>€{{cents $r.Form.MonthlySavingsCents}}/mo</strong></div>
+        <div>{{$d.T.Get "plan.phase1_target"}} <strong>€{{cents $r.DownPaymentCents}}</strong></div>
+        <div>{{$d.T.Get "plan.phase1_already_have"}} <strong>€{{cents $r.AlreadyHaveCents}}</strong></div>
+        <div>{{$d.T.Get "plan.phase1_still_need"}} <strong>€{{cents $r.StillNeededCents}}</strong></div>
+        <div>{{$d.T.Get "plan.phase1_saving"}} <strong>€{{cents $r.Form.MonthlySavingsCents}}/mo</strong></div>
       </div>
       {{else}}
-      <div style="font-size:16px; font-weight:600; color:var(--green); margin-bottom:4px;">Ready now!</div>
-      <div style="font-size:11px; color:var(--text3);">equity covers down payment</div>
+      <div style="font-size:16px; font-weight:600; color:var(--green); margin-bottom:4px;">{{$d.T.Get "plan.phase1_ready"}}</div>
+      <div style="font-size:11px; color:var(--text3);">{{$d.T.Get "plan.phase1_equity_covers"}}</div>
       <div style="margin-top:10px; font-size:12px; color:var(--text2); background:var(--bg3); border-radius:var(--radius-sm); padding:8px 10px; text-align:left;">
-        <div>Down payment: <strong>€{{cents $r.DownPaymentCents}}</strong></div>
-        <div>Your equity: <strong style="color:var(--green);">€{{cents $r.AlreadyHaveCents}}</strong></div>
+        <div>{{$d.T.Get "plan.phase1_down_payment"}} <strong>€{{cents $r.DownPaymentCents}}</strong></div>
+        <div>{{$d.T.Get "plan.phase1_your_equity"}} <strong style="color:var(--green);">€{{cents $r.AlreadyHaveCents}}</strong></div>
       </div>
       {{end}}
     </div>
@@ -173,51 +164,51 @@
     <!-- Phase 2 -->
     <div style="text-align:center; position:relative; padding:0 8px;">
       <div style="width:40px; height:40px; border-radius:50%; background:var(--orange, #f97316); color:#fff; display:flex; align-items:center; justify-content:center; font-size:18px; margin:0 auto 12px; position:relative; z-index:1;">2</div>
-      <div style="font-weight:600; font-size:13px; color:var(--text1); margin-bottom:6px;">Acquire / build</div>
+      <div style="font-weight:600; font-size:13px; color:var(--text1); margin-bottom:6px;">{{$d.T.Get "plan.phase2_title"}}</div>
       <div style="font-size:22px; font-weight:500; color:var(--orange, #f97316); margin-bottom:4px;">{{$r.Phase2Months}}mo</div>
       <div style="font-size:11px; color:var(--text3);">until {{dateShort $r.Phase2EndDate}}</div>
       <div style="margin-top:10px; font-size:12px; color:var(--text2); background:var(--bg3); border-radius:var(--radius-sm); padding:8px 10px; text-align:left;">
-        <div>New loan: <strong>€{{cents $r.ConstructionLoanCents}}</strong></div>
+        <div>{{$d.T.Get "plan.phase2_new_loan"}} <strong>€{{cents $r.ConstructionLoanCents}}</strong></div>
         {{if $r.CurrentLoan}}
-        <div>Existing loan: <strong>€{{cents $r.CurrentMonthlyCents}}/mo</strong></div>
+        <div>{{$d.T.Get "plan.phase2_existing_loan"}} <strong>€{{cents $r.CurrentMonthlyCents}}/mo</strong></div>
         {{end}}
-        <div>New EMI: <strong>€{{cents $r.ConstructionMonthly}}/mo</strong></div>
-        <div style="border-top:1px solid var(--border); margin-top:6px; padding-top:6px;">Total burden: <strong style="color:var(--orange, #f97316);">€{{cents $r.Phase2MonthlyCents}}/mo</strong></div>
+        <div>{{$d.T.Get "plan.phase2_new_emi"}} <strong>€{{cents $r.ConstructionMonthly}}/mo</strong></div>
+        <div style="border-top:1px solid var(--border); margin-top:6px; padding-top:6px;">{{$d.T.Get "plan.phase2_total_burden"}} <strong style="color:var(--orange, #f97316);">€{{cents $r.Phase2MonthlyCents}}/mo</strong></div>
       </div>
     </div>
 
     <!-- Phase 3 -->
     <div style="text-align:center; position:relative; padding:0 8px;">
       <div style="width:40px; height:40px; border-radius:50%; background:var(--teal, #14b8a6); color:#fff; display:flex; align-items:center; justify-content:center; font-size:18px; margin:0 auto 12px; position:relative; z-index:1;">3</div>
-      <div style="font-weight:600; font-size:13px; color:var(--text1); margin-bottom:6px;">Sell &amp; transition</div>
-      <div style="font-size:16px; font-weight:600; color:var(--teal, #14b8a6); margin-bottom:4px;">One-time event</div>
-      <div style="font-size:11px; color:var(--text3);">after acquisition completes</div>
+      <div style="font-weight:600; font-size:13px; color:var(--text1); margin-bottom:6px;">{{$d.T.Get "plan.phase3_title"}}</div>
+      <div style="font-size:16px; font-weight:600; color:var(--teal, #14b8a6); margin-bottom:4px;">{{$d.T.Get "plan.phase3_one_time"}}</div>
+      <div style="font-size:11px; color:var(--text3);">{{$d.T.Get "plan.phase3_after_acquisition"}}</div>
       <div style="margin-top:10px; font-size:12px; color:var(--text2); background:var(--bg3); border-radius:var(--radius-sm); padding:8px 10px; text-align:left;">
-        <div>Sale price: <strong>€{{cents $r.SalePriceCents}}</strong></div>
-        <div>Pay off loan: <strong style="color:var(--red);">-€{{cents $r.MortgagePayoffCents}}</strong></div>
-        <div style="border-top:1px solid var(--border); margin-top:6px; padding-top:6px;">Net proceeds: <strong style="color:var(--green);">€{{cents $r.NetProceedsCents}}</strong></div>
-        <div>Applied to new loan</div>
+        <div>{{$d.T.Get "plan.phase3_sale_price"}} <strong>€{{cents $r.SalePriceCents}}</strong></div>
+        <div>{{$d.T.Get "plan.phase3_pay_off"}} <strong style="color:var(--red);">-€{{cents $r.MortgagePayoffCents}}</strong></div>
+        <div style="border-top:1px solid var(--border); margin-top:6px; padding-top:6px;">{{$d.T.Get "plan.phase3_net_proceeds"}} <strong style="color:var(--green);">€{{cents $r.NetProceedsCents}}</strong></div>
+        <div>{{$d.T.Get "plan.phase3_applied"}}</div>
       </div>
     </div>
 
     <!-- Phase 4 -->
     <div style="text-align:center; position:relative; padding:0 8px;">
       <div style="width:40px; height:40px; border-radius:50%; background:var(--green); color:#fff; display:flex; align-items:center; justify-content:center; font-size:18px; margin:0 auto 12px; position:relative; z-index:1;">4</div>
-      <div style="font-weight:600; font-size:13px; color:var(--text1); margin-bottom:6px;">Goal achieved</div>
+      <div style="font-weight:600; font-size:13px; color:var(--text1); margin-bottom:6px;">{{$d.T.Get "plan.phase4_title"}}</div>
       {{if gt $r.Phase4Months 0}}
       <div style="font-size:22px; font-weight:500; color:var(--green); margin-bottom:4px;">{{$r.Phase4Months}}mo</div>
       <div style="font-size:11px; color:var(--text3);">paid off {{dateShort $r.Phase4EndDate}}</div>
       <div style="margin-top:10px; font-size:12px; color:var(--text2); background:var(--bg3); border-radius:var(--radius-sm); padding:8px 10px; text-align:left;">
-        <div>Remaining loan: <strong>€{{cents $r.RemainingBalanceCents}}</strong></div>
-        <div>Monthly payment: <strong style="color:var(--green);">€{{cents $r.Phase4MonthlyCents}}/mo</strong></div>
-        <div style="font-size:11px; color:var(--text3); margin-top:4px;">just the new loan</div>
+        <div>{{$d.T.Get "plan.phase4_remaining_loan"}} <strong>€{{cents $r.RemainingBalanceCents}}</strong></div>
+        <div>{{$d.T.Get "plan.phase4_monthly_payment"}} <strong style="color:var(--green);">€{{cents $r.Phase4MonthlyCents}}/mo</strong></div>
+        <div style="font-size:11px; color:var(--text3); margin-top:4px;">{{$d.T.Get "plan.phase4_just_new_loan"}}</div>
       </div>
       {{else}}
-      <div style="font-size:16px; font-weight:600; color:var(--green); margin-bottom:4px;">Fully paid!</div>
-      <div style="font-size:11px; color:var(--text3);">sale proceeds cleared the loan</div>
+      <div style="font-size:16px; font-weight:600; color:var(--green); margin-bottom:4px;">{{$d.T.Get "plan.phase4_fully_paid"}}</div>
+      <div style="font-size:11px; color:var(--text3);">{{$d.T.Get "plan.phase4_sale_cleared"}}</div>
       <div style="margin-top:10px; font-size:12px; color:var(--text2); background:var(--bg3); border-radius:var(--radius-sm); padding:8px 10px; text-align:left;">
-        <div style="color:var(--green); font-weight:600;">No remaining loan!</div>
-        <div>The sale covers everything.</div>
+        <div style="color:var(--green); font-weight:600;">{{$d.T.Get "plan.phase4_no_remaining"}}</div>
+        <div>{{$d.T.Get "plan.phase4_sale_covers"}}</div>
       </div>
       {{end}}
     </div>
@@ -228,8 +219,8 @@
 <!-- Monthly cost chart -->
 <div class="card animate-on-scroll" style="margin-bottom:20px;">
   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-    <h2>Monthly cost over time</h2>
-    <span style="font-size:11px; color:var(--text3);">what you pay each month</span>
+    <h2>{{$d.T.Get "plan.chart_title"}}</h2>
+    <span style="font-size:11px; color:var(--text3);">{{$d.T.Get "plan.chart_subtitle"}}</span>
   </div>
   <canvas id="cost-chart" height="160"></canvas>
 </div>
@@ -315,23 +306,23 @@
 
 <!-- Key levers -->
 <div class="card animate-on-scroll">
-  <h2 style="margin-bottom:14px;">Key levers</h2>
+  <h2 style="margin-bottom:14px;">{{$d.T.Get "plan.levers_title"}}</h2>
   <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; font-size:13px; color:var(--text2);">
     <div style="background:var(--bg3); border-radius:var(--radius-sm); padding:12px 14px;">
-      <div style="font-weight:600; color:var(--text1); margin-bottom:6px;">Save more monthly</div>
-      <div>Each extra €100/mo shortens Phase 1 and gets you acquiring sooner.</div>
+      <div style="font-weight:600; color:var(--text1); margin-bottom:6px;">{{$d.T.Get "plan.lever1_title"}}</div>
+      <div>{{$d.T.Get "plan.lever1_desc"}}</div>
     </div>
     <div style="background:var(--bg3); border-radius:var(--radius-sm); padding:12px 14px;">
-      <div style="font-weight:600; color:var(--text1); margin-bottom:6px;">Increase the down payment</div>
-      <div>A higher down % reduces the new loan and lowers the double-burden in Phase 2.</div>
+      <div style="font-weight:600; color:var(--text1); margin-bottom:6px;">{{$d.T.Get "plan.lever2_title"}}</div>
+      <div>{{$d.T.Get "plan.lever2_desc"}}</div>
     </div>
     <div style="background:var(--bg3); border-radius:var(--radius-sm); padding:12px 14px;">
-      <div style="font-weight:600; color:var(--text1); margin-bottom:6px;">Sell at a higher price</div>
-      <div>Every extra euro from the sale goes straight to reducing the new loan balance.</div>
+      <div style="font-weight:600; color:var(--text1); margin-bottom:6px;">{{$d.T.Get "plan.lever3_title"}}</div>
+      <div>{{$d.T.Get "plan.lever3_desc"}}</div>
     </div>
     <div style="background:var(--bg3); border-radius:var(--radius-sm); padding:12px 14px;">
-      <div style="font-weight:600; color:var(--text1); margin-bottom:6px;">Negotiate the rate</div>
-      <div>Even 0.5% less on the new loan saves thousands over the full term.</div>
+      <div style="font-weight:600; color:var(--text1); margin-bottom:6px;">{{$d.T.Get "plan.lever4_title"}}</div>
+      <div>{{$d.T.Get "plan.lever4_desc"}}</div>
     </div>
   </div>
 </div>
@@ -341,15 +332,13 @@
 <!-- Empty state -->
 <div class="card empty-state animate-on-scroll">
   <div style="font-size:48px; margin-bottom:16px;">🎯</div>
-  <h3>Plan your next big goal</h3>
+  <h3>{{$d.T.Get "plan.empty_title"}}</h3>
   <p style="margin-bottom:8px; max-width:480px; margin-left:auto; margin-right:auto;">
-    Model any transition where you hold an asset with a loan, want to acquire something new,
-    and plan to sell the old to fund it — including the double-payment period,
-    the sale, and the final payoff date.
+    {{$d.T.Get "plan.empty_desc"}}
   </p>
   {{if not $d.Properties}}
   <p style="font-size:13px; color:var(--text3); margin-top:12px;">
-    Tip: <a href="/property" style="color:var(--accent);">add your current asset and loan</a> first so the planner can pre-fill the numbers.
+    Tip: <a href="/property" style="color:var(--accent);">{{$d.T.Get "plan.scenario_desc"}}</a>
   </p>
   {{end}}
 </div>

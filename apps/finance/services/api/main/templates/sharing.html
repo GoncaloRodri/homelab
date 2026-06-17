@@ -1,27 +1,27 @@
 {{define "content"}}
 {{$d := .}}
-<h1 style="margin-bottom:24px;">Sharing</h1>
+<h1 style="margin-bottom:24px;">{{$d.T.Get "sharing.title"}}</h1>
 
 <div class="card animate-on-scroll">
-  <h2 style="margin-bottom:16px;">Grant Read Access</h2>
+  <h2 style="margin-bottom:16px;">{{$d.T.Get "sharing.grant_title"}}</h2>
   <form method="POST" class="flex flex-wrap" style="gap:10px; align-items:flex-end; position:relative;">
     <div class="form-group" style="margin-bottom:0; flex:1; min-width:220px; position:relative;">
-      <label>User Email</label>
+      <label>{{$d.T.Get "sharing.label_user_email"}}</label>
       <input type="text" name="viewer_id" id="viewerSearch"
-             placeholder="Search by email…" autocomplete="off" required>
+             placeholder="{{$d.T.Get "sharing.placeholder_email"}}" autocomplete="off" required>
       <div id="searchResults"></div>
     </div>
-    <button type="submit" class="btn btn-primary">Grant Access</button>
+    <button type="submit" class="btn btn-primary">{{$d.T.Get "sharing.btn_grant"}}</button>
   </form>
 </div>
 
 <div class="grid-2">
   <div class="card animate-on-scroll">
-    <h2 style="margin-bottom:14px;">People with access to my finances</h2>
+    <h2 style="margin-bottom:14px;">{{$d.T.Get "sharing.my_finances_title"}}</h2>
     <div class="table-wrap">
       <table>
         <thead>
-          <tr><th>User</th><th>Since</th><th></th></tr>
+          <tr><th>{{$d.T.Get "sharing.col_user"}}</th><th>{{$d.T.Get "sharing.col_since"}}</th><th></th></tr>
         </thead>
         <tbody>
           {{range $d.Grants}}
@@ -29,11 +29,11 @@
             <td style="font-size:13px;">{{.ViewerID}}</td>
             <td class="text-muted">{{.CreatedAt.Format "02 Jan 2006"}}</td>
             <td class="text-right">
-              <button class="btn btn-danger btn-sm" onclick="revoke('{{.ViewerID}}')">Revoke</button>
+              <button class="btn btn-danger btn-sm" onclick="revoke('{{.ViewerID}}')">{{$d.T.Get "sharing.btn_revoke"}}</button>
             </td>
           </tr>
           {{else}}
-          <tr><td colspan="3" class="text-center text-muted" style="padding:28px;">No access grants yet.</td></tr>
+          <tr><td colspan="3" class="text-center text-muted" style="padding:28px;">{{$d.T.Get "sharing.empty_my_grants"}}</td></tr>
           {{end}}
         </tbody>
       </table>
@@ -41,11 +41,11 @@
   </div>
 
   <div class="card animate-on-scroll">
-    <h2 style="margin-bottom:14px;">Access granted to me</h2>
+    <h2 style="margin-bottom:14px;">{{$d.T.Get "sharing.access_to_me_title"}}</h2>
     <div class="table-wrap">
       <table>
         <thead>
-          <tr><th>Owner</th><th>Since</th></tr>
+          <tr><th>{{$d.T.Get "sharing.col_owner"}}</th><th>{{$d.T.Get "sharing.col_since"}}</th></tr>
         </thead>
         <tbody>
           {{range $d.Granted}}
@@ -54,7 +54,7 @@
             <td class="text-muted">{{.CreatedAt.Format "02 Jan 2006"}}</td>
           </tr>
           {{else}}
-          <tr><td colspan="2" class="text-center text-muted" style="padding:28px;">No one has shared with you yet.</td></tr>
+          <tr><td colspan="2" class="text-center text-muted" style="padding:28px;">{{$d.T.Get "sharing.empty_access_to_me"}}</td></tr>
           {{end}}
         </tbody>
       </table>
@@ -87,6 +87,7 @@
 #searchResults div:hover { background: var(--bg3); }
 </style>
 <script>
+const CONFIRM_REVOKE = {{$d.T.Get "sharing.confirm_revoke" | printf "%q"}};
 let searchTimer;
 const input   = document.getElementById('viewerSearch');
 const results = document.getElementById('searchResults');
@@ -114,7 +115,7 @@ function selectUser(id, email) {
 }
 
 function revoke(viewerId) {
-  if (!confirm('Revoke access for this user?')) return;
+  if (!confirm(CONFIRM_REVOKE)) return;
   fetch('/sharing/' + encodeURIComponent(viewerId), {method: 'DELETE'})
     .then(() => location.reload());
 }

@@ -377,6 +377,11 @@ func NewHandler(store *Store, secret, googleID, googleSecret, baseURL string) *H
 	}
 }
 
+// t returns a Translator for the current request's preferred language.
+func (h *Handler) t(r *http.Request) *Translator {
+	return newT(detectLang(r))
+}
+
 // securityHeaders adds defence-in-depth HTTP headers to every response.
 func (h *Handler) securityHeaders(next http.Handler) http.Handler {
 	csp := strings.Join([]string{
@@ -435,6 +440,7 @@ func (h *Handler) ownerOrViewerMW(next http.HandlerFunc) http.HandlerFunc {
 			}
 		}
 		render(w, baseTmpl, map[string]interface{}{
+			"T":       h.t(r),
 			"UserID":  a.UserID,
 			"Email":   a.Email,
 			"Title":   "Access Denied",
@@ -463,7 +469,7 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 	txns, err := h.store.getTransactions(ctx, a.UserID, bson.M{})
 	if err != nil {
 		slog.Error("get transactions", "err", err)
-		render(w, dashboardTmpl, &DashboardData{UserID: a.UserID, Email: a.Email, Title: "Dashboard", Route: "dashboard", IsOwner: true})
+		render(w, dashboardTmpl, &DashboardData{T: h.t(r), UserID: a.UserID, Email: a.Email, Title: "Dashboard", Route: "dashboard", IsOwner: true})
 		return
 	}
 
@@ -819,6 +825,7 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render(w, dashboardTmpl, &DashboardData{
+		T:                       h.t(r),
 		UserID:                  a.UserID,
 		Email:                   a.Email,
 		Title:                   "Dashboard",
@@ -906,6 +913,7 @@ func (h *Handler) Transactions(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render(w, txnsTmpl, map[string]interface{}{
+		"T":              h.t(r),
 		"UserID":         a.UserID,
 		"Email":          a.Email,
 		"Title":          "Transactions",
@@ -970,6 +978,7 @@ func (h *Handler) ImportPage(w http.ResponseWriter, r *http.Request) {
 	a := h.getAuth(r)
 	accounts, _ := h.store.getAccounts(r.Context(), a.UserID)
 	render(w, importTmpl, map[string]interface{}{
+		"T":        h.t(r),
 		"UserID":   a.UserID,
 		"Email":    a.Email,
 		"Title":    "Import",
@@ -1024,6 +1033,7 @@ func (h *Handler) ImportPreview(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		accounts, _ := h.store.getAccounts(ctx, a.UserID)
 		render(w, importTmpl, map[string]interface{}{
+			"T":        h.t(r),
 			"UserID":   a.UserID,
 			"Email":    a.Email,
 			"Title":    "Import",
@@ -1086,6 +1096,7 @@ func (h *Handler) ImportPreview(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render(w, importTmpl, map[string]interface{}{
+		"T":               h.t(r),
 		"UserID":          a.UserID,
 		"Email":           a.Email,
 		"Title":           "Import",
@@ -1302,6 +1313,7 @@ func (h *Handler) Accounts(w http.ResponseWriter, r *http.Request) {
 			slog.Error("get accounts", "err", err)
 		}
 		render(w, accountsTmpl, map[string]interface{}{
+			"T":        h.t(r),
 			"UserID":   a.UserID,
 			"Email":    a.Email,
 			"Title":    "Accounts",
@@ -1351,6 +1363,7 @@ func (h *Handler) Categories(w http.ResponseWriter, r *http.Request) {
 			slog.Error("get categories", "err", err)
 		}
 		render(w, categoriesTmpl, map[string]interface{}{
+			"T":          h.t(r),
 			"UserID":     a.UserID,
 			"Email":      a.Email,
 			"Title":      "Categories",
@@ -1459,6 +1472,7 @@ func (h *Handler) Reports(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render(w, reportsTmpl, map[string]interface{}{
+		"T":              h.t(r),
 		"UserID":         a.UserID,
 		"Email":          a.Email,
 		"Title":          "Reports",
@@ -1559,6 +1573,7 @@ func (h *Handler) Projections(w http.ResponseWriter, r *http.Request) {
 	})
 
 	render(w, projectionsTmpl, map[string]interface{}{
+		"T":              h.t(r),
 		"UserID":        a.UserID,
 		"Email":         a.Email,
 		"Title":         "Projections",
@@ -1584,6 +1599,7 @@ func (h *Handler) Portfolio(w http.ResponseWriter, r *http.Request) {
 	isins := uniqueISINs(trades)
 	if len(isins) == 0 {
 		render(w, portfolioTmpl, &PortfolioData{
+			T:      h.t(r),
 			UserID: a.UserID,
 			Email:  a.Email,
 			Title:  "Portfolio",
@@ -1616,6 +1632,7 @@ func (h *Handler) Portfolio(w http.ResponseWriter, r *http.Request) {
 	pr := aggregatePortfolio(holdings)
 
 	render(w, portfolioTmpl, &PortfolioData{
+		T:               h.t(r),
 		UserID:          a.UserID,
 		Email:           a.Email,
 		Title:           "Portfolio",
@@ -1733,6 +1750,7 @@ func (h *Handler) Sharing(w http.ResponseWriter, r *http.Request) {
 		}
 
 		render(w, sharingTmpl, map[string]interface{}{
+			"T":       h.t(r),
 			"UserID":  a.UserID,
 			"Email":   a.Email,
 			"Title":   "Sharing",
@@ -1986,6 +2004,7 @@ func (h *Handler) Goals(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := &GoalsData{
+		T:                     h.t(r),
 		UserID:                a.UserID,
 		Email:                 a.Email,
 		Title:                 "Goals",
@@ -2182,6 +2201,7 @@ func (h *Handler) Simulator(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render(w, simulatorTmpl, &SimulatorData{
+		T:               h.t(r),
 		UserID:          a.UserID,
 		Email:           a.Email,
 		Title:           "What If",
@@ -2310,6 +2330,7 @@ func (h *Handler) NetWorth(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render(w, networthTmpl, &NetWorthData{
+		T:                        h.t(r),
 		UserID:                   a.UserID,
 		Email:                    a.Email,
 		Title:                    "Net Worth",
@@ -2491,6 +2512,7 @@ func (h *Handler) Tax(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render(w, taxTmpl, &TaxData{
+		T:                  h.t(r),
 		UserID:             auth.UserID,
 		Email:              auth.Email,
 		Title:              "Tax Summary",
@@ -2549,6 +2571,7 @@ func (h *Handler) Household(w http.ResponseWriter, r *http.Request) {
 	now := time.Now()
 
 	data := &HouseholdData{
+		T:      h.t(r),
 		UserID: auth.UserID,
 		Email:  auth.Email,
 		Title:  "Household",
@@ -2644,6 +2667,7 @@ func (h *Handler) AutoImport(w http.ResponseWriter, r *http.Request) {
 	auth := h.getAuth(r)
 	accounts, _ := h.store.getAccounts(r.Context(), auth.UserID)
 	render(w, autoImportTmpl, &AutoImportData{
+		T:        h.t(r),
 		UserID:   auth.UserID,
 		Email:    auth.Email,
 		Title:    "Import Guide",
@@ -2715,6 +2739,7 @@ func (h *Handler) People(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := &PeopleData{
+		T:      h.t(r),
 		UserID: a.UserID,
 		Email:  a.Email,
 		Title:  "People",
@@ -2795,6 +2820,7 @@ func (h *Handler) Settings(w http.ResponseWriter, r *http.Request) {
 	categories, _ := h.store.getCategories(ctx, a.UserID)
 
 	render(w, settingsTmpl, &SettingsData{
+		T:          h.t(r),
 		UserID:     a.UserID,
 		Email:      a.Email,
 		Title:      "Settings",
@@ -2803,6 +2829,18 @@ func (h *Handler) Settings(w http.ResponseWriter, r *http.Request) {
 		Accounts:   accounts,
 		Categories: categories,
 	})
+}
+
+func (h *Handler) SetLang(w http.ResponseWriter, r *http.Request) {
+	lang := r.FormValue("lang")
+	if supportedLangs[lang] {
+		setLangCookie(w, lang, h.isSecure())
+	}
+	back := r.Header.Get("Referer")
+	if back == "" {
+		back = "/dashboard"
+	}
+	http.Redirect(w, r, back, http.StatusSeeOther)
 }
 
 func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
@@ -2864,6 +2902,7 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /property", h.Properties)
 	mux.HandleFunc("POST /property", h.Properties)
 	mux.HandleFunc("GET /plan", h.Dream)
+	mux.HandleFunc("POST /lang", h.SetLang)
 
 	h.RegisterOrgRoutes(mux)
 }

@@ -2,7 +2,7 @@
 {{$d := .}}
 
 <div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:8px;">
-  <h1>Dashboard</h1>
+  <h1>{{$d.T.Get "dashboard.title"}}</h1>
   <span class="text-muted">{{if $d.Email}}{{$d.Email}}{{end}}</span>
 </div>
 
@@ -23,9 +23,9 @@
 <!-- HERO: available to spend -->
 <div class="card animate-on-scroll" style="margin-bottom:16px; padding:24px 28px;">
   <div style="font-size:12px; color:var(--text2); text-transform:uppercase; letter-spacing:.5px; margin-bottom:10px; display:flex; align-items:center; gap:8px;">
-    Available to spend this month
+    {{$d.T.Get "dashboard.available_to_spend"}}
     <span style="font-size:11px; background:var(--bg3); color:var(--text3); padding:2px 8px; border-radius:99px; font-weight:400; text-transform:none; letter-spacing:0;">
-      income − fixed costs − spent so far
+      {{$d.T.Get "dashboard.available_formula"}}
     </span>
   </div>
 
@@ -34,7 +34,7 @@
          style="font-size:42px; font-weight:500; letter-spacing:-1.5px; line-height:1;"
          data-target="{{$d.AvailableToSpend}}" data-prefix="€">€0.00</div>
     <div style="font-size:13px; color:var(--text2);">
-      of <span style="color:var(--text); font-weight:500;" class="animate-counter" data-target="{{$d.DisposableIncome}}" data-prefix="€">€0.00</span> disposable
+      of <span style="color:var(--text); font-weight:500;" class="animate-counter" data-target="{{$d.DisposableIncome}}" data-prefix="€">€0.00</span> {{$d.T.Get "dashboard.disposable_label"}}
       &nbsp;·&nbsp; <span style="color:var(--text2);">{{$d.MonthSpentPct}}% used</span>
     </div>
   </div>
@@ -54,30 +54,30 @@
 <div class="grid" style="margin-bottom:16px;">
 
   <div class="card value-card animate-on-scroll">
-    <h2>Bank balance should be</h2>
+    <h2>{{$d.T.Get "dashboard.cards.bank_should_be"}}</h2>
     <div class="value animate-counter" data-target="{{$d.BankShouldBe}}" data-prefix="€" style="color:var(--text);">€0.00</div>
-    <p style="font-size:12px; color:var(--text3); margin-top:6px;">upcoming fixed + safety buffer</p>
+    <p style="font-size:12px; color:var(--text3); margin-top:6px;">{{$d.T.Get "dashboard.cards.bank_should_be_sub"}}</p>
   </div>
 
   <div class="card value-card animate-on-scroll">
-    <h2>Savings rate</h2>
+    <h2>{{$d.T.Get "dashboard.cards.savings_rate"}}</h2>
     <div class="value {{if gt $d.SavingsRatePct 0}}positive{{else}}negative{{end}}">{{$d.SavingsRatePct}}%</div>
     {{if $d.LastMonthSavingsRatePct}}
     <p style="font-size:12px; margin-top:6px; {{if gt $d.SavingsRatePct $d.LastMonthSavingsRatePct}}color:var(--green){{else}}color:var(--red){{end}};">
-      {{if gt $d.SavingsRatePct $d.LastMonthSavingsRatePct}}↑{{else}}↓{{end}} vs last month ({{$d.LastMonthSavingsRatePct}}%)
+      {{if gt $d.SavingsRatePct $d.LastMonthSavingsRatePct}}↑{{else}}↓{{end}} {{$d.T.Get "dashboard.alerts.vs_last_month_up"}} ({{$d.LastMonthSavingsRatePct}}%)
     </p>
     {{end}}
   </div>
 
   <div class="card value-card animate-on-scroll">
-    <h2>Net worth</h2>
+    <h2>{{$d.T.Get "dashboard.cards.net_worth"}}</h2>
     <div class="value animate-counter {{if lt $d.NetWorthCents 0}}negative{{else}}positive{{end}}"
          data-target="{{$d.NetWorthCents}}" data-prefix="€">€0.00</div>
-    <p style="font-size:12px; color:var(--text3); margin-top:6px;"><a href="/networth" style="color:var(--accent);">→ full breakdown</a></p>
+    <p style="font-size:12px; color:var(--text3); margin-top:6px;"><a href="/networth" style="color:var(--accent);">{{$d.T.Get "dashboard.cards.net_worth_link"}}</a></p>
   </div>
 
   <div class="card value-card animate-on-scroll">
-    <h2>Portfolio today</h2>
+    <h2>{{$d.T.Get "dashboard.cards.portfolio_today"}}</h2>
     {{if $d.PortfolioHoldings}}
     <div class="value animate-counter" data-target="{{$d.PortfolioValueCents}}" data-prefix="€" style="color:var(--text);">€0.00</div>
     {{if $d.PortfolioPricesAvailable}}
@@ -85,11 +85,11 @@
       {{if ge $d.PortfolioPCLCents 0}}+{{else}}−{{end}}€{{cents (centsAbs $d.PortfolioPCLCents)}} total P&L
     </p>
     {{else}}
-    <p style="font-size:12px; color:var(--text3); margin-top:6px;">cost basis · prices unavailable</p>
+    <p style="font-size:12px; color:var(--text3); margin-top:6px;">{{$d.T.Get "dashboard.cards.portfolio_cost_basis"}}</p>
     {{end}}
     {{else}}
-    <div class="value" style="color:var(--text3); font-size:18px;">No trades yet</div>
-    <p style="font-size:12px; color:var(--text3); margin-top:6px;"><a href="/import" style="color:var(--accent);">Import trades →</a></p>
+    <div class="value" style="color:var(--text3); font-size:18px;">{{$d.T.Get "dashboard.cards.portfolio_no_trades"}}</div>
+    <p style="font-size:12px; color:var(--text3); margin-top:6px;"><a href="/import" style="color:var(--accent);">{{$d.T.Get "dashboard.cards.portfolio_import_link"}}</a></p>
     {{end}}
   </div>
 
@@ -100,8 +100,8 @@
 
   <div class="card animate-on-scroll">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-      <h2>What should be in your bank</h2>
-      <span style="font-size:11px; color:var(--text3);">right now</span>
+      <h2>{{$d.T.Get "dashboard.bank_math.section_title"}}</h2>
+      <span style="font-size:11px; color:var(--text3);">{{$d.T.Get "dashboard.bank_math.section_subtitle"}}</span>
     </div>
     {{if $d.RecurringExpenses}}
     <div style="display:flex; flex-direction:column;">
@@ -117,27 +117,27 @@
       {{end}}
       {{if $d.SafetyBufferCents}}
       <div style="display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid var(--border);">
-        <span style="font-size:13px; color:var(--text2);">Safety buffer (2 weeks)</span>
+        <span style="font-size:13px; color:var(--text2);">{{$d.T.Get "dashboard.bank_math.safety_buffer"}}</span>
         <span style="font-size:13px; font-weight:500; color:var(--red);">− €{{cents $d.SafetyBufferCents}}</span>
       </div>
       {{end}}
       <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 0 0 0;">
-        <span style="font-size:13px; font-weight:500; color:var(--text);">Minimum recommended</span>
+        <span style="font-size:13px; font-weight:500; color:var(--text);">{{$d.T.Get "dashboard.bank_math.minimum_recommended"}}</span>
         <span class="animate-counter positive" style="font-size:16px; font-weight:600;"
               data-target="{{$d.BankShouldBe}}" data-prefix="€">€0.00</span>
       </div>
     </div>
     {{else}}
     <div class="empty-state" style="padding:24px;">
-      <p>No recurring expenses detected yet.<br>Import a few months of transactions.</p>
+      <p>{{$d.T.Get "dashboard.bank_math.no_recurring_msg"}}<br>{{$d.T.Get "dashboard.bank_math.no_recurring_sub"}}</p>
     </div>
     {{end}}
   </div>
 
   <div class="card animate-on-scroll">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-      <h2>Stocks at a glance</h2>
-      <a href="/portfolio" style="font-size:12px; color:var(--text3);">→ portfolio</a>
+      <h2>{{$d.T.Get "dashboard.stocks.section_title"}}</h2>
+      <a href="/portfolio" style="font-size:12px; color:var(--text3);">{{$d.T.Get "dashboard.stocks.portfolio_link"}}</a>
     </div>
     {{if $d.PortfolioHoldings}}
     <div style="display:flex; flex-direction:column;">
@@ -145,7 +145,7 @@
       <div style="display:flex; align-items:center; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--border);">
         <div>
           <div style="font-size:13px; font-weight:600; color:var(--text);">{{.Name}}</div>
-          <div style="font-size:11px; color:var(--text3);">{{printf "%.4f" .SharesOwned}} shares</div>
+          <div style="font-size:11px; color:var(--text3);">{{printf "%.4f" .SharesOwned}} {{$d.T.Get "dashboard.stocks.shares_label"}}</div>
         </div>
         <div style="text-align:right;">
           {{if $d.PortfolioPricesAvailable}}
@@ -155,20 +155,20 @@
           </div>
           {{else}}
           <div style="font-size:13px; font-weight:500; color:var(--text);">€{{cents .TotalCostCents}}</div>
-          <div style="font-size:11px; color:var(--text3);">cost basis</div>
+          <div style="font-size:11px; color:var(--text3);">{{$d.T.Get "dashboard.stocks.cost_basis"}}</div>
           {{end}}
         </div>
       </div>
       {{end}}
       <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 0 0 0;">
-        <span style="font-size:13px; font-weight:500; color:var(--text);">Total{{if not $d.PortfolioPricesAvailable}} invested{{end}}</span>
+        <span style="font-size:13px; font-weight:500; color:var(--text);">{{$d.T.Get "dashboard.stocks.total_label"}}{{if not $d.PortfolioPricesAvailable}} {{$d.T.Get "dashboard.stocks.total_invested"}}{{end}}</span>
         <span class="animate-counter" style="font-size:15px; font-weight:600; color:var(--text);"
               data-target="{{$d.PortfolioValueCents}}" data-prefix="€">€0.00</span>
       </div>
     </div>
     {{else}}
     <div class="empty-state" style="padding:24px;">
-      <p>No holdings yet.<br><a href="/import" style="color:var(--accent);">Import trades →</a></p>
+      <p>{{$d.T.Get "dashboard.stocks.no_holdings_msg"}}<br><a href="/import" style="color:var(--accent);">{{$d.T.Get "dashboard.stocks.import_link"}}</a></p>
     </div>
     {{end}}
   </div>
@@ -181,8 +181,8 @@
   {{if $d.CategoryBudgets}}
   <div class="card animate-on-scroll">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-      <h2>Budget health</h2>
-      <a href="/categories" style="font-size:12px; color:var(--text3);">→ categories</a>
+      <h2>{{$d.T.Get "dashboard.budget_health.section_title"}}</h2>
+      <a href="/categories" style="font-size:12px; color:var(--text3);">{{$d.T.Get "dashboard.budget_health.categories_link"}}</a>
     </div>
     <div style="display:flex; flex-direction:column; gap:10px;">
       {{range $cat, $budget := $d.CategoryBudgets}}
@@ -214,8 +214,8 @@
 
   <div class="card animate-on-scroll">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-      <h2>Recent activity</h2>
-      <a href="/transactions" style="font-size:12px; color:var(--text3);">→ all transactions</a>
+      <h2>{{$d.T.Get "dashboard.recent.section_title"}}</h2>
+      <a href="/transactions" style="font-size:12px; color:var(--text3);">{{$d.T.Get "dashboard.recent.all_txns_link"}}</a>
     </div>
     {{if $d.RecentTxns}}
     <div style="display:flex; flex-direction:column;">
@@ -239,7 +239,7 @@
     </div>
     {{else}}
     <div class="empty-state" style="padding:24px;">
-      No transactions yet. <a href="/import" style="color:var(--accent);">Import some!</a>
+      {{$d.T.Get "dashboard.recent.no_txns_msg"}} <a href="/import" style="color:var(--accent);">{{$d.T.Get "dashboard.recent.import_link"}}</a>
     </div>
     {{end}}
   </div>
@@ -249,8 +249,8 @@
 {{if $d.DashGoals}}
 <div class="card animate-on-scroll" style="margin-top:16px;">
   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-    <h2>Committed goals</h2>
-    <a href="/goals" style="font-size:12px; color:var(--text3);">→ all goals</a>
+    <h2>{{$d.T.Get "dashboard.goals.section_title"}}</h2>
+    <a href="/goals" style="font-size:12px; color:var(--text3);">{{$d.T.Get "dashboard.goals.all_goals_link"}}</a>
   </div>
   <div style="display:flex; flex-direction:column; gap:14px;">
     {{range $d.DashGoals}}
@@ -261,7 +261,7 @@
           <span style="font-size:13px; font-weight:500; color:var(--text);">{{.Name}}</span>
         </div>
         <div style="display:flex; align-items:center; gap:12px;">
-          <span style="font-size:12px; color:var(--text3);">{{.MonthsLeft}}mo left</span>
+          <span style="font-size:12px; color:var(--text3);">{{.MonthsLeft}}{{$d.T.Get "dashboard.goals.months_left"}}</span>
           <span style="font-size:12px; font-weight:600; color:{{if .Feasible}}var(--green){{else}}var(--red){{end}};">{{.ProgressPct}}%</span>
         </div>
       </div>
@@ -272,7 +272,7 @@
       </div>
       <div style="display:flex; justify-content:space-between; margin-top:4px; font-size:11px; color:var(--text3);">
         <span>€{{cents .SavedCents}} of €{{cents .TargetCents}}</span>
-        <span style="color:{{if .Feasible}}var(--green){{else}}var(--red){{end}};">€{{cents .MonthlyCents}}/mo needed</span>
+        <span style="color:{{if .Feasible}}var(--green){{else}}var(--red){{end}};">€{{cents .MonthlyCents}}{{$d.T.Get "dashboard.goals.per_month_needed"}}</span>
       </div>
     </div>
     {{end}}
@@ -283,8 +283,8 @@
 {{if $d.RecurringExpenses}}
 <div class="card animate-on-scroll" style="margin-top:16px;">
   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-    <h2>Fixed costs</h2>
-    <span style="font-size:11px; color:var(--text3);">auto-detected · 3-month average</span>
+    <h2>{{$d.T.Get "dashboard.fixed_costs.section_title"}}</h2>
+    <span style="font-size:11px; color:var(--text3);">{{$d.T.Get "dashboard.fixed_costs.auto_detected"}}</span>
   </div>
   <div style="display:flex; flex-direction:column;">
     {{range $d.RecurringExpenses}}
@@ -298,17 +298,17 @@
         {{end}}
         <div>
           <div style="font-size:13px; font-weight:500; color:var(--text);">{{.Category}}</div>
-          <div style="font-size:11px; color:var(--text3);">{{if .IsGoal}}committed goal{{else}}recurring expense{{end}}</div>
+          <div style="font-size:11px; color:var(--text3);">{{if .IsGoal}}{{$d.T.Get "dashboard.fixed_costs.committed_goal"}}{{else}}{{$d.T.Get "dashboard.fixed_costs.recurring_expense"}}{{end}}</div>
         </div>
       </div>
       <div style="text-align:right;">
         <div style="font-size:14px; font-weight:600; color:var(--red);">− €{{cents .MonthlyCents}}</div>
-        <div style="font-size:11px; color:var(--text3);">/ month</div>
+        <div style="font-size:11px; color:var(--text3);">{{$d.T.Get "dashboard.fixed_costs.per_month"}}</div>
       </div>
     </div>
     {{end}}
     <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 0 0 0;">
-      <span style="font-size:13px; font-weight:500; color:var(--text);">Total committed</span>
+      <span style="font-size:13px; font-weight:500; color:var(--text);">{{$d.T.Get "dashboard.fixed_costs.total_committed"}}</span>
       <span class="animate-counter" style="font-size:15px; font-weight:600; color:var(--red);"
             data-target="{{$d.TotalCommittedCents}}" data-prefix="€">€0</span>
     </div>

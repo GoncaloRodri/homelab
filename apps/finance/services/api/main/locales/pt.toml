@@ -1,0 +1,1016 @@
+# ── Navegação ────────────────────────────────────────────────────────────────
+
+[nav]
+brand          = "Pessoal"
+dashboard      = "Painel"
+transactions   = "Transações"
+portfolio      = "Carteira"
+goals          = "Objetivos"
+property       = "Imóveis"
+people         = "Pessoas"
+analysis       = "Análise"
+settings       = "Definições"
+business       = "🏢 Empresa"
+hub_back       = "← Hub"
+
+[nav.analysis]
+reports        = "Relatórios"
+projections    = "Projeções"
+tax            = "Impostos"
+networth       = "Património"
+simulator      = "E Se…"
+
+[nav.settings]
+accounts_categories = "Contas & Categorias"
+import_csv     = "Importar CSV"
+import_guide   = "Guia de Importação"
+
+[nav.drawer]
+analysis_label = "Análise"
+settings_label = "Definições"
+
+[nav.theme]
+toggle_title   = "Alternar modo escuro/claro"
+menu_aria      = "Menu"
+
+# ── Página inicial ────────────────────────────────────────────────────────────
+
+[homepage]
+title           = "Finance Hub — Finanças Pessoais & Empresariais"
+brand           = "Finance Hub"
+footer_tagline  = "Homelab auto-hospedado"
+
+[homepage.nav]
+signin          = "Entrar"
+personal        = "Pessoal"
+business        = "Empresa"
+
+[homepage.hero]
+eyebrow         = "Auto-hospedado · Privado · Aberto"
+title_line1     = "Património pessoal."
+title_line2     = "Finanças empresariais."
+subtitle        = "Uma plataforma auto-hospedada para acompanhar o seu património pessoal e gerir o orçamento da sua organização — sem partilhar os seus dados com ninguém."
+cta_get_started = "Começar"
+cta_see_inside  = "Ver o que inclui"
+cta_open_personal = "Abrir pessoal"
+cta_open_business = "Abrir empresa"
+
+[homepage.trust]
+data_privacy    = "Os seus dados, o seu servidor"
+multi_bank      = "Importação CSV multibanco"
+dark_light      = "Modo escuro & claro"
+role_access     = "Acesso por função"
+analytics       = "Análise em tempo real"
+
+[homepage.products.personal]
+badge           = "Pessoal"
+name            = "As Minhas Finanças"
+desc            = "Visibilidade total sobre o seu património pessoal — gastos, investimentos, objetivos e valor líquido num só lugar."
+feature_1       = "Painel de gastos & tendências mensais"
+feature_2       = "Transações com orçamentos por categoria"
+feature_3       = "Acompanhamento de carteira de investimentos"
+feature_4       = "Objetivos financeiros com progresso"
+feature_5       = "Património líquido & projeções hipotéticas"
+feature_6       = "Exportação de relatório fiscal"
+feature_7       = "Partilha familiar & vista multiutilizador"
+cta_open        = "Abrir aplicação"
+cta_signin      = "Entrar"
+
+[homepage.products.business]
+badge           = "Empresa"
+name            = "Organizações"
+desc            = "Gerencie organizações, planeie anos fiscais, controle orçamentos de eventos e mantenha as equipas alinhadas financeiramente."
+feature_1       = "Multi-org com ciclo de vida do ano fiscal"
+feature_2       = "Equipas com avatares emoji & funções"
+feature_3       = "Eventos com linhas de orçamento & objetivos"
+feature_4       = "Pedidos de compra & fluxo de aprovação"
+feature_5       = "Razão & importação de CSV bancário"
+feature_6       = "Análise de variância por evento & equipa"
+feature_7       = "Relatório narrativo de fim de ano"
+cta_open        = "Abrir orgs"
+cta_signin      = "Entrar"
+
+[homepage.features.personal]
+section_label   = "Finanças Pessoais"
+section_title   = "Visibilidade total sobre o seu património"
+section_sub     = "Do café diário à carteira de longo prazo — tudo num painel, atualizado à medida que importa."
+chip1_title     = "Painel inteligente"
+chip1_desc      = "Rendimento vs gastos mensais, principais categorias, transações recentes e saúde do orçamento de relance."
+chip2_title     = "Acompanhamento de carteira"
+chip2_desc      = "Importe negociações, acompanhe tickers mapeados por ISIN, veja P&L e alocação por classe de ativo."
+chip3_title     = "Objetivos & projeções"
+chip3_desc      = "Defina objetivos de poupança, modele cenários e veja o seu património líquido projetado ao longo do tempo."
+
+[homepage.features.business]
+section_label   = "Finanças Empresariais"
+section_title   = "Controlo orçamental para a sua org"
+section_sub     = "Do início do ano fiscal ao relatório final — com rastreabilidade total de cada euro gasto."
+chip1_title     = "Ciclo de vida do ano fiscal"
+chip1_desc      = "Planeie eventos e orçamentos por ano. Ative, bloqueie e feche com um relatório de fim de ano."
+chip2_title     = "Fluxo de pedido & aprovação"
+chip2_desc      = "As equipas submetem pedidos de compra. As finanças aprovam, acompanham a entrega e liquidam no razão."
+chip3_title     = "Análise de variância"
+chip3_desc      = "Compare planeado vs real por evento e por equipa. Identifique excesso de gastos antes do fecho do ano."
+
+[homepage.signin_block]
+title           = "Pronto para começar?"
+body            = "O Finance Hub é auto-hospedado no seu homelab. Inicie sessão com a sua conta para aceder aos seus painéis pessoal e empresarial."
+cta             = "Entrar no Finance Hub"
+
+[homepage.mock]
+net_income_label  = "Rendimento líquido"
+net_income_value  = "+€2.840"
+net_income_sub    = "vs mês anterior +12%"
+net_worth_label   = "Património líquido"
+net_worth_sub     = "↑ €1.240 este mês"
+budget_health     = "Saúde do orçamento"
+groceries         = "Supermercado"
+dining_out        = "Restaurantes"
+transport         = "Transportes"
+entertainment     = "Entretenimento"
+events_label      = "Eventos — Festival de Verão 2025"
+budget_label      = "Orçamento"
+active_year       = "Ano ativo"
+requests_label    = "Pedidos"
+sound_equipment   = "Aluguer de equipamento de som"
+catering_deposit  = "Depósito de catering"
+stage_lighting    = "Iluminação de palco"
+approved          = "Aprovado"
+pending           = "Pendente"
+in_transit        = "Em trânsito"
+
+# ── Autenticação ──────────────────────────────────────────────────────────────
+
+[auth.login]
+page_title      = "Entrar — Finance Hub"
+brand           = "Finance Hub"
+heading         = "Bem-vindo de volta"
+subtext         = "Inicie sessão na sua conta. Sem conta?"
+subtext_link    = "Criar uma →"
+field_email     = "E-mail"
+placeholder_email = "voce@exemplo.com"
+field_password  = "Palavra-passe"
+placeholder_password = "••••••••"
+btn_submit      = "Entrar →"
+divider         = "ou"
+btn_google      = "Continuar com o Google"
+footer_back     = "← Voltar ao início"
+error_oauth     = "Falha ao iniciar sessão com o Google. Por favor, tente novamente."
+
+[auth.register]
+page_title      = "Criar conta — Finance Hub"
+brand           = "Finance Hub"
+heading         = "Criar a sua conta"
+subtext         = "Já tem conta?"
+subtext_link    = "Entrar →"
+field_name      = "Nome"
+name_optional   = "(opcional)"
+placeholder_name = "O seu nome"
+field_email     = "E-mail"
+placeholder_email = "voce@exemplo.com"
+field_password  = "Palavra-passe"
+placeholder_password = "••••••••"
+hint_password   = "Mínimo de 8 caracteres"
+field_confirm   = "Confirmar palavra-passe"
+placeholder_confirm = "••••••••"
+btn_submit      = "Criar conta →"
+divider_oauth   = "ou registar com e-mail"
+btn_google      = "Continuar com o Google"
+footer_back     = "← Voltar ao início"
+
+# ── Painel ────────────────────────────────────────────────────────────────────
+
+[dashboard]
+title                   = "Painel"
+available_to_spend      = "Disponível para gastar este mês"
+available_formula       = "rendimento − custos fixos − já gasto"
+disposable_label        = "disponível"
+month_progress          = "Progresso do mês: {{pct}}%"
+month_spent             = "Gasto: {{pct}}%"
+
+[dashboard.cards]
+bank_should_be          = "Saldo bancário recomendado"
+bank_should_be_sub      = "próximos fixos + margem de segurança"
+savings_rate            = "Taxa de poupança"
+net_worth               = "Património líquido"
+net_worth_link          = "→ detalhe completo"
+portfolio_today         = "Carteira hoje"
+portfolio_cost_basis    = "custo de aquisição · preços indisponíveis"
+portfolio_no_trades     = "Sem negociações"
+portfolio_import_link   = "Importar negociações →"
+
+[dashboard.bank_math]
+section_title           = "O que deve ter no banco"
+section_subtitle        = "agora mesmo"
+safety_buffer           = "Margem de segurança (2 semanas)"
+minimum_recommended     = "Mínimo recomendado"
+no_recurring_msg        = "Nenhuma despesa recorrente detetada ainda."
+no_recurring_sub        = "Importe alguns meses de transações."
+
+[dashboard.stocks]
+section_title           = "Carteira em resumo"
+portfolio_link          = "→ carteira"
+shares_label            = "ações"
+cost_basis              = "custo de aquisição"
+total_label             = "Total"
+total_invested          = "Total investido"
+no_holdings_msg         = "Sem posições ainda."
+import_link             = "Importar negociações →"
+
+[dashboard.budget_health]
+section_title           = "Saúde do orçamento"
+categories_link         = "→ categorias"
+
+[dashboard.recent]
+section_title           = "Atividade recente"
+all_txns_link           = "→ todas as transações"
+no_txns_msg             = "Sem transações ainda."
+import_link             = "Importar algumas!"
+
+[dashboard.goals]
+section_title           = "Objetivos comprometidos"
+all_goals_link          = "→ todos os objetivos"
+months_left             = "meses restantes"
+per_month_needed        = "/mês necessários"
+
+[dashboard.fixed_costs]
+section_title           = "Custos fixos"
+auto_detected           = "detetado automaticamente · média de 3 meses"
+committed_goal          = "objetivo comprometido"
+recurring_expense       = "despesa recorrente"
+per_month               = "/ mês"
+total_committed         = "Total comprometido"
+
+[dashboard.alerts]
+vs_last_month_up        = "↑ vs mês anterior"
+vs_last_month_down      = "↓ vs mês anterior"
+
+# ── Transações ────────────────────────────────────────────────────────────────
+
+[transactions]
+title               = "Transações"
+btn_add             = "+ Adicionar Transação"
+warning_all_dupes   = "Todas as linhas desse ficheiro já foram importadas — nada foi adicionado."
+
+[transactions.filter]
+label_category      = "Categoria"
+option_all_cats     = "Todas as Categorias"
+label_period        = "Período"
+option_all_time     = "Todo o tempo"
+option_30_days      = "30 dias"
+option_90_days      = "90 dias"
+option_1_year       = "1 ano"
+label_search        = "Pesquisar"
+placeholder_search  = "Descrição…"
+btn_filter          = "Filtrar"
+btn_clear           = "Limpar"
+
+[transactions.table]
+col_date            = "Data"
+col_description     = "Descrição"
+col_account         = "Conta"
+col_category        = "Categoria"
+col_amount          = "Valor"
+btn_edit_category   = "Editar categoria"
+btn_delete          = "Eliminar"
+empty_msg           = "Nenhuma transação encontrada."
+empty_import_link   = "Importar algumas"
+empty_add_btn       = "adicionar manualmente"
+
+[transactions.modal_add]
+title               = "Adicionar Transação"
+label_date          = "Data"
+label_description   = "Descrição"
+placeholder_desc    = "ex: Café no Starbucks"
+label_amount        = "Valor (€)"
+option_expense      = "− Despesa"
+option_income       = "+ Rendimento"
+placeholder_amount  = "0,00"
+label_category      = "Categoria"
+label_account       = "Conta"
+option_no_account   = "— nenhuma —"
+btn_cancel          = "Cancelar"
+btn_save            = "Guardar Transação"
+error_required      = "Por favor, preencha a data, a descrição e um valor positivo."
+error_save_failed   = "Falha ao guardar."
+
+[transactions.confirm]
+delete_msg          = "Eliminar esta transação?"
+
+# ── Carteira ──────────────────────────────────────────────────────────────────
+
+[portfolio]
+title               = "Carteira"
+missing_prices_warn = "Preço em tempo real indisponível para {{n}} posição{{s}} — adicione um ticker do Yahoo Finance para corrigir"
+lookup_link         = "Pesquisar ↗"
+btn_save_ticker     = "Guardar"
+ticker_placeholder  = "ex: QDVE.DE"
+
+[portfolio.cards]
+total_value         = "Valor Total"
+total_cost          = "Custo Total"
+unrealized_pl       = "P&L Não Realizado"
+
+[portfolio.allocation]
+section_title       = "Alocação"
+
+[portfolio.holdings]
+section_title       = "Posições"
+col_asset           = "Ativo"
+col_shares          = "Ações"
+col_avg_cost        = "Custo Médio"
+col_price           = "Preço"
+col_value           = "Valor"
+col_pl              = "P&L"
+add_trades_via      = "Adicionar negociações via"
+btn_import          = "Importar CSV"
+
+[portfolio.empty]
+title               = "Sem negociações"
+desc                = "Importe o seu CSV de valores mobiliários do Trade Republic para ver a sua carteira."
+btn_import          = "Importar Negociações"
+
+# ── Objetivos ─────────────────────────────────────────────────────────────────
+
+[goals]
+title                   = "Objetivos"
+tab_committed           = "Objetivos comprometidos"
+tab_planner             = "Planeador de Objetivos"
+
+[goals.summary_cards]
+avg_monthly_savings     = "Poupança mensal média"
+last_3_months           = "últimos 3 meses"
+disposable_income       = "Rendimento disponível"
+before_goals            = "antes dos objetivos"
+reserved_for_goals      = "Reservado para objetivos"
+per_month               = "por mês"
+free_to_spend           = "Livre para gastar"
+after_goals             = "após objetivos"
+
+[goals.goal_card]
+type_once               = "Compra pontual"
+type_deposit            = "Entrada / sinal"
+type_emergency          = "Fundo de emergência"
+type_recurring          = "Investimento recorrente"
+saved_of                = "poupado de"
+need_per_month          = "Necessário por mês"
+months_left             = "Meses restantes"
+at_current_rate         = "À taxa atual"
+disposable_after        = "Disponível depois"
+on_track                = "✓ No bom caminho — a sua taxa de poupança atual cobre €{{monthly}}/mês com {{months}} meses restantes."
+behind_warn             = "⚠ À sua taxa atual (€{{rate}}/mês) chegaria lá em {{actual}} meses — {{diff}} meses de atraso."
+btn_adjust_deadline     = "Ajustar prazo →"
+btn_committed           = "✓ Comprometido — clique para cancelar compromisso"
+btn_commit              = "Comprometer com este objetivo"
+btn_remove              = "Remover"
+confirm_remove          = "Remover este objetivo?"
+
+[goals.empty]
+title                   = "Sem objetivos ainda"
+desc                    = "Use o separador Planeador de Objetivos para simular um objetivo e guardá-lo aqui."
+btn_open_planner        = "Abrir Planeador de Objetivos →"
+
+[goals.planner]
+what_kind               = "Que tipo de objetivo?"
+purchase_title          = "Poupar para uma compra"
+purchase_desc           = "Carro, viagem, gadget, fundo — poupar até um valor-alvo até uma data."
+transition_title        = "Vender & atualizar"
+transition_desc         = "Ter um ativo com empréstimo, adquirir algo novo e vender o antigo para financiar."
+
+[goals.planner.purchase]
+form_title              = "O seu objetivo de compra"
+label_name              = "Nome do objetivo"
+placeholder_name        = "ex: Carro novo, Viagem à Europa, Fundo de emergência…"
+label_target            = "Valor-alvo (€)"
+placeholder_target      = "ex: 12000"
+label_monthly_savings   = "Poupança mensal (€)"
+placeholder_monthly     = "ex: 400"
+label_deadline          = "Data-alvo (opcional — deixe em branco para ver quando chegará lá)"
+btn_calculate           = "Calcular →"
+
+[goals.planner.purchase_result]
+card_at_rate            = "À sua taxa de poupança"
+card_monthly_needed     = "Necessário por mês"
+card_target             = "Valor-alvo"
+your_goal_amount        = "o valor do seu objetivo"
+to_hit_deadline         = "para atingir {{date}}"
+set_target_date         = "defina uma data-alvo acima"
+enter_monthly           = "introduza poupança mensal"
+reach_label             = "chega em {{date}}"
+on_track                = "✓ No bom caminho — €{{monthly}}/mês cobre o necessário €{{needed}}/mês."
+behind_warn             = "⚠ Precisa de €{{needed}}/mês para cumprir o prazo, mas está a poupar €{{monthly}}/mês. À taxa atual chegará lá em {{months}} meses ({{date}})."
+save_as_goal_title      = "Guardar como objetivo"
+save_as_goal_desc       = "Adiciona ao separador Objetivos para poder comprometer-se."
+label_goal_name         = "Nome do objetivo"
+placeholder_goal_name   = "ex: Carro novo"
+btn_save_goal           = "Guardar objetivo →"
+
+[goals.planner.transition]
+form_title              = "O seu cenário de transição"
+label_current_asset     = "Ativo atual (opcional)"
+option_none_asset       = "— nenhum selecionado —"
+label_current_loan      = "Empréstimo atual (opcional)"
+option_none_loan        = "— nenhum selecionado —"
+label_dream_cost        = "Custo do novo objetivo (€)"
+placeholder_dream_cost  = "ex: 350000"
+label_down_pct          = "Entrada (%)"
+label_loan_rate         = "Taxa do novo empréstimo (% anual)"
+label_loan_term         = "Prazo do novo empréstimo (anos)"
+label_build_months      = "Período de aquisição / construção (meses)"
+label_monthly_savings   = "Poupança mensal disponível (€)"
+placeholder_savings     = "ex: 800"
+label_sale_price        = "Preço de venda esperado do ativo atual (€)"
+placeholder_sale_price  = "deixe em branco para usar o valor atual"
+btn_run                 = "Executar simulação →"
+
+[goals.planner.transition_result]
+card_total_timeline     = "Linha temporal total"
+until_paid_off          = "até ao pagamento total do objetivo"
+card_final_monthly      = "Custo mensal final"
+after_selling           = "após venda do ativo atual"
+card_total_interest     = "Juros totais"
+across_both_loans       = "em ambos os empréstimos"
+card_free_by            = "Livre em"
+fully_paid_off          = "totalmente pago"
+roadmap_title           = "O seu roteiro"
+phase1_title            = "Poupar entrada"
+phase1_target           = "Objetivo:"
+phase1_already_have     = "Já tem:"
+phase1_still_need       = "Ainda precisa:"
+phase1_saving           = "A poupar:"
+phase1_ready            = "Pronto já!"
+phase1_equity_covers    = "o capital cobre a entrada"
+phase1_down_payment     = "Entrada:"
+phase1_your_equity      = "O seu capital:"
+phase2_title            = "Adquirir / construir"
+phase2_new_loan         = "Novo empréstimo:"
+phase2_existing_loan    = "Empréstimo existente:"
+phase2_new_emi          = "Nova prestação:"
+phase2_total_burden     = "Encargo total:"
+phase3_title            = "Vender & transitar"
+phase3_one_time         = "Evento único"
+phase3_after_acquisition = "após a conclusão da aquisição"
+phase3_sale_price       = "Preço de venda:"
+phase3_pay_off          = "Liquidar empréstimo:"
+phase3_net_proceeds     = "Receita líquida:"
+phase3_applied          = "Aplicado ao novo empréstimo"
+phase4_title            = "Objetivo atingido"
+phase4_remaining_loan   = "Empréstimo restante:"
+phase4_monthly          = "Mensal:"
+phase4_fully_paid       = "Totalmente pago!"
+phase4_sale_cleared     = "receita da venda liquidou o empréstimo"
+phase4_no_remaining     = "Sem empréstimo restante!"
+chart_title             = "Custo mensal ao longo do tempo"
+chart_subtitle          = "o que paga em cada mês"
+save_as_goal_title      = "Guardar como objetivo"
+save_as_goal_desc       = "Adiciona ao separador Objetivos para poder comprometer-se."
+label_goal_name         = "Nome do objetivo"
+placeholder_goal_name   = "ex: Novo imóvel, Atualizar carro…"
+btn_save_goal           = "Guardar objetivo →"
+
+# ── Imóveis ───────────────────────────────────────────────────────────────────
+
+[property]
+summary_total_value         = "Valor total dos imóveis"
+summary_total_value_sub     = "valor estimado atual"
+summary_outstanding_loans   = "Empréstimos em dívida"
+summary_outstanding_sub     = "saldo restante"
+summary_net_equity          = "Capital líquido"
+summary_net_equity_sub      = "valor − empréstimos"
+
+[property.properties]
+section_title               = "Imóveis"
+btn_add                     = "+ Adicionar imóvel"
+stat_current_value          = "Valor atual"
+stat_equity                 = "Capital próprio"
+stat_purchase_price         = "Preço de compra"
+stat_gain                   = "Mais-valia"
+equity_label                = "Capital {{pct}}%"
+loan_label                  = "Empréstimo {{pct}}%"
+loan_remaining              = "Restante"
+loan_monthly_payment        = "Prestação mensal"
+loan_payoff                 = "Data de liquidação"
+loan_rate                   = "Taxa"
+btn_edit                    = "Editar"
+btn_remove                  = "Remover"
+
+[property.properties.empty]
+title                       = "Sem imóveis ainda"
+desc                        = "Adicione a sua casa, propriedade de investimento ou terreno para acompanhar o capital próprio e os empréstimos num só lugar."
+btn_add_first               = "Adicionar o primeiro imóvel"
+
+[property.loans]
+section_title               = "Empréstimos"
+btn_add                     = "+ Adicionar empréstimo"
+stat_balance                = "Saldo"
+stat_monthly                = "Mensal"
+stat_payoff                 = "Liquidação"
+stat_rate                   = "Taxa"
+paid_label                  = "Pago {{pct}}%"
+interest_left               = "juros restantes"
+btn_mark_paid               = "Marcar como liquidado"
+btn_remove                  = "Remover"
+confirm_paid_off            = "Marcar como liquidado?"
+
+[property.modal_add]
+title_property              = "Adicionar imóvel"
+label_name                  = "Nome do imóvel *"
+placeholder_name            = "ex: Casa Principal"
+label_address               = "Morada"
+placeholder_address         = "Rua, cidade"
+label_purchase_price        = "Preço de compra (€) *"
+placeholder_purchase_price  = "220000"
+label_current_value         = "Valor atual (€)"
+placeholder_current_value   = "Igual ao preço de compra"
+hint_current_value          = "Deixe em branco para usar o preço de compra"
+label_purchase_date         = "Data de compra"
+label_appreciation          = "Valorização estimada (%/ano)"
+placeholder_appreciation    = "2,0"
+label_status                = "Estado"
+status_owned                = "Próprio"
+status_building             = "Em construção"
+status_sold                 = "Vendido"
+label_notes                 = "Notas"
+placeholder_notes           = "Notas opcionais"
+btn_cancel                  = "Cancelar"
+btn_add                     = "Adicionar imóvel"
+
+[property.modal_edit]
+title_property              = "Editar imóvel"
+label_name                  = "Nome do imóvel *"
+label_address               = "Morada"
+label_purchase_price        = "Preço de compra (€)"
+label_current_value         = "Valor atual (€)"
+label_purchase_date         = "Data de compra"
+label_appreciation          = "Valorização (%/ano)"
+label_status                = "Estado"
+status_owned                = "Próprio"
+status_building             = "Em construção"
+status_sold                 = "Vendido"
+label_notes                 = "Notas"
+btn_cancel                  = "Cancelar"
+btn_save                    = "Guardar alterações"
+
+[property.modal_loan]
+title_loan                  = "Adicionar empréstimo"
+label_name                  = "Nome do empréstimo *"
+placeholder_name            = "ex: Crédito habitação"
+label_type                  = "Tipo"
+type_mortgage               = "Hipoteca"
+type_construction           = "Crédito à construção"
+type_personal               = "Crédito pessoal"
+label_linked_property       = "Imóvel associado"
+option_none_property        = "— nenhum —"
+label_principal             = "Capital inicial (€) *"
+placeholder_principal       = "200000"
+label_balance               = "Saldo atual (€)"
+placeholder_balance         = "Igual ao capital inicial"
+hint_balance                = "Deixe em branco se for um novo empréstimo"
+label_interest_rate         = "Taxa de juro (%/ano) *"
+placeholder_rate            = "3,2"
+label_term                  = "Prazo (meses) *"
+placeholder_term            = "360"
+hint_term                   = "ex: 360 = 30 anos"
+label_monthly_payment       = "Prestação mensal (€)"
+placeholder_monthly_payment = "Calculada automaticamente"
+hint_monthly_payment        = "Deixe em branco para calcular"
+label_start_date            = "Data de início"
+label_notes                 = "Notas"
+placeholder_notes           = "Nome do banco, referência, etc."
+btn_cancel                  = "Cancelar"
+btn_add                     = "Adicionar empréstimo"
+
+# ── Património Líquido ────────────────────────────────────────────────────────
+
+[networth]
+title                   = "Património Líquido"
+hero_label              = "Património líquido total"
+hero_formula            = "saldo em conta + carteira"
+cash_label              = "💵 Dinheiro"
+portfolio_label         = "📈 Carteira"
+property_equity_label   = "🏠 Capital de imóveis"
+credit_label            = "💳 Crédito"
+
+[networth.cards]
+cash_balance            = "Saldo em conta"
+cash_balance_sub        = "todo o histórico de transações"
+portfolio               = "Carteira"
+portfolio_cost_basis    = "Carteira (custo de aquisição)"
+portfolio_market        = "valor de mercado"
+portfolio_cost_shown    = "preços indisponíveis · custo de aquisição apresentado"
+property_equity         = "Capital de imóveis"
+credit_liabilities      = "Crédito / passivos"
+outstanding_balance     = "saldo em dívida"
+
+[networth.chart]
+section_title           = "Património líquido ao longo do tempo"
+subtitle                = "acumulado · desde sempre"
+legend_net_worth        = "Património Líquido"
+legend_loans            = "Empréstimos em dívida"
+
+[networth.empty]
+title                   = "Sem histórico de transações"
+desc                    = "Importe algumas transações para ver o seu património líquido ao longo do tempo."
+btn_import              = "Importar transações →"
+
+# ── Relatórios ────────────────────────────────────────────────────────────────
+
+[reports]
+title                   = "Relatórios Mensais"
+chart_title             = "Gastos por Categoria — 12 Meses"
+table_title             = "Detalhe por Mês"
+col_month               = "Mês"
+col_total               = "Total"
+
+# ── Projeções ─────────────────────────────────────────────────────────────────
+
+[projections]
+title                   = "Projeções"
+card_annual_spend       = "Gasto Anual Projetado"
+card_annual_sub         = "Com base na média de 6 meses"
+card_monthly_spend      = "Gasto Mensal Projetado"
+card_monthly_sub        = "Média em todas as categorias"
+chart_title             = "Média Mensal por Categoria — Últimos 6 Meses"
+table_col_category      = "Categoria"
+table_col_monthly_avg   = "Média Mensal"
+table_col_projected     = "Projeção Anual"
+table_col_share         = "Quota do Gasto"
+
+[projections.empty]
+title                   = "Sem dados de gastos ainda"
+desc                    = "Importe pelo menos um mês de transações para ver as projeções."
+btn_import              = "Importar Transações"
+
+# ── Simulador ("E Se…") ───────────────────────────────────────────────────────
+
+[simulator]
+title                   = "E Se…"
+subtitle                = "ajuste os controlos para ver o efeito em cascata"
+
+[simulator.cards]
+disposable_income       = "Rendimento disponível"
+disposable_sub          = "após custos fixos & objetivos"
+monthly_savings         = "Poupança mensal"
+monthly_savings_sub     = "rendimento − todos os gastos comprometidos"
+savings_rate            = "Taxa de poupança"
+savings_rate_sub        = "poupança ÷ rendimento"
+
+[simulator.controls]
+section_title           = "Ajustes"
+btn_reset               = "Repor"
+label_income_change     = "Variação do rendimento"
+label_one_off           = "Despesa pontual"
+label_fixed_costs       = "Variação dos custos fixos"
+label_new_goal          = "Novo objetivo hipotético"
+label_goal_amount       = "Valor (€)"
+placeholder_goal_amount = "5 000"
+label_goal_months       = "Meses para poupar"
+placeholder_goal_months = "12"
+goal_would_need         = "Precisaria de"
+per_month               = "€0/mês"
+leaving                 = "— deixando"
+disposable_after        = "€0/mês disponível"
+
+[simulator.goal_impact]
+section_title           = "Impacto na linha temporal dos objetivos"
+no_goals_msg            = "Sem objetivos ainda."
+goals_link              = "Adicionar →"
+committed               = "comprometido"
+feasibility_not_achievable = "Não atingível com esta taxa de poupança"
+feasibility_on_track    = "No bom caminho ✓"
+feasibility_faster      = "meses mais cedo ✓"
+feasibility_over        = "meses acima do prazo"
+
+[simulator.history_chart]
+section_title           = "Histórico da taxa de poupança"
+subtitle                = "meses anteriores"
+
+# ── Impostos ──────────────────────────────────────────────────────────────────
+
+[tax]
+title                   = "Resumo Fiscal"
+btn_export              = "Exportar CSV"
+year_label              = "Ano fiscal:"
+gross_income            = "Rendimento Bruto"
+gross_income_sub        = "das transações de Rendimento"
+total_expenses          = "Total de Despesas"
+total_expenses_sub      = "em todas as categorias"
+capital_gains           = "Mais-Valias"
+capital_gains_sub       = "realizadas este ano"
+capital_losses          = "Menos-Valias"
+capital_losses_sub      = "realizadas este ano"
+net_capital             = "Capital Líquido"
+net_capital_sub         = "ganhos − perdas"
+
+[tax.capital_table]
+section_title           = "Eventos de Capital Realizados"
+col_name                = "Nome"
+col_isin                = "ISIN"
+col_cost_basis          = "Custo de Aquisição"
+col_proceeds            = "Receitas"
+col_gain_loss           = "Ganho/Perda"
+col_pct                 = "%"
+
+[tax.expenses_table]
+section_title           = "Despesas por Categoria"
+col_category            = "Categoria"
+col_total_spent         = "Total Gasto"
+row_total               = "Total"
+empty_msg               = "Sem transações de despesa para {{year}}"
+
+# ── Guia de Importação ────────────────────────────────────────────────────────
+
+[auto_import]
+title                   = "Guia de Importação"
+subtitle                = "Como importar as suas transações bancárias para a aplicação"
+btn_upload              = "Carregar CSV →"
+
+[auto_import.steps]
+step1_title             = "Exportar um CSV do seu banco"
+step1_body              = "Inicie sessão no portal online do seu banco e descarregue um extrato de transações para o período pretendido. A maioria dos bancos portugueses disponibiliza esta opção em Movimentos ou Extratos."
+step1_cgd_name          = "CGD (Caixa Geral de Depósitos)"
+step1_cgd_desc          = "Netbanco → Consultas → Movimentos de Conta → Exportar. Escolha CSV."
+step1_tr_name           = "Trade Republic"
+step1_tr_desc           = "App → Perfil → Documentos → Atividade. Exportar como CSV."
+step1_generic_name      = "Genérico / Outros bancos"
+step1_generic_desc      = "Qualquer CSV com colunas: Date, Description, Amount. O importador deteta automaticamente a ordem das colunas."
+step2_title             = "Carregar e pré-visualizar"
+step2_body              = "Vá a Importar, escolha a conta e o formato e selecione o ficheiro. Verá uma pré-visualização de cada linha com categorias sugeridas automaticamente. As linhas já presentes na base de dados aparecem a cinzento e serão ignoradas — pode carregar o mesmo ficheiro com segurança."
+step3_title             = "Rever categorias e confirmar"
+step3_body              = "Ajuste as linhas categorizadas automaticamente com os seletores, e depois clique em Confirmar Importação. Apenas as novas transações são guardadas."
+
+[auto_import.tip]
+title                   = "Dica — evitar duplicados:"
+body                    = "o importador identifica cada linha pela data, descrição, valor e conta. Voltar a carregar um ficheiro que se sobreponha a uma importação anterior é seguro; os duplicados são detetados e ignorados tanto na pré-visualização como na confirmação."
+
+[auto_import.api]
+title                   = "Automatizar com um script"
+body                    = "Se exportar o CSV com regularidade (ex: via cron job ou n8n), pode enviá-lo diretamente para o endpoint de importação sem passar pela interface:"
+footer                  = "O endpoint de pré-visualização devolve uma página HTML; para importação sem interface redirecione as linhas confirmadas para POST /import/confirm com os campos account_id, format, raw_data e categories[]."
+
+# ── Importar ──────────────────────────────────────────────────────────────────
+
+[import]
+title                   = "Importar"
+
+[import.preview]
+section_title           = "Pré-visualização"
+rows_label              = "linhas"
+already_imported        = "já importadas"
+skip_note               = "(mostradas a cinzento, serão ignoradas)"
+btn_back                = "← Voltar"
+col_date                = "Data"
+col_description         = "Descrição"
+col_amount              = "Valor"
+col_category            = "Categoria"
+duplicate_label         = "duplicado"
+btn_confirm             = "✓ Confirmar Importação"
+btn_cancel              = "Cancelar"
+
+[import.upload]
+bank_section_title      = "Transações Bancárias"
+label_account           = "Conta"
+placeholder_account     = "Selecionar conta…"
+label_format            = "Banco / Formato"
+format_cgd              = "Caixa Geral de Depósitos (CGD)"
+format_tr               = "Trade Republic Card"
+format_generic          = "CSV Genérico"
+label_csv_file          = "Ficheiro CSV"
+btn_preview             = "Pré-visualizar Importação"
+securities_title        = "Negociações de Valores Mobiliários"
+securities_desc         = "Carregue o seu CSV de valores mobiliários do Trade Republic para importar compras/vendas para a sua carteira."
+label_securities_file   = "CSV de Valores Mobiliários Trade Republic"
+btn_import_trades       = "Importar Negociações"
+after_import_note       = "Após importar, visite a Carteira para ver preços em tempo real e P&L."
+
+# ── Definições ────────────────────────────────────────────────────────────────
+
+[settings]
+title               = "Definições"
+tab_accounts        = "Contas"
+tab_categories      = "Categorias"
+
+[settings.accounts]
+card_add_title      = "Adicionar conta"
+placeholder_name    = "Nome da conta"
+type_checking       = "Conta à ordem"
+type_savings        = "Poupança"
+type_credit         = "Cartão de crédito"
+type_securities     = "Valores mobiliários"
+btn_add             = "Adicionar"
+col_name            = "Nome"
+col_type            = "Tipo"
+btn_delete          = "Eliminar"
+empty_msg           = "Sem contas ainda — adicione uma acima."
+confirm_delete      = "Eliminar esta conta?"
+
+[settings.categories]
+card_add_title      = "Adicionar categoria"
+placeholder_name    = "Nome da categoria"
+placeholder_budget  = "Orçamento mensal (cêntimos)"
+btn_add             = "Adicionar"
+col_category        = "Categoria"
+col_budget          = "Orçamento Mensal"
+btn_delete          = "Eliminar"
+empty_msg           = "Sem categorias ainda — adicione uma acima."
+confirm_delete      = "Eliminar esta categoria?"
+
+[settings.categories.modal_edit]
+title               = "Editar Categoria"
+placeholder_name    = "Nome"
+placeholder_budget  = "Orçamento (cêntimos)"
+btn_cancel          = "Cancelar"
+btn_save            = "Guardar"
+
+# ── Contas (página autónoma) ──────────────────────────────────────────────────
+
+[accounts]
+title               = "Contas"
+add_title           = "Adicionar Conta"
+label_name          = "Nome da Conta"
+placeholder_name    = "ex: CGD À Ordem"
+label_type          = "Tipo"
+type_checking       = "Conta à ordem"
+type_savings        = "Poupança"
+type_credit         = "Cartão de Crédito"
+type_securities     = "Valores Mobiliários"
+btn_add             = "Adicionar"
+col_name            = "Nome"
+col_type            = "Tipo"
+empty_msg           = "Sem contas ainda."
+confirm_delete      = "Eliminar esta conta?"
+btn_delete          = "Eliminar"
+
+# ── Categorias (página autónoma) ──────────────────────────────────────────────
+
+[categories]
+title               = "Categorias"
+add_title           = "Adicionar Categoria"
+label_name          = "Nome"
+placeholder_name    = "ex: Restaurantes"
+label_color         = "Cor"
+btn_add             = "Adicionar"
+col_color           = ""
+col_name            = "Nome"
+col_budget          = "Orçamento Mensal"
+no_budget           = "Sem orçamento"
+btn_edit_budget     = "Editar"
+btn_save_budget     = "Guardar"
+btn_cancel_budget   = "Cancelar"
+btn_delete          = "Eliminar"
+empty_msg           = "Sem categorias ainda. Adicione uma acima."
+confirm_delete      = "Eliminar esta categoria? As transações mantêm a etiqueta."
+
+# ── Partilha ──────────────────────────────────────────────────────────────────
+
+[sharing]
+title               = "Partilha"
+grant_title         = "Conceder Acesso de Leitura"
+label_user_email    = "E-mail do utilizador"
+placeholder_email   = "Pesquisar por e-mail…"
+btn_grant           = "Conceder Acesso"
+my_finances_title   = "Pessoas com acesso às minhas finanças"
+col_user            = "Utilizador"
+col_since           = "Desde"
+btn_revoke          = "Revogar"
+empty_my_grants     = "Sem autorizações de acesso ainda."
+access_to_me_title  = "Acesso concedido a mim"
+col_owner           = "Proprietário"
+empty_access_to_me  = "Ninguém partilhou dados consigo ainda."
+confirm_revoke      = "Revogar o acesso deste utilizador?"
+
+# ── Pessoas ───────────────────────────────────────────────────────────────────
+
+[people]
+title               = "Pessoas"
+tab_sharing         = "Partilha"
+tab_household       = "Agregado"
+
+[people.sharing]
+grant_title         = "Conceder acesso de leitura"
+grant_desc          = "Introduza o ID de outro utilizador para que ele possa ver as suas finanças em modo só de leitura."
+placeholder_viewer  = "ID ou e-mail do utilizador"
+btn_add             = "Adicionar"
+viewers_title       = "Pessoas com acesso aos seus dados"
+btn_revoke          = "Revogar"
+granted_title       = "Contas que pode ver"
+view_link           = "Ver →"
+no_sharing_msg      = "Sem partilha configurada ainda."
+confirm_revoke      = "Revogar o acesso deste utilizador?"
+
+[people.household]
+link_title          = "Ligar conta de parceiro"
+link_desc           = "Combine finanças com um parceiro para ver um resumo mensal partilhado e objetivos."
+placeholder_email   = "E-mail do parceiro"
+btn_link            = "Ligar"
+linked_partner      = "Parceiro ligado"
+btn_unlink          = "Desligar"
+stat_combined_income    = "Rendimento Conjunto"
+stat_my_income          = "O Meu Rendimento"
+stat_partner_income     = "Rendimento do Parceiro"
+stat_combined_expenses  = "Despesas Conjuntas"
+stat_disposable         = "Disponível"
+your_goals          = "Os Meus Objetivos"
+partner_goals       = "Objetivos do Parceiro"
+no_goals            = "Sem objetivos"
+committed_badge     = "comprometido"
+confirm_unlink      = "Desligar agregado? Apenas remove a ligação, não os dados."
+
+# ── Agregado (página autónoma) ────────────────────────────────────────────────
+
+[household]
+title               = "Agregado"
+link_title          = "Ligar conta de parceiro"
+link_desc           = "Combine as suas finanças com um parceiro para ver um painel partilhado. Introduza o e-mail da conta do parceiro abaixo."
+label_partner_email = "E-mail do parceiro"
+placeholder_email   = "parceiro@exemplo.com"
+btn_link            = "Ligar Parceiro"
+linked_partner      = "Parceiro ligado"
+btn_unlink          = "Desligar"
+this_month_title    = "Este Mês — Vista Conjunta"
+combined_income     = "Rendimento Conjunto"
+my_income           = "O Meu Rendimento"
+partner_income      = "Rendimento do Parceiro"
+combined_expenses   = "Despesas Conjuntas"
+disposable          = "Disponível"
+goals_title         = "Objetivos"
+your_goals          = "OS MEUS OBJETIVOS"
+partner_goals       = "OBJETIVOS DO PARCEIRO"
+no_goals            = "Sem objetivos"
+committed_badge     = "comprometido"
+confirm_unlink      = "Desligar agregado? Apenas remove a ligação, não os dados."
+
+# ── Planeador de Objetivos (plan.html — página autónoma) ─────────────────────
+
+[plan]
+title                       = "Planeador de Objetivos"
+scenario_title              = "O seu cenário"
+scenario_desc               = "Modele qualquer transição em que detém um ativo com empréstimo, quer adquirir um novo e depois vender o antigo para financiar a transição."
+label_current_asset         = "Ativo atual (opcional)"
+option_none_asset           = "— nenhum selecionado —"
+label_current_loan          = "Empréstimo atual (opcional)"
+option_none_loan            = "— nenhum selecionado —"
+label_dream_cost            = "Custo do novo objetivo (€)"
+placeholder_dream_cost      = "ex: 350000"
+label_down_pct              = "Entrada (%)"
+label_loan_rate             = "Taxa do novo empréstimo (% anual)"
+label_loan_term             = "Prazo do novo empréstimo (anos)"
+placeholder_loan_term       = "30"
+label_build_months          = "Período de aquisição / construção (meses)"
+label_monthly_savings       = "Poupança mensal disponível (€)"
+placeholder_savings         = "ex: 800"
+label_sale_price            = "Preço de venda esperado do ativo atual (€)"
+placeholder_sale_price      = "deixe em branco para usar o valor atual"
+btn_run                     = "Executar simulação →"
+result_total_timeline       = "Linha temporal total"
+result_until_paid           = "até ao pagamento total do objetivo"
+result_final_monthly        = "Custo mensal final"
+result_after_selling        = "após venda do ativo atual"
+result_total_interest       = "Juros totais"
+result_across_both          = "em ambos os empréstimos combinados"
+result_free_by              = "Livre em"
+result_fully_paid           = "totalmente pago"
+roadmap_title               = "O seu roteiro"
+phase1_title                = "Poupar entrada"
+phase1_target               = "Objetivo:"
+phase1_already_have         = "Já tem:"
+phase1_still_need           = "Ainda precisa:"
+phase1_saving               = "A poupar:"
+phase1_ready                = "Pronto já!"
+phase1_equity_covers        = "o capital cobre a entrada"
+phase1_down_payment         = "Entrada:"
+phase1_your_equity          = "O seu capital:"
+phase2_title                = "Adquirir / construir"
+phase2_new_loan             = "Novo empréstimo:"
+phase2_existing_loan        = "Empréstimo existente:"
+phase2_new_emi              = "Nova prestação:"
+phase2_total_burden         = "Encargo total:"
+phase3_title                = "Vender & transitar"
+phase3_one_time             = "Evento único"
+phase3_after_acquisition    = "após a conclusão da aquisição"
+phase3_sale_price           = "Preço de venda:"
+phase3_pay_off              = "Liquidar empréstimo:"
+phase3_net_proceeds         = "Receita líquida:"
+phase3_applied              = "Aplicado ao novo empréstimo"
+phase4_title                = "Objetivo atingido"
+phase4_remaining_loan       = "Empréstimo restante:"
+phase4_monthly_payment      = "Prestação mensal:"
+phase4_just_new_loan        = "apenas o novo empréstimo"
+phase4_fully_paid           = "Totalmente pago!"
+phase4_sale_cleared         = "receita da venda liquidou o empréstimo"
+phase4_no_remaining         = "Sem empréstimo restante!"
+phase4_sale_covers          = "A venda cobre tudo."
+chart_title                 = "Custo mensal ao longo do tempo"
+chart_subtitle              = "o que paga em cada mês"
+levers_title                = "Alavancas principais"
+lever1_title                = "Poupar mais por mês"
+lever1_desc                 = "Cada €100 extra/mês encurta a Fase 1 e aproxima a data de aquisição."
+lever2_title                = "Aumentar a entrada"
+lever2_desc                 = "Uma entrada maior reduz o novo empréstimo e diminui o encargo duplo na Fase 2."
+lever3_title                = "Vender a um preço mais alto"
+lever3_desc                 = "Cada euro extra da venda vai diretamente para reduzir o saldo do novo empréstimo."
+lever4_title                = "Negociar a taxa"
+lever4_desc                 = "Mesmo 0,5% a menos no novo empréstimo poupa milhares ao longo do prazo total."
+empty_title                 = "Planeie o seu próximo grande objetivo"
+empty_desc                  = "Modele qualquer transição em que detém um ativo com empréstimo, quer adquirir algo novo e planeia vender o antigo para financiar — incluindo o período de duplo pagamento, a venda e a data final de liquidação."
+empty_tip                   = "Dica: adicione primeiro o seu ativo atual e o empréstimo para que o planeador preencha os valores automaticamente."

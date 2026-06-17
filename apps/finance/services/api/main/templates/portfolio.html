@@ -1,21 +1,21 @@
 {{define "content"}}
 {{$d := .}}
-<h1 style="margin-bottom:24px;">Portfolio</h1>
+<h1 style="margin-bottom:24px;">{{$d.T.Get "portfolio.title"}}</h1>
 
 {{if $d.Holdings}}
 
 {{if $d.MissingPrices}}
 <div style="background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.35); border-radius:12px; padding:16px 20px; margin-bottom:20px;">
-  <div style="font-weight:600; font-size:0.9rem; margin-bottom:12px;">⚠ Live price unavailable for {{len $d.MissingPrices}} holding{{if gt (len $d.MissingPrices) 1}}s{{end}} — add a Yahoo Finance ticker to fix this</div>
+  <div style="font-weight:600; font-size:0.9rem; margin-bottom:12px;">⚠ {{$d.T.Get "portfolio.missing_prices_warn"}}</div>
   {{range $d.MissingPrices}}
   <form method="post" action="/portfolio/ticker" style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
     <input type="hidden" name="isin" value="{{.}}">
     <code style="font-size:0.8rem; color:var(--muted); min-width:140px;">{{.}}</code>
-    <input type="text" name="ticker" placeholder="e.g. QDVE.DE" required
+    <input type="text" name="ticker" placeholder="{{$d.T.Get "portfolio.ticker_placeholder"}}" required
            style="padding:6px 10px; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text); font-size:0.85rem; width:130px;">
-    <button type="submit" style="padding:6px 14px; background:var(--accent); color:#fff; border:none; border-radius:8px; font-size:0.85rem; font-weight:600; cursor:pointer;">Save</button>
+    <button type="submit" style="padding:6px 14px; background:var(--accent); color:#fff; border:none; border-radius:8px; font-size:0.85rem; font-weight:600; cursor:pointer;">{{$d.T.Get "portfolio.btn_save_ticker"}}</button>
     <a href="https://finance.yahoo.com/lookup/" target="_blank" rel="noopener"
-       style="font-size:0.78rem; color:var(--accent);">Look up ↗</a>
+       style="font-size:0.78rem; color:var(--accent);">{{$d.T.Get "portfolio.lookup_link"}}</a>
   </form>
   {{end}}
 </div>
@@ -23,17 +23,17 @@
 
 <div class="grid">
   <div class="card value-card animate-on-scroll">
-    <h2>Total Value</h2>
+    <h2>{{$d.T.Get "portfolio.cards.total_value"}}</h2>
     <div class="value {{if ge $d.TotalPCLCents 0}}positive{{else}}negative{{end}} animate-counter"
          data-target="{{$d.TotalValueCents}}" data-prefix="€">€0.00</div>
   </div>
   <div class="card value-card animate-on-scroll">
-    <h2>Total Cost</h2>
+    <h2>{{$d.T.Get "portfolio.cards.total_cost"}}</h2>
     <div class="value animate-counter" data-target="{{$d.TotalCostCents}}" data-prefix="€"
          style="color:var(--text);">€0.00</div>
   </div>
   <div class="card value-card animate-on-scroll">
-    <h2>Unrealized P&amp;L</h2>
+    <h2>{{$d.T.Get "portfolio.cards.unrealized_pl"}}</h2>
     <div class="value {{if ge $d.TotalPCLCents 0}}positive{{else}}negative{{end}} animate-counter"
          data-target="{{$d.TotalPCLCents}}" data-prefix="€">€0.00</div>
     <p style="font-size:13px; margin-top:6px; color:{{if eq (pctSign $d.TotalPCLPct) "+"}}var(--green){{else}}var(--red){{end}};">
@@ -45,23 +45,23 @@
 <div class="grid-2" style="align-items:start;">
   <!-- Allocation donut -->
   <div class="card animate-on-scroll">
-    <h2 style="margin-bottom:16px;">Allocation</h2>
+    <h2 style="margin-bottom:16px;">{{$d.T.Get "portfolio.allocation.section_title"}}</h2>
     <div id="allocation3d" style="width:100%; height:380px; position:relative;"></div>
   </div>
 
   <!-- Holdings table -->
   <div class="card animate-on-scroll">
-    <h2 style="margin-bottom:14px;">Holdings</h2>
+    <h2 style="margin-bottom:14px;">{{$d.T.Get "portfolio.holdings.section_title"}}</h2>
     <div class="table-wrap">
       <table>
         <thead>
           <tr>
-            <th>Asset</th>
-            <th class="text-right">Shares</th>
-            <th class="text-right">Avg Cost</th>
-            <th class="text-right">Price</th>
-            <th class="text-right">Value</th>
-            <th class="text-right">P&amp;L</th>
+            <th>{{$d.T.Get "portfolio.holdings.col_asset"}}</th>
+            <th class="text-right">{{$d.T.Get "portfolio.holdings.col_shares"}}</th>
+            <th class="text-right">{{$d.T.Get "portfolio.holdings.col_avg_cost"}}</th>
+            <th class="text-right">{{$d.T.Get "portfolio.holdings.col_price"}}</th>
+            <th class="text-right">{{$d.T.Get "portfolio.holdings.col_value"}}</th>
+            <th class="text-right">{{$d.T.Get "portfolio.holdings.col_pl"}}</th>
           </tr>
         </thead>
         <tbody>
@@ -83,7 +83,6 @@
                 {{if ge .UnrealizedPCLCents 0}}+{{else}}−{{end}}€{{cents (centsAbs .UnrealizedPCLCents)}}
               </div>
             </td>
-
           </tr>
           {{end}}
         </tbody>
@@ -91,8 +90,8 @@
     </div>
 
     <div style="margin-top:16px; padding-top:14px; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
-      <span class="text-muted">Add trades via</span>
-      <a href="/import" class="btn btn-outline btn-sm">Import CSV</a>
+      <span class="text-muted">{{$d.T.Get "portfolio.holdings.add_trades_via"}}</span>
+      <a href="/import" class="btn btn-outline btn-sm">{{$d.T.Get "portfolio.holdings.btn_import"}}</a>
     </div>
   </div>
 </div>
@@ -144,7 +143,6 @@ controls.autoRotateSpeed = 1.2;
 controls.minDistance     = 5;
 controls.maxDistance     = 16;
 
-// tooltip
 const tip = Object.assign(document.createElement('div'), {
   style: 'position:absolute;background:rgba(15,17,23,0.92);color:#e8eaf6;padding:7px 13px;border-radius:8px;font-size:13px;pointer-events:none;opacity:0;transition:opacity .15s;z-index:10;border:1px solid rgba(255,255,255,0.08);backdrop-filter:blur(8px);'
 });
@@ -236,9 +234,9 @@ window.addEventListener('resize', () => {
 {{else}}
 <div class="card empty-state animate-on-scroll">
   <div style="font-size:48px; margin-bottom:16px;">📈</div>
-  <h3>No trades yet</h3>
-  <p style="margin-bottom:20px;">Import your Trade Republic securities CSV to see your portfolio.</p>
-  <a href="/import" class="btn btn-primary">Import Trades</a>
+  <h3>{{$d.T.Get "portfolio.empty.title"}}</h3>
+  <p style="margin-bottom:20px;">{{$d.T.Get "portfolio.empty.desc"}}</p>
+  <a href="/import" class="btn btn-primary">{{$d.T.Get "portfolio.empty.btn_import"}}</a>
 </div>
 {{end}}
 {{end}}

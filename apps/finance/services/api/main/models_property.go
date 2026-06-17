@@ -80,6 +80,7 @@ type PropertyView struct {
 }
 
 type PropertyData struct {
+	T      *Translator
 	UserID string
 	Email  string
 	Title  string

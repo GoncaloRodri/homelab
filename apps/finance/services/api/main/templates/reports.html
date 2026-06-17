@@ -1,28 +1,28 @@
 {{define "content"}}
 {{$d := .}}
-<h1 style="margin-bottom:24px;">Monthly Reports</h1>
+<h1 style="margin-bottom:24px;">{{$d.T.Get "reports.title"}}</h1>
 
 <div class="card animate-on-scroll">
-  <h2>12-Month Spend by Category</h2>
+  <h2>{{$d.T.Get "reports.chart_title"}}</h2>
   <div style="padding-top:8px;">
     <canvas id="reportChart" height="280"></canvas>
   </div>
 </div>
 
 <div class="card animate-on-scroll" style="overflow-x:auto;">
-  <h2 style="margin-bottom:14px;">Breakdown by Month</h2>
+  <h2 style="margin-bottom:14px;">{{$d.T.Get "reports.table_title"}}</h2>
   <div class="table-wrap">
     <table>
       <thead>
         <tr>
-          <th>Month</th>
+          <th>{{$d.T.Get "reports.col_month"}}</th>
           {{range $cat, $_ := $d.CategoryNames}}
           {{$color := index $d.CategoryColors $cat}}
           <th class="text-right" style="white-space:nowrap;">
             {{if $color}}<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:{{$color}};margin-right:4px;vertical-align:middle;box-shadow:0 0 4px {{$color}}88;"></span>{{end}}{{$cat}}
           </th>
           {{end}}
-          <th class="text-right">Total</th>
+          <th class="text-right">{{$d.T.Get "reports.col_total"}}</th>
         </tr>
       </thead>
       <tbody>

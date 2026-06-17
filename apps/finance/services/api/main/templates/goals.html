@@ -2,7 +2,7 @@
 {{$d := .}}
 
 <div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:8px;">
-  <h1>Goals</h1>
+  <h1>{{$d.T.Get "goals.title"}}</h1>
 </div>
 
 <!-- Tab bar -->
@@ -10,12 +10,12 @@
   <a href="/goals?tab=goals"
      style="padding:8px 16px; font-size:14px; font-weight:500; border-radius:6px 6px 0 0; text-decoration:none;
             {{if eq $d.Tab "goals"}}background:var(--bg2); color:var(--text1); border:1px solid var(--border); border-bottom:1px solid var(--bg2); margin-bottom:-1px;{{else}}color:var(--text3);{{end}}">
-    Committed goals
+    {{$d.T.Get "goals.tab_committed"}}
   </a>
   <a href="/goals?tab=planner"
      style="padding:8px 16px; font-size:14px; font-weight:500; border-radius:6px 6px 0 0; text-decoration:none;
             {{if eq $d.Tab "planner"}}background:var(--bg2); color:var(--text1); border:1px solid var(--border); border-bottom:1px solid var(--bg2); margin-bottom:-1px;{{else}}color:var(--text3);{{end}}">
-    Goal Planner
+    {{$d.T.Get "goals.tab_planner"}}
   </a>
 </div>
 
@@ -32,26 +32,26 @@
 {{if $d.AvgMonthlySavings}}
 <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
   <div class="card value-card animate-on-scroll" style="flex:1; min-width:160px;">
-    <h2>Avg monthly savings</h2>
+    <h2>{{$d.T.Get "goals.summary_cards.avg_monthly_savings"}}</h2>
     <div class="value positive animate-counter" data-target="{{$d.AvgMonthlySavings}}" data-prefix="€">€0</div>
-    <p style="font-size:12px; color:var(--text3); margin-top:4px;">last 3 months</p>
+    <p style="font-size:12px; color:var(--text3); margin-top:4px;">{{$d.T.Get "goals.summary_cards.last_3_months"}}</p>
   </div>
   <div class="card value-card animate-on-scroll" style="flex:1; min-width:160px;">
-    <h2>Disposable income</h2>
+    <h2>{{$d.T.Get "goals.summary_cards.disposable_income"}}</h2>
     <div class="value animate-counter" data-target="{{$d.DisposableIncome}}" data-prefix="€" style="color:var(--text);">€0</div>
-    <p style="font-size:12px; color:var(--text3); margin-top:4px;">before goals</p>
+    <p style="font-size:12px; color:var(--text3); margin-top:4px;">{{$d.T.Get "goals.summary_cards.before_goals"}}</p>
   </div>
   {{if $d.CommittedMonthlyCents}}
   <div class="card value-card animate-on-scroll" style="flex:1; min-width:160px;">
-    <h2>Reserved for goals</h2>
+    <h2>{{$d.T.Get "goals.summary_cards.reserved_for_goals"}}</h2>
     <div class="value negative animate-counter" data-target="{{$d.CommittedMonthlyCents}}" data-prefix="€">€0</div>
-    <p style="font-size:12px; color:var(--text3); margin-top:4px;">per month</p>
+    <p style="font-size:12px; color:var(--text3); margin-top:4px;">{{$d.T.Get "goals.summary_cards.per_month"}}</p>
   </div>
   <div class="card value-card animate-on-scroll" style="flex:1; min-width:160px;">
-    <h2>Free to spend</h2>
+    <h2>{{$d.T.Get "goals.summary_cards.free_to_spend"}}</h2>
     <div class="value animate-counter {{if lt $d.RemainingDisposable 0}}negative{{else}}positive{{end}}"
          data-target="{{$d.RemainingDisposable}}" data-prefix="€">€0</div>
-    <p style="font-size:12px; color:var(--text3); margin-top:4px;">after goals</p>
+    <p style="font-size:12px; color:var(--text3); margin-top:4px;">{{$d.T.Get "goals.summary_cards.after_goals"}}</p>
   </div>
   {{end}}
 </div>
@@ -69,14 +69,14 @@
           <div>
             <div style="font-size:15px; font-weight:600; color:var(--text);">{{.Name}}</div>
             <div style="font-size:11px; color:var(--text3); text-transform:uppercase; letter-spacing:.4px;">
-              {{if eq .Type "once"}}One-off purchase{{else if eq .Type "deposit"}}Deposit / down-payment{{else if eq .Type "emergency"}}Emergency fund{{else}}Recurring investment{{end}}
+              {{if eq .Type "once"}}{{$d.T.Get "goals.goal_card.type_once"}}{{else if eq .Type "deposit"}}{{$d.T.Get "goals.goal_card.type_deposit"}}{{else if eq .Type "emergency"}}{{$d.T.Get "goals.goal_card.type_emergency"}}{{else}}{{$d.T.Get "goals.goal_card.type_recurring"}}{{end}}
             </div>
           </div>
         </div>
 
         <div style="margin-top:12px;">
           <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-            <span style="font-size:12px; color:var(--text2);">€{{cents .SavedCents}} saved of €{{cents .TargetCents}}</span>
+            <span style="font-size:12px; color:var(--text2);">€{{cents .SavedCents}} {{$d.T.Get "goals.goal_card.saved_of"}} €{{cents .TargetCents}}</span>
             <span style="font-size:12px; color:var(--text2);">{{.ProgressPct}}%</span>
           </div>
           <div style="background:var(--bg3); border-radius:99px; height:6px; overflow:hidden;">
@@ -89,16 +89,16 @@
 
       <div style="display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start;">
         <div style="text-align:center;">
-          <div style="font-size:11px; color:var(--text3); margin-bottom:3px;">Need per month</div>
+          <div style="font-size:11px; color:var(--text3); margin-bottom:3px;">{{$d.T.Get "goals.goal_card.need_per_month"}}</div>
           <div class="animate-counter" style="font-size:18px; font-weight:600; color:var(--text);"
                data-target="{{.MonthlyCents}}" data-prefix="€">€0</div>
         </div>
         <div style="text-align:center;">
-          <div style="font-size:11px; color:var(--text3); margin-bottom:3px;">Months left</div>
+          <div style="font-size:11px; color:var(--text3); margin-bottom:3px;">{{$d.T.Get "goals.goal_card.months_left"}}</div>
           <div style="font-size:18px; font-weight:600; color:var(--text);">{{.MonthsLeft}}</div>
         </div>
         <div style="text-align:center;">
-          <div style="font-size:11px; color:var(--text3); margin-bottom:3px;">At current rate</div>
+          <div style="font-size:11px; color:var(--text3); margin-bottom:3px;">{{$d.T.Get "goals.goal_card.at_current_rate"}}</div>
           {{if gt .MonthsAtCurrentRate 0}}
           <div style="font-size:18px; font-weight:600;
                {{if .Feasible}}color:var(--green){{else}}color:var(--red){{end}};">
@@ -109,7 +109,7 @@
           {{end}}
         </div>
         <div style="text-align:center;">
-          <div style="font-size:11px; color:var(--text3); margin-bottom:3px;">Disposable after</div>
+          <div style="font-size:11px; color:var(--text3); margin-bottom:3px;">{{$d.T.Get "goals.goal_card.disposable_after"}}</div>
           <div class="animate-counter" style="font-size:18px; font-weight:600;
                {{if ge .ImpactOnDisposable 0}}color:var(--green){{else}}color:var(--red){{end}};"
                data-target="{{.ImpactOnDisposable}}" data-prefix="€">€0</div>
@@ -135,7 +135,7 @@
         <input type="hidden" name="id" value="{{.ID}}">
         <input type="hidden" name="months" value="{{.MonthsAtCurrentRate}}">
         <button type="submit" class="btn btn-outline btn-sm" style="color:var(--red); border-color:var(--red)44; white-space:nowrap;">
-          Adjust deadline →
+          {{$d.T.Get "goals.goal_card.btn_adjust_deadline"}}
         </button>
       </form>
       {{end}}
@@ -148,17 +148,17 @@
         <input type="hidden" name="id" value="{{.ID}}">
         {{if .Committed}}
         <button type="submit" class="btn btn-outline btn-sm" style="color:var(--green); border-color:var(--green)55;">
-          ✓ Committed — click to uncommit
+          {{$d.T.Get "goals.goal_card.btn_committed"}}
         </button>
         {{else}}
-        <button type="submit" class="btn btn-primary btn-sm">Commit to this goal</button>
+        <button type="submit" class="btn btn-primary btn-sm">{{$d.T.Get "goals.goal_card.btn_commit"}}</button>
         {{end}}
       </form>
       <form method="POST" action="/goals">
         <input type="hidden" name="action" value="delete">
         <input type="hidden" name="id" value="{{.ID}}">
         <button type="submit" class="btn btn-outline btn-sm" style="color:var(--red); border-color:var(--red)33;"
-                onclick="return confirm('Remove this goal?')">Remove</button>
+                onclick="return confirm('{{$d.T.Get "goals.goal_card.confirm_remove"}}')">{{$d.T.Get "goals.goal_card.btn_remove"}}</button>
       </form>
     </div>
   </div>
@@ -168,9 +168,9 @@
 {{else}}
 <div class="card empty-state animate-on-scroll">
   <div style="font-size:48px; margin-bottom:16px;">🎯</div>
-  <h3>No goals yet</h3>
-  <p style="margin-bottom:20px;">Use the <strong>Goal Planner</strong> tab to simulate a goal and save it here.</p>
-  <a href="/goals?tab=planner" class="btn btn-primary">Open Goal Planner →</a>
+  <h3>{{$d.T.Get "goals.empty.title"}}</h3>
+  <p style="margin-bottom:20px;">{{$d.T.Get "goals.empty.desc"}}</p>
+  <a href="/goals?tab=planner" class="btn btn-primary">{{$d.T.Get "goals.empty.btn_open_planner"}}</a>
 </div>
 {{end}}
 
@@ -181,19 +181,19 @@
 
 <!-- Type selector -->
 <div class="card animate-on-scroll" style="margin-bottom:20px;">
-  <h2 style="margin-bottom:14px;">What kind of goal?</h2>
+  <h2 style="margin-bottom:14px;">{{$d.T.Get "goals.planner.what_kind"}}</h2>
   <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
     <a href="/goals?tab=planner&planner_type=purchase"
        style="display:block; padding:16px 18px; border-radius:var(--radius); border:2px solid {{if eq $d.PlannerType "purchase"}}var(--accent){{else}}var(--border){{end}}; text-decoration:none; transition:border-color 0.15s;">
       <div style="font-size:22px; margin-bottom:8px;">🛒</div>
-      <div style="font-weight:600; font-size:14px; color:var(--text1); margin-bottom:4px;">Save for a purchase</div>
-      <div style="font-size:12px; color:var(--text3);">Car, trip, gadget, fund — save up to a target by a date.</div>
+      <div style="font-weight:600; font-size:14px; color:var(--text1); margin-bottom:4px;">{{$d.T.Get "goals.planner.purchase_title"}}</div>
+      <div style="font-size:12px; color:var(--text3);">{{$d.T.Get "goals.planner.purchase_desc"}}</div>
     </a>
     <a href="/goals?tab=planner&planner_type=transition"
        style="display:block; padding:16px 18px; border-radius:var(--radius); border:2px solid {{if eq $d.PlannerType "transition"}}var(--accent){{else}}var(--border){{end}}; text-decoration:none; transition:border-color 0.15s;">
       <div style="font-size:22px; margin-bottom:8px;">🔄</div>
-      <div style="font-weight:600; font-size:14px; color:var(--text1); margin-bottom:4px;">Sell &amp; upgrade</div>
-      <div style="font-size:12px; color:var(--text3);">Own an asset with a loan, acquire something new, sell the old to fund it.</div>
+      <div style="font-weight:600; font-size:14px; color:var(--text1); margin-bottom:4px;">{{$d.T.Get "goals.planner.transition_title"}}</div>
+      <div style="font-size:12px; color:var(--text3);">{{$d.T.Get "goals.planner.transition_desc"}}</div>
     </a>
   </div>
 </div>
@@ -201,7 +201,7 @@
 {{if eq $d.PlannerType "purchase"}}
 <!-- ── PURCHASE FORM ──────────────────────────────────────────────────────── -->
 <div class="card animate-on-scroll" style="margin-bottom:20px;">
-  <h2 style="margin-bottom:16px;">Your purchase goal</h2>
+  <h2 style="margin-bottom:16px;">{{$d.T.Get "goals.planner.purchase.form_title"}}</h2>
   <form method="GET" action="/goals">
     <input type="hidden" name="tab" value="planner">
     <input type="hidden" name="planner_type" value="purchase">
@@ -209,38 +209,38 @@
     <div style="display:flex; flex-direction:column; gap:14px; margin-bottom:16px;">
 
       <div>
-        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">Goal name</label>
-        <input name="name" placeholder="e.g. New car, Europe trip, Emergency fund…"
+        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">{{$d.T.Get "goals.planner.purchase.label_name"}}</label>
+        <input name="name" placeholder="{{$d.T.Get "goals.planner.purchase.placeholder_name"}}"
           value="{{if $d.HasPurchaseResult}}{{$pr.Name}}{{end}}"
           style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px; box-sizing:border-box;">
       </div>
 
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
         <div>
-          <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">Target amount (€)</label>
+          <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">{{$d.T.Get "goals.planner.purchase.label_target"}}</label>
           <input type="number" name="target" min="0" step="100"
             value="{{if $d.HasPurchaseResult}}{{div $pr.TargetCents 100}}{{end}}"
-            placeholder="e.g. 12000"
+            placeholder="{{$d.T.Get "goals.planner.purchase.placeholder_target"}}"
             style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px; box-sizing:border-box;">
         </div>
         <div>
-          <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">Monthly savings (€)</label>
+          <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">{{$d.T.Get "goals.planner.purchase.label_monthly_savings"}}</label>
           <input type="number" name="monthly_savings" min="0" step="50"
             value="{{if $d.HasPurchaseResult}}{{div $pr.MonthlySavingsCents 100}}{{end}}"
-            placeholder="e.g. 400"
+            placeholder="{{$d.T.Get "goals.planner.purchase.placeholder_monthly"}}"
             style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px; box-sizing:border-box;">
         </div>
       </div>
 
       <div>
-        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">Target date (optional — leave blank to see when you'll get there)</label>
+        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">{{$d.T.Get "goals.planner.purchase.label_deadline"}}</label>
         <input type="month" name="deadline"
           value="{{if and $d.HasPurchaseResult $pr.HasDeadline}}{{$pr.DeadlineDate.Format "2006-01"}}{{end}}"
           style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px; box-sizing:border-box;">
       </div>
 
     </div>
-    <button type="submit" class="btn btn-primary" style="width:100%;">Calculate →</button>
+    <button type="submit" class="btn btn-primary" style="width:100%;">{{$d.T.Get "goals.planner.purchase.btn_calculate"}}</button>
   </form>
 </div>
 
@@ -248,29 +248,29 @@
 <!-- Purchase result -->
 <div class="grid" style="margin-bottom:20px;">
   <div class="card value-card animate-on-scroll">
-    <h2>At your savings rate</h2>
+    <h2>{{$d.T.Get "goals.planner.purchase_result.card_at_rate"}}</h2>
     {{if gt $pr.MonthsNeeded 0}}
     <div class="value positive">{{$pr.YearsNeeded}}y {{$pr.RemMonths}}m</div>
-    <p style="font-size:12px; color:var(--text3); margin-top:6px;">reach {{dateShort $pr.ReachDate}}</p>
+    <p style="font-size:12px; color:var(--text3); margin-top:6px;">{{$d.T.Get "goals.planner.purchase_result.reach_label"}} {{dateShort $pr.ReachDate}}</p>
     {{else}}
     <div class="value" style="color:var(--text3); font-size:18px;">—</div>
-    <p style="font-size:12px; color:var(--text3); margin-top:6px;">enter monthly savings</p>
+    <p style="font-size:12px; color:var(--text3); margin-top:6px;">{{$d.T.Get "goals.planner.purchase_result.enter_monthly"}}</p>
     {{end}}
   </div>
   <div class="card value-card animate-on-scroll">
-    <h2>Monthly needed</h2>
+    <h2>{{$d.T.Get "goals.planner.purchase_result.card_monthly_needed"}}</h2>
     {{if $pr.HasDeadline}}
     <div class="value {{if $pr.Feasible}}positive{{else}}negative{{end}}">€{{cents $pr.MonthlyNeededForDeadline}}</div>
-    <p style="font-size:12px; color:var(--text3); margin-top:6px;">to hit {{dateShort $pr.DeadlineDate}}</p>
+    <p style="font-size:12px; color:var(--text3); margin-top:6px;">{{$d.T.Get "goals.planner.purchase_result.to_hit_deadline"}} {{dateShort $pr.DeadlineDate}}</p>
     {{else}}
     <div class="value" style="color:var(--text3); font-size:18px;">—</div>
-    <p style="font-size:12px; color:var(--text3); margin-top:6px;">set a target date above</p>
+    <p style="font-size:12px; color:var(--text3); margin-top:6px;">{{$d.T.Get "goals.planner.purchase_result.set_target_date"}}</p>
     {{end}}
   </div>
   <div class="card value-card animate-on-scroll">
-    <h2>Target</h2>
+    <h2>{{$d.T.Get "goals.planner.purchase_result.card_target"}}</h2>
     <div class="value positive">€{{cents $pr.TargetCents}}</div>
-    <p style="font-size:12px; color:var(--text3); margin-top:6px;">your goal amount</p>
+    <p style="font-size:12px; color:var(--text3); margin-top:6px;">{{$d.T.Get "goals.planner.purchase_result.your_goal_amount"}}</p>
   </div>
 </div>
 
@@ -289,18 +289,18 @@
 
 <!-- Save as goal -->
 <div class="card animate-on-scroll">
-  <h2 style="margin-bottom:4px;">Save as a goal</h2>
-  <p style="font-size:13px; color:var(--text3); margin-bottom:14px;">Adds this to your Goals tab so you can commit to it.</p>
+  <h2 style="margin-bottom:4px;">{{$d.T.Get "goals.planner.purchase_result.save_as_goal_title"}}</h2>
+  <p style="font-size:13px; color:var(--text3); margin-bottom:14px;">{{$d.T.Get "goals.planner.purchase_result.save_as_goal_desc"}}</p>
   <form method="POST" action="/goals" style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
     <input type="hidden" name="type" value="once">
     <input type="hidden" name="target_euros" value="{{div $pr.TargetCents 100}}">
     <input type="hidden" name="deadline" value="{{if $pr.HasDeadline}}{{$pr.DeadlineDate.Format "2006-01"}}{{else}}{{$pr.ReachDate.Format "2006-01"}}{{end}}">
     <div style="flex:1; min-width:200px;">
-      <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">Goal name</label>
-      <input name="name" required value="{{$pr.Name}}" placeholder="e.g. New car"
+      <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">{{$d.T.Get "goals.planner.purchase_result.label_goal_name"}}</label>
+      <input name="name" required value="{{$pr.Name}}" placeholder="{{$d.T.Get "goals.planner.purchase_result.placeholder_goal_name"}}"
              style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px; box-sizing:border-box;">
     </div>
-    <button type="submit" class="btn btn-primary" style="white-space:nowrap;">Save goal →</button>
+    <button type="submit" class="btn btn-primary" style="white-space:nowrap;">{{$d.T.Get "goals.planner.purchase_result.btn_save_goal"}}</button>
   </form>
 </div>
 {{end}}
@@ -308,7 +308,7 @@
 {{else if eq $d.PlannerType "transition"}}
 <!-- ── TRANSITION FORM ───────────────────────────────────────────────────── -->
 <div class="card animate-on-scroll" style="margin-bottom:20px;">
-  <h2 style="margin-bottom:16px;">Your transition scenario</h2>
+  <h2 style="margin-bottom:16px;">{{$d.T.Get "goals.planner.transition.form_title"}}</h2>
   <form method="GET" action="/goals">
     <input type="hidden" name="tab" value="planner">
     <input type="hidden" name="planner_type" value="transition">
@@ -317,9 +317,9 @@
     <div class="grid" style="gap:14px; margin-bottom:16px;">
 
       <div>
-        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">Current asset (optional)</label>
+        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">{{$d.T.Get "goals.planner.transition.label_current_asset"}}</label>
         <select name="property_id" style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px;">
-          <option value="">— none selected —</option>
+          <option value="">{{$d.T.Get "goals.planner.transition.option_none_asset"}}</option>
           {{range $d.PlanProperties}}
           <option value="{{.ID}}" {{if and $d.HasPlanResult (eq $d.PlanForm.PropertyID .ID)}}selected{{end}}>{{.Name}} (€{{cents .CurrentValueCents}})</option>
           {{end}}
@@ -327,9 +327,9 @@
       </div>
 
       <div>
-        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">Current loan (optional)</label>
+        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">{{$d.T.Get "goals.planner.transition.label_current_loan"}}</label>
         <select name="loan_id" style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px;">
-          <option value="">— none selected —</option>
+          <option value="">{{$d.T.Get "goals.planner.transition.option_none_loan"}}</option>
           {{range $d.PlanLoans}}
           <option value="{{.ID}}" {{if and $d.HasPlanResult (eq $d.PlanForm.LoanID .ID)}}selected{{end}}>{{.Name}} (€{{cents .BalanceCents}} left)</option>
           {{end}}
@@ -337,60 +337,60 @@
       </div>
 
       <div>
-        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">New goal cost (€)</label>
+        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">{{$d.T.Get "goals.planner.transition.label_dream_cost"}}</label>
         <input type="number" name="dream_cost" min="0" step="1000"
           value="{{if $d.HasPlanResult}}{{div $d.PlanForm.DreamCostCents 100}}{{end}}"
-          placeholder="e.g. 350000"
+          placeholder="{{$d.T.Get "goals.planner.transition.placeholder_dream_cost"}}"
           style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px; box-sizing:border-box;">
       </div>
 
       <div>
-        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">Down payment (%)</label>
+        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">{{$d.T.Get "goals.planner.transition.label_down_pct"}}</label>
         <input type="number" name="down_pct" min="0" max="100" step="1"
           value="{{if $d.HasPlanResult}}{{round $d.PlanForm.DownPaymentPct}}{{else}}20{{end}}"
           style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px; box-sizing:border-box;">
       </div>
 
       <div>
-        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">New loan rate (% annual)</label>
+        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">{{$d.T.Get "goals.planner.transition.label_loan_rate"}}</label>
         <input type="number" name="const_rate" min="0" max="30" step="0.1"
           value="{{if $d.HasPlanResult}}{{$d.PlanForm.ConstructionRatePct}}{{else}}4.0{{end}}"
           style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px; box-sizing:border-box;">
       </div>
 
       <div>
-        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">New loan term (years)</label>
+        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">{{$d.T.Get "goals.planner.transition.label_loan_term"}}</label>
         <input type="number" name="const_term" min="1" max="40" step="1"
           value="{{if $d.HasPlanResult}}{{$d.PlanForm.ConstructionTermYears}}{{else}}30{{end}}"
           style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px; box-sizing:border-box;">
       </div>
 
       <div>
-        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">Acquisition / build period (months)</label>
+        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">{{$d.T.Get "goals.planner.transition.label_build_months"}}</label>
         <input type="number" name="build_months" min="1" max="60" step="1"
           value="{{if $d.HasPlanResult}}{{$d.PlanForm.BuildMonths}}{{else}}18{{end}}"
           style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px; box-sizing:border-box;">
       </div>
 
       <div>
-        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">Monthly savings available (€)</label>
+        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">{{$d.T.Get "goals.planner.transition.label_monthly_savings"}}</label>
         <input type="number" name="monthly_savings" min="0" step="100"
           value="{{if $d.HasPlanResult}}{{div $d.PlanForm.MonthlySavingsCents 100}}{{end}}"
-          placeholder="e.g. 800"
+          placeholder="{{$d.T.Get "goals.planner.transition.placeholder_savings"}}"
           style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px; box-sizing:border-box;">
       </div>
 
       <div>
-        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">Expected sale price of current asset (€)</label>
+        <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">{{$d.T.Get "goals.planner.transition.label_sale_price"}}</label>
         <input type="number" name="sale_price" min="0" step="1000"
           value="{{if $d.HasPlanResult}}{{div $d.PlanForm.ExpectedSalePriceCents 100}}{{end}}"
-          placeholder="leave blank to use current value"
+          placeholder="{{$d.T.Get "goals.planner.transition.placeholder_sale_price"}}"
           style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px; box-sizing:border-box;">
       </div>
 
     </div>
 
-    <button type="submit" class="btn btn-primary" style="width:100%;">Run simulation →</button>
+    <button type="submit" class="btn btn-primary" style="width:100%;">{{$d.T.Get "goals.planner.transition.btn_run"}}</button>
   </form>
 </div>
 
@@ -405,52 +405,52 @@
 <!-- Summary cards -->
 <div class="grid" style="margin-bottom:20px;">
   <div class="card value-card animate-on-scroll">
-    <h2>Total timeline</h2>
+    <h2>{{$d.T.Get "goals.planner.transition_result.card_total_timeline"}}</h2>
     <div class="value positive">{{$r.TotalYears}}y {{$r.TotalRemMonths}}m</div>
-    <p style="font-size:12px; color:var(--text3); margin-top:6px;">until goal is fully paid off</p>
+    <p style="font-size:12px; color:var(--text3); margin-top:6px;">{{$d.T.Get "goals.planner.transition_result.until_paid_off"}}</p>
   </div>
   <div class="card value-card animate-on-scroll">
-    <h2>Final monthly cost</h2>
+    <h2>{{$d.T.Get "goals.planner.transition_result.card_final_monthly"}}</h2>
     <div class="value positive">€{{cents $r.Phase4MonthlyCents}}</div>
-    <p style="font-size:12px; color:var(--text3); margin-top:6px;">after selling current asset</p>
+    <p style="font-size:12px; color:var(--text3); margin-top:6px;">{{$d.T.Get "goals.planner.transition_result.after_selling"}}</p>
   </div>
   <div class="card value-card animate-on-scroll">
-    <h2>Total interest</h2>
+    <h2>{{$d.T.Get "goals.planner.transition_result.card_total_interest"}}</h2>
     <div class="value" style="color:var(--red);">€{{cents $r.TotalInterestCents}}</div>
-    <p style="font-size:12px; color:var(--text3); margin-top:6px;">across both loans</p>
+    <p style="font-size:12px; color:var(--text3); margin-top:6px;">{{$d.T.Get "goals.planner.transition_result.across_both_loans"}}</p>
   </div>
   <div class="card value-card animate-on-scroll">
-    <h2>Free by</h2>
+    <h2>{{$d.T.Get "goals.planner.transition_result.card_free_by"}}</h2>
     <div class="value positive" style="font-size:24px;">{{dateShort $r.FinalDate}}</div>
-    <p style="font-size:12px; color:var(--text3); margin-top:6px;">fully paid off</p>
+    <p style="font-size:12px; color:var(--text3); margin-top:6px;">{{$d.T.Get "goals.planner.transition_result.fully_paid_off"}}</p>
   </div>
 </div>
 
 <!-- Phase timeline -->
 <div class="card animate-on-scroll" style="margin-bottom:20px;">
-  <h2 style="margin-bottom:20px;">Your roadmap</h2>
+  <h2 style="margin-bottom:20px;">{{$d.T.Get "goals.planner.transition_result.roadmap_title"}}</h2>
   <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:0; position:relative;">
     <div style="position:absolute; top:20px; left:12.5%; right:12.5%; height:3px; background:var(--border); z-index:0; border-radius:2px;"></div>
 
     <!-- Phase 1 -->
     <div style="text-align:center; position:relative; padding:0 8px;">
       <div style="width:40px; height:40px; border-radius:50%; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-size:18px; margin:0 auto 12px; position:relative; z-index:1;">1</div>
-      <div style="font-weight:600; font-size:13px; color:var(--text1); margin-bottom:6px;">Save down payment</div>
+      <div style="font-weight:600; font-size:13px; color:var(--text1); margin-bottom:6px;">{{$d.T.Get "goals.planner.transition_result.phase1_title"}}</div>
       {{if gt $r.Phase1Months 0}}
       <div style="font-size:22px; font-weight:500; color:var(--accent); margin-bottom:4px;">{{$r.Phase1Months}}mo</div>
       <div style="font-size:11px; color:var(--text3);">until {{dateShort $r.Phase1EndDate}}</div>
       <div style="margin-top:10px; font-size:12px; color:var(--text2); background:var(--bg3); border-radius:var(--radius-sm); padding:8px 10px; text-align:left;">
-        <div>Target: <strong>€{{cents $r.DownPaymentCents}}</strong></div>
-        <div>Already have: <strong>€{{cents $r.AlreadyHaveCents}}</strong></div>
-        <div>Still need: <strong>€{{cents $r.StillNeededCents}}</strong></div>
-        <div>Saving: <strong>€{{cents $r.Form.MonthlySavingsCents}}/mo</strong></div>
+        <div>{{$d.T.Get "goals.planner.transition_result.phase1_target"}} <strong>€{{cents $r.DownPaymentCents}}</strong></div>
+        <div>{{$d.T.Get "goals.planner.transition_result.phase1_already_have"}} <strong>€{{cents $r.AlreadyHaveCents}}</strong></div>
+        <div>{{$d.T.Get "goals.planner.transition_result.phase1_still_need"}} <strong>€{{cents $r.StillNeededCents}}</strong></div>
+        <div>{{$d.T.Get "goals.planner.transition_result.phase1_saving"}} <strong>€{{cents $r.Form.MonthlySavingsCents}}/mo</strong></div>
       </div>
       {{else}}
-      <div style="font-size:16px; font-weight:600; color:var(--green); margin-bottom:4px;">Ready now!</div>
-      <div style="font-size:11px; color:var(--text3);">equity covers down payment</div>
+      <div style="font-size:16px; font-weight:600; color:var(--green); margin-bottom:4px;">{{$d.T.Get "goals.planner.transition_result.phase1_ready"}}</div>
+      <div style="font-size:11px; color:var(--text3);">{{$d.T.Get "goals.planner.transition_result.phase1_equity_covers"}}</div>
       <div style="margin-top:10px; font-size:12px; color:var(--text2); background:var(--bg3); border-radius:var(--radius-sm); padding:8px 10px; text-align:left;">
-        <div>Down payment: <strong>€{{cents $r.DownPaymentCents}}</strong></div>
-        <div>Your equity: <strong style="color:var(--green);">€{{cents $r.AlreadyHaveCents}}</strong></div>
+        <div>{{$d.T.Get "goals.planner.transition_result.phase1_down_payment"}} <strong>€{{cents $r.DownPaymentCents}}</strong></div>
+        <div>{{$d.T.Get "goals.planner.transition_result.phase1_your_equity"}} <strong style="color:var(--green);">€{{cents $r.AlreadyHaveCents}}</strong></div>
       </div>
       {{end}}
     </div>
@@ -458,47 +458,47 @@
     <!-- Phase 2 -->
     <div style="text-align:center; position:relative; padding:0 8px;">
       <div style="width:40px; height:40px; border-radius:50%; background:#f97316; color:#fff; display:flex; align-items:center; justify-content:center; font-size:18px; margin:0 auto 12px; position:relative; z-index:1;">2</div>
-      <div style="font-weight:600; font-size:13px; color:var(--text1); margin-bottom:6px;">Acquire / build</div>
+      <div style="font-weight:600; font-size:13px; color:var(--text1); margin-bottom:6px;">{{$d.T.Get "goals.planner.transition_result.phase2_title"}}</div>
       <div style="font-size:22px; font-weight:500; color:#f97316; margin-bottom:4px;">{{$r.Phase2Months}}mo</div>
       <div style="font-size:11px; color:var(--text3);">until {{dateShort $r.Phase2EndDate}}</div>
       <div style="margin-top:10px; font-size:12px; color:var(--text2); background:var(--bg3); border-radius:var(--radius-sm); padding:8px 10px; text-align:left;">
-        <div>New loan: <strong>€{{cents $r.ConstructionLoanCents}}</strong></div>
-        {{if $r.CurrentLoan}}<div>Existing loan: <strong>€{{cents $r.CurrentMonthlyCents}}/mo</strong></div>{{end}}
-        <div>New EMI: <strong>€{{cents $r.ConstructionMonthly}}/mo</strong></div>
-        <div style="border-top:1px solid var(--border); margin-top:6px; padding-top:6px;">Total burden: <strong style="color:#f97316;">€{{cents $r.Phase2MonthlyCents}}/mo</strong></div>
+        <div>{{$d.T.Get "goals.planner.transition_result.phase2_new_loan"}} <strong>€{{cents $r.ConstructionLoanCents}}</strong></div>
+        {{if $r.CurrentLoan}}<div>{{$d.T.Get "goals.planner.transition_result.phase2_existing_loan"}} <strong>€{{cents $r.CurrentMonthlyCents}}/mo</strong></div>{{end}}
+        <div>{{$d.T.Get "goals.planner.transition_result.phase2_new_emi"}} <strong>€{{cents $r.ConstructionMonthly}}/mo</strong></div>
+        <div style="border-top:1px solid var(--border); margin-top:6px; padding-top:6px;">{{$d.T.Get "goals.planner.transition_result.phase2_total_burden"}} <strong style="color:#f97316;">€{{cents $r.Phase2MonthlyCents}}/mo</strong></div>
       </div>
     </div>
 
     <!-- Phase 3 -->
     <div style="text-align:center; position:relative; padding:0 8px;">
       <div style="width:40px; height:40px; border-radius:50%; background:#14b8a6; color:#fff; display:flex; align-items:center; justify-content:center; font-size:18px; margin:0 auto 12px; position:relative; z-index:1;">3</div>
-      <div style="font-weight:600; font-size:13px; color:var(--text1); margin-bottom:6px;">Sell &amp; transition</div>
-      <div style="font-size:16px; font-weight:600; color:#14b8a6; margin-bottom:4px;">One-time event</div>
-      <div style="font-size:11px; color:var(--text3);">after acquisition completes</div>
+      <div style="font-weight:600; font-size:13px; color:var(--text1); margin-bottom:6px;">{{$d.T.Get "goals.planner.transition_result.phase3_title"}}</div>
+      <div style="font-size:16px; font-weight:600; color:#14b8a6; margin-bottom:4px;">{{$d.T.Get "goals.planner.transition_result.phase3_one_time"}}</div>
+      <div style="font-size:11px; color:var(--text3);">{{$d.T.Get "goals.planner.transition_result.phase3_after_acquisition"}}</div>
       <div style="margin-top:10px; font-size:12px; color:var(--text2); background:var(--bg3); border-radius:var(--radius-sm); padding:8px 10px; text-align:left;">
-        <div>Sale price: <strong>€{{cents $r.SalePriceCents}}</strong></div>
-        <div>Pay off loan: <strong style="color:var(--red);">-€{{cents $r.MortgagePayoffCents}}</strong></div>
-        <div style="border-top:1px solid var(--border); margin-top:6px; padding-top:6px;">Net proceeds: <strong style="color:var(--green);">€{{cents $r.NetProceedsCents}}</strong></div>
-        <div>Applied to new loan</div>
+        <div>{{$d.T.Get "goals.planner.transition_result.phase3_sale_price"}} <strong>€{{cents $r.SalePriceCents}}</strong></div>
+        <div>{{$d.T.Get "goals.planner.transition_result.phase3_pay_off"}} <strong style="color:var(--red);">-€{{cents $r.MortgagePayoffCents}}</strong></div>
+        <div style="border-top:1px solid var(--border); margin-top:6px; padding-top:6px;">{{$d.T.Get "goals.planner.transition_result.phase3_net_proceeds"}} <strong style="color:var(--green);">€{{cents $r.NetProceedsCents}}</strong></div>
+        <div>{{$d.T.Get "goals.planner.transition_result.phase3_applied"}}</div>
       </div>
     </div>
 
     <!-- Phase 4 -->
     <div style="text-align:center; position:relative; padding:0 8px;">
       <div style="width:40px; height:40px; border-radius:50%; background:var(--green); color:#fff; display:flex; align-items:center; justify-content:center; font-size:18px; margin:0 auto 12px; position:relative; z-index:1;">4</div>
-      <div style="font-weight:600; font-size:13px; color:var(--text1); margin-bottom:6px;">Goal achieved</div>
+      <div style="font-weight:600; font-size:13px; color:var(--text1); margin-bottom:6px;">{{$d.T.Get "goals.planner.transition_result.phase4_title"}}</div>
       {{if gt $r.Phase4Months 0}}
       <div style="font-size:22px; font-weight:500; color:var(--green); margin-bottom:4px;">{{$r.Phase4Months}}mo</div>
       <div style="font-size:11px; color:var(--text3);">paid off {{dateShort $r.Phase4EndDate}}</div>
       <div style="margin-top:10px; font-size:12px; color:var(--text2); background:var(--bg3); border-radius:var(--radius-sm); padding:8px 10px; text-align:left;">
-        <div>Remaining loan: <strong>€{{cents $r.RemainingBalanceCents}}</strong></div>
-        <div>Monthly: <strong style="color:var(--green);">€{{cents $r.Phase4MonthlyCents}}/mo</strong></div>
+        <div>{{$d.T.Get "goals.planner.transition_result.phase4_remaining_loan"}} <strong>€{{cents $r.RemainingBalanceCents}}</strong></div>
+        <div>{{$d.T.Get "goals.planner.transition_result.phase4_monthly"}} <strong style="color:var(--green);">€{{cents $r.Phase4MonthlyCents}}/mo</strong></div>
       </div>
       {{else}}
-      <div style="font-size:16px; font-weight:600; color:var(--green); margin-bottom:4px;">Fully paid!</div>
-      <div style="font-size:11px; color:var(--text3);">sale proceeds cleared the loan</div>
+      <div style="font-size:16px; font-weight:600; color:var(--green); margin-bottom:4px;">{{$d.T.Get "goals.planner.transition_result.phase4_fully_paid"}}</div>
+      <div style="font-size:11px; color:var(--text3);">{{$d.T.Get "goals.planner.transition_result.phase4_sale_cleared"}}</div>
       <div style="margin-top:10px; font-size:12px; color:var(--text2); background:var(--bg3); border-radius:var(--radius-sm); padding:8px 10px; text-align:left;">
-        <div style="color:var(--green); font-weight:600;">No remaining loan!</div>
+        <div style="color:var(--green); font-weight:600;">{{$d.T.Get "goals.planner.transition_result.phase4_no_remaining"}}</div>
       </div>
       {{end}}
     </div>
@@ -508,8 +508,8 @@
 <!-- Monthly cost chart -->
 <div class="card animate-on-scroll" style="margin-bottom:20px;">
   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-    <h2>Monthly cost over time</h2>
-    <span style="font-size:11px; color:var(--text3);">what you pay each month</span>
+    <h2>{{$d.T.Get "goals.planner.transition_result.chart_title"}}</h2>
+    <span style="font-size:11px; color:var(--text3);">{{$d.T.Get "goals.planner.transition_result.chart_subtitle"}}</span>
   </div>
   <canvas id="cost-chart" height="160"></canvas>
 </div>
@@ -556,18 +556,18 @@
 
 <!-- Save as goal (transition) -->
 <div class="card animate-on-scroll">
-  <h2 style="margin-bottom:4px;">Save as a goal</h2>
-  <p style="font-size:13px; color:var(--text3); margin-bottom:14px;">Adds this to your Goals tab so you can commit to it.</p>
+  <h2 style="margin-bottom:4px;">{{$d.T.Get "goals.planner.transition_result.save_as_goal_title"}}</h2>
+  <p style="font-size:13px; color:var(--text3); margin-bottom:14px;">{{$d.T.Get "goals.planner.transition_result.save_as_goal_desc"}}</p>
   <form method="POST" action="/goals" style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
     <input type="hidden" name="type" value="deposit">
     <input type="hidden" name="target_euros" value="{{div $r.Form.DreamCostCents 100}}">
     <input type="hidden" name="deadline" value="{{$r.FinalDate.Format "2006-01"}}">
     <div style="flex:1; min-width:200px;">
-      <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">Goal name</label>
-      <input name="name" required placeholder="e.g. New property, Upgrade car…"
+      <label style="font-size:12px; color:var(--text3); display:block; margin-bottom:5px;">{{$d.T.Get "goals.planner.transition_result.label_goal_name"}}</label>
+      <input name="name" required placeholder="{{$d.T.Get "goals.planner.transition_result.placeholder_goal_name"}}"
              style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text1); font-size:14px; box-sizing:border-box;">
     </div>
-    <button type="submit" class="btn btn-primary" style="white-space:nowrap;">Save goal →</button>
+    <button type="submit" class="btn btn-primary" style="white-space:nowrap;">{{$d.T.Get "goals.planner.transition_result.btn_save_goal"}}</button>
   </form>
 </div>
 
