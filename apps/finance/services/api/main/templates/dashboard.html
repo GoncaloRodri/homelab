@@ -20,44 +20,205 @@
 </div>
 {{end}}
 
-<!-- HERO: available to spend -->
+<!-- HERO: interactive cash flow waterfall -->
 <div class="card animate-on-scroll" style="margin-bottom:16px; padding:24px 28px;">
-  <div style="font-size:12px; color:var(--text2); text-transform:uppercase; letter-spacing:.5px; margin-bottom:10px; display:flex; align-items:center; gap:8px;">
-    {{$d.T.Get "dashboard.available_to_spend"}}
-    <span style="font-size:11px; background:var(--bg3); color:var(--text3); padding:2px 8px; border-radius:99px; font-weight:400; text-transform:none; letter-spacing:0;">
-      {{$d.T.Get "dashboard.available_formula"}}
-    </span>
+  <div style="font-size:12px; color:var(--text2); text-transform:uppercase; letter-spacing:.5px; margin-bottom:4px;">
+    {{$d.T.Get "dashboard.waterfall.title"}}
   </div>
 
-  <div style="display:flex; align-items:baseline; gap:20px; flex-wrap:wrap; margin-bottom:16px;">
-    <div class="animate-counter {{if lt $d.AvailableToSpend 0}}negative{{else}}positive{{end}}"
-         style="font-size:42px; font-weight:500; letter-spacing:-1.5px; line-height:1;"
-         data-target="{{$d.AvailableToSpend}}" data-prefix="€">€0.00</div>
-    <div style="font-size:13px; color:var(--text2);">
-      of <span style="color:var(--text); font-weight:500;" class="animate-counter" data-target="{{$d.DisposableIncome}}" data-prefix="€">€0.00</span> {{$d.T.Get "dashboard.disposable_label"}}
-      &nbsp;·&nbsp; <span style="color:var(--text2);">{{$d.MonthSpentPct}}% used</span>
+  <!-- Income row -->
+  {{if $d.IncomeCats}}
+  <div class="wf-section">
+    <button class="wf-row" onclick="wfToggle('income')" aria-expanded="false">
+      <span class="wf-chevron" id="wf-chev-income">›</span>
+      <span class="wf-row-label">{{$d.T.Get "dashboard.waterfall.income"}}</span>
+      <span class="wf-row-amt positive">+€{{cents $d.WaterfallIncome}}</span>
+    </button>
+    <div class="wf-detail" id="wf-income" style="display:none;">
+      {{range $i, $row := $d.IncomeCats}}
+      <div class="wf-cat-section">
+        <button class="wf-cat-row" onclick="wfToggleCat('ic{{$i}}')">
+          {{if $row.Color}}<span class="cat-dot" style="background:{{$row.Color}};"></span>{{end}}
+          <span style="flex:1; font-size:12px;">{{$row.Name}}</span>
+          <span class="wf-cat-chev" id="wf-cc-ic{{$i}}">›</span>
+          <span style="font-size:12px; font-weight:500; color:var(--green);">+€{{cents $row.Cents}}</span>
+        </button>
+        <div class="wf-txn-list" id="wf-ic{{$i}}" style="display:none;">
+          {{range index $d.IncomeCatTxns $row.Name}}
+          <div class="wf-txn-row">
+            <span class="wf-txn-date">{{dateShort .Date}}</span>
+            <span class="wf-txn-desc">{{.Description}}</span>
+            <span class="wf-txn-amt positive">+€{{cents .AmountCents}}</span>
+          </div>
+          {{end}}
+        </div>
+      </div>
+      {{end}}
     </div>
   </div>
-
-  <div style="background:var(--bg3); border-radius:99px; height:6px; overflow:hidden; margin-bottom:6px;">
-    <div style="height:100%; border-radius:99px; width:{{$d.MonthSpentPct}}%;
-         background:{{if gt $d.MonthSpentPct 90}}var(--red){{else if gt $d.MonthSpentPct 70}}#f59e0b{{else}}var(--green){{end}};
-         transition:width 1s ease;"></div>
+  {{else}}
+  <div class="wf-row" style="cursor:default;">
+    <span class="wf-row-label" style="padding-left:20px;">{{$d.T.Get "dashboard.waterfall.income"}}</span>
+    <span class="wf-row-amt positive">+€{{cents $d.WaterfallIncome}}</span>
   </div>
-  <div style="display:flex; justify-content:space-between;">
-    <span style="font-size:11px; color:var(--text3);">Month progress: {{$d.MonthProgressPct}}%</span>
-    <span style="font-size:11px; color:var(--text3);">Spent: {{$d.MonthSpentPct}}%</span>
+  {{end}}
+
+  <!-- Living expenses row -->
+  {{if $d.LivingCats}}
+  <div class="wf-section">
+    <button class="wf-row" onclick="wfToggle('living')" aria-expanded="false">
+      <span class="wf-chevron" id="wf-chev-living">›</span>
+      <span class="wf-row-label">{{$d.T.Get "dashboard.waterfall.living"}}</span>
+      <span class="wf-row-amt" style="color:var(--red);">−€{{cents $d.WaterfallLiving}}</span>
+    </button>
+    <div class="wf-detail" id="wf-living" style="display:none;">
+      {{range $i, $row := $d.LivingCats}}
+      <div class="wf-cat-section">
+        <button class="wf-cat-row" onclick="wfToggleCat('lc{{$i}}')">
+          {{if $row.Color}}<span class="cat-dot" style="background:{{$row.Color}};"></span>{{end}}
+          <span style="flex:1; font-size:12px;">{{$row.Name}}</span>
+          <span class="wf-cat-chev" id="wf-cc-lc{{$i}}">›</span>
+          <span style="font-size:12px; font-weight:500; color:var(--red);">−€{{cents $row.Cents}}</span>
+        </button>
+        <div class="wf-txn-list" id="wf-lc{{$i}}" style="display:none;">
+          {{range index $d.LivingCatTxns $row.Name}}
+          <div class="wf-txn-row">
+            <span class="wf-txn-date">{{dateShort .Date}}</span>
+            <span class="wf-txn-desc">{{.Description}}</span>
+            <span class="wf-txn-amt" style="color:var(--red);">−€{{cents (abs .AmountCents)}}</span>
+          </div>
+          {{end}}
+        </div>
+      </div>
+      {{end}}
+    </div>
+  </div>
+  {{else if gt $d.WaterfallLiving 0}}
+  <div class="wf-row" style="cursor:default;">
+    <span class="wf-row-label" style="padding-left:20px;">{{$d.T.Get "dashboard.waterfall.living"}}</span>
+    <span class="wf-row-amt" style="color:var(--red);">−€{{cents $d.WaterfallLiving}}</span>
+  </div>
+  {{end}}
+
+  <!-- Goal contributions row -->
+  {{if gt $d.WaterfallGoals 0}}
+  <div class="wf-section">
+    {{if $d.DashGoals}}
+    <button class="wf-row" onclick="wfToggle('goals')" aria-expanded="false">
+      <span class="wf-chevron" id="wf-chev-goals">›</span>
+      <span class="wf-row-label">{{$d.T.Get "dashboard.waterfall.goals"}}</span>
+      <span class="wf-row-amt" style="color:var(--accent);">−€{{cents $d.WaterfallGoals}}</span>
+    </button>
+    <div class="wf-detail" id="wf-goals" style="display:none;">
+      {{range $d.DashGoals}}
+      {{$funded := index $d.GoalFundedThisMonth .ID}}
+      {{if gt $funded 0}}
+      <div class="wf-cat-row" style="cursor:default;">
+        <span style="font-size:11px;">{{if eq .Type "once"}}🎯{{else if eq .Type "deposit"}}🏠{{else if eq .Type "emergency"}}🛡️{{else}}📈{{end}}</span>
+        <span style="flex:1; font-size:12px;">{{.Name}}</span>
+        <a href="/goals" style="font-size:11px; color:var(--accent); text-decoration:none; margin-right:8px;">{{$d.T.Get "dashboard.waterfall.goals_link"}}</a>
+        <span style="font-size:12px; font-weight:500; color:var(--accent);">−€{{cents $funded}}</span>
+      </div>
+      {{end}}
+      {{end}}
+    </div>
+    {{else}}
+    <div class="wf-row" style="cursor:default;">
+      <span class="wf-row-label" style="padding-left:20px; display:flex; align-items:center; gap:8px;">
+        {{$d.T.Get "dashboard.waterfall.goals"}}
+        <a href="/goals" style="font-size:11px; color:var(--accent); text-decoration:none;">{{$d.T.Get "dashboard.waterfall.goals_link"}}</a>
+      </span>
+      <span class="wf-row-amt" style="color:var(--accent);">−€{{cents $d.WaterfallGoals}}</span>
+    </div>
+    {{end}}
+  </div>
+  {{end}}
+
+  <!-- Free cash total -->
+  <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 0 0 0; margin-top:4px; border-top:1px solid var(--border);">
+    <span style="font-size:14px; font-weight:600; color:var(--text);">{{$d.T.Get "dashboard.waterfall.free_cash"}}</span>
+    <div class="animate-counter {{if lt $d.WaterfallFreeCash 0}}negative{{else}}positive{{end}}"
+         style="font-size:32px; font-weight:500; letter-spacing:-1px; line-height:1;"
+         data-target="{{$d.WaterfallFreeCash}}" data-prefix="€">€0</div>
+  </div>
+
+  <!-- Month progress bar -->
+  <div style="margin-top:16px; padding-top:14px; border-top:1px solid var(--border);">
+    <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text3); margin-bottom:5px;">
+      <span>{{$d.T.Get "dashboard.waterfall.month_progress"}}</span>
+      <span>{{$d.MonthProgressPct}}%</span>
+    </div>
+    <div style="background:var(--bg3); border-radius:99px; height:4px; overflow:hidden;">
+      <div style="height:100%; border-radius:99px; width:{{$d.MonthProgressPct}}%;
+           background:var(--text3); transition:width 1s ease;"></div>
+    </div>
   </div>
 </div>
 
+<style>
+.wf-section { border-bottom: 1px solid var(--border); }
+.wf-section:last-of-type { border-bottom: none; }
+.wf-row {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; padding: 10px 0;
+  background: none; border: none; cursor: pointer; text-align: left;
+  color: var(--text);
+}
+.wf-row:hover .wf-row-label { color: var(--text); }
+.wf-chevron {
+  font-size: 14px; color: var(--text3); width: 14px; flex-shrink: 0;
+  transition: transform 0.18s ease; display: inline-block;
+  transform-origin: center 45%;
+}
+.wf-chevron.open { transform: rotate(90deg); }
+.wf-row-label { flex: 1; font-size: 13px; color: var(--text2); }
+.wf-row-amt { font-size: 15px; font-weight: 600; white-space: nowrap; }
+.wf-detail { padding: 4px 0 8px 22px; }
+.wf-cat-section { }
+.wf-cat-row {
+  display: flex; align-items: center; gap: 7px;
+  width: 100%; padding: 6px 0;
+  background: none; border: none; cursor: pointer; text-align: left;
+  color: var(--text2);
+}
+.wf-cat-chev {
+  font-size: 11px; color: var(--text3); width: 10px;
+  transition: transform 0.15s ease; display: inline-block;
+  transform-origin: center 45%;
+}
+.wf-cat-chev.open { transform: rotate(90deg); }
+.cat-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.wf-txn-list { padding: 2px 0 6px 14px; }
+.wf-txn-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 0; border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+.wf-txn-row:last-child { border-bottom: none; }
+.wf-txn-date { color: var(--text3); white-space: nowrap; min-width: 44px; }
+.wf-txn-desc { flex: 1; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wf-txn-amt { white-space: nowrap; font-weight: 500; }
+</style>
+
+<script>
+function wfToggle(id) {
+  const detail = document.getElementById('wf-' + id);
+  const chev   = document.getElementById('wf-chev-' + id);
+  const open   = detail.style.display !== 'none';
+  detail.style.display = open ? 'none' : 'block';
+  if (chev) chev.classList.toggle('open', !open);
+}
+function wfToggleCat(id) {
+  const list = document.getElementById('wf-' + id);
+  const chev = document.getElementById('wf-cc-' + id);
+  const open = list.style.display !== 'none';
+  list.style.display = open ? 'none' : 'block';
+  if (chev) chev.classList.toggle('open', !open);
+}
+</script>
+
 <!-- 3 diagnostic cards -->
 <div class="grid" style="margin-bottom:16px;">
-
-  <div class="card value-card animate-on-scroll">
-    <h2>{{$d.T.Get "dashboard.cards.bank_should_be"}}</h2>
-    <div class="value animate-counter" data-target="{{$d.BankShouldBe}}" data-prefix="€" style="color:var(--text);">€0.00</div>
-    <p style="font-size:12px; color:var(--text3); margin-top:6px;">{{$d.T.Get "dashboard.cards.bank_should_be_sub"}}</p>
-  </div>
 
   <div class="card value-card animate-on-scroll">
     <h2>{{$d.T.Get "dashboard.cards.savings_rate"}}</h2>
@@ -95,44 +256,8 @@
 
 </div>
 
-<!-- Bank math + stocks -->
+<!-- Stocks + spending breakdown -->
 <div class="grid-2" style="margin-bottom:16px;">
-
-  <div class="card animate-on-scroll">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-      <h2>{{$d.T.Get "dashboard.bank_math.section_title"}}</h2>
-      <span style="font-size:11px; color:var(--text3);">{{$d.T.Get "dashboard.bank_math.section_subtitle"}}</span>
-    </div>
-    {{if $d.RecurringExpenses}}
-    <div style="display:flex; flex-direction:column;">
-      {{range $d.RecurringExpenses}}
-      {{$color := index $d.CategoryColors .Category}}
-      <div style="display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid var(--border);">
-        <span style="font-size:13px; color:var(--text2); display:flex; align-items:center; gap:7px;">
-          {{if $color}}<span style="width:7px;height:7px;border-radius:50%;background:{{$color}};display:inline-block;"></span>{{end}}
-          {{.Category}}
-        </span>
-        <span style="font-size:13px; font-weight:500; color:var(--red);">− €{{cents .MonthlyCents}}</span>
-      </div>
-      {{end}}
-      {{if $d.SafetyBufferCents}}
-      <div style="display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid var(--border);">
-        <span style="font-size:13px; color:var(--text2);">{{$d.T.Get "dashboard.bank_math.safety_buffer"}}</span>
-        <span style="font-size:13px; font-weight:500; color:var(--red);">− €{{cents $d.SafetyBufferCents}}</span>
-      </div>
-      {{end}}
-      <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 0 0 0;">
-        <span style="font-size:13px; font-weight:500; color:var(--text);">{{$d.T.Get "dashboard.bank_math.minimum_recommended"}}</span>
-        <span class="animate-counter positive" style="font-size:16px; font-weight:600;"
-              data-target="{{$d.BankShouldBe}}" data-prefix="€">€0.00</span>
-      </div>
-    </div>
-    {{else}}
-    <div class="empty-state" style="padding:24px;">
-      <p>{{$d.T.Get "dashboard.bank_math.no_recurring_msg"}}<br>{{$d.T.Get "dashboard.bank_math.no_recurring_sub"}}</p>
-    </div>
-    {{end}}
-  </div>
 
   <div class="card animate-on-scroll">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
@@ -280,39 +405,4 @@
 </div>
 {{end}}
 
-{{if $d.RecurringExpenses}}
-<div class="card animate-on-scroll" style="margin-top:16px;">
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-    <h2>{{$d.T.Get "dashboard.fixed_costs.section_title"}}</h2>
-    <span style="font-size:11px; color:var(--text3);">{{$d.T.Get "dashboard.fixed_costs.auto_detected"}}</span>
-  </div>
-  <div style="display:flex; flex-direction:column;">
-    {{range $d.RecurringExpenses}}
-    {{$color := index $d.CategoryColors .Category}}
-    <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border);">
-      <div style="display:flex; align-items:center; gap:10px;">
-        {{if .IsGoal}}
-        <span style="width:9px; height:9px; border-radius:50%; background:var(--accent); flex-shrink:0; display:inline-block;"></span>
-        {{else if $color}}
-        <span style="width:9px; height:9px; border-radius:50%; background:{{$color}}; flex-shrink:0; display:inline-block;"></span>
-        {{end}}
-        <div>
-          <div style="font-size:13px; font-weight:500; color:var(--text);">{{.Category}}</div>
-          <div style="font-size:11px; color:var(--text3);">{{if .IsGoal}}{{$d.T.Get "dashboard.fixed_costs.committed_goal"}}{{else}}{{$d.T.Get "dashboard.fixed_costs.recurring_expense"}}{{end}}</div>
-        </div>
-      </div>
-      <div style="text-align:right;">
-        <div style="font-size:14px; font-weight:600; color:var(--red);">− €{{cents .MonthlyCents}}</div>
-        <div style="font-size:11px; color:var(--text3);">{{$d.T.Get "dashboard.fixed_costs.per_month"}}</div>
-      </div>
-    </div>
-    {{end}}
-    <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 0 0 0;">
-      <span style="font-size:13px; font-weight:500; color:var(--text);">{{$d.T.Get "dashboard.fixed_costs.total_committed"}}</span>
-      <span class="animate-counter" style="font-size:15px; font-weight:600; color:var(--red);"
-            data-target="{{$d.TotalCommittedCents}}" data-prefix="€">€0</span>
-    </div>
-  </div>
-</div>
-{{end}}
 {{end}}

@@ -162,6 +162,17 @@
         {{end}}
       </select>
     </div>
+    {{if $d.Goals}}
+    <div class="form-group">
+      <label>{{$d.T.Get "transactions.modal_add.label_goal"}}</label>
+      <select id="add-goal">
+        <option value="">{{$d.T.Get "transactions.modal_add.option_no_goal"}}</option>
+        {{range $d.Goals}}
+        <option value="{{.ID}}">{{.Name}}</option>
+        {{end}}
+      </select>
+    </div>
+    {{end}}
 
     <div id="add-error" class="error" style="display:none;"></div>
 
@@ -214,9 +225,15 @@ function delTxn(id) {
   });
 }
 
-function openAddModal() {
+function openAddModal(preselectedGoalID) {
   document.getElementById('add-modal').style.display = 'flex';
   document.getElementById('add-date').value = new Date().toISOString().slice(0, 10);
+  if (preselectedGoalID) {
+    const goalSel = document.getElementById('add-goal');
+    if (goalSel) goalSel.value = preselectedGoalID;
+    const signSel = document.getElementById('add-sign');
+    if (signSel) signSel.value = '-1'; // goal contributions are expenses
+  }
   document.getElementById('add-desc').focus();
 }
 function closeAddModal() {
@@ -230,6 +247,8 @@ function submitAdd() {
   const amt    = parseFloat(document.getElementById('add-amount').value);
   const cat    = document.getElementById('add-cat').value;
   const acct   = document.getElementById('add-account').value;
+  const goalEl = document.getElementById('add-goal');
+  const goalID = goalEl ? goalEl.value : '';
   const errEl  = document.getElementById('add-error');
 
   if (!date || !desc || isNaN(amt) || amt <= 0) {
@@ -239,16 +258,26 @@ function submitAdd() {
   }
   errEl.style.display = 'none';
 
+  const body = {account_id: acct, date, description: desc, amount_cents: Math.round(amt * 100) * sign, category: cat};
+  if (goalID) body.goal_id = goalID;
+
   fetch('/api/transactions', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({account_id: acct, date, description: desc, amount_cents: Math.round(amt * 100) * sign, category: cat})
+    body: JSON.stringify(body)
   }).then(r => {
     if (!r.ok) { errEl.textContent = '{{$d.T.Get "transactions.modal_add.error_save_failed"}}'; errEl.style.display = 'block'; return; }
     closeAddModal();
     location.reload();
   });
 }
+
+// auto-open modal when redirected from goals page with ?fund_goal=<id>
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const fundGoal = params.get('fund_goal');
+  if (fundGoal) openAddModal(fundGoal);
+})();
 
 document.getElementById('add-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeAddModal(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAddModal(); });
