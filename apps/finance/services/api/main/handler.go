@@ -849,6 +849,19 @@ func (h *Handler) CreateTransaction(w http.ResponseWriter, r *http.Request) {
 		date = time.Now()
 	}
 
+	// Auto-tag: if no explicit goal_id but the category has one linked, inherit it.
+	goalID := body.GoalID
+	if goalID == "" && body.Category != "" && body.AmountCents < 0 {
+		if cats, err2 := h.store.getCategories(ctx, a.UserID); err2 == nil {
+			for _, c := range cats {
+				if c.Name == body.Category && c.GoalID != "" {
+					goalID = c.GoalID
+					break
+				}
+			}
+		}
+	}
+
 	txn := Transaction{
 		ID:          bson.NewObjectID().Hex(),
 		UserID:      a.UserID,
@@ -857,7 +870,7 @@ func (h *Handler) CreateTransaction(w http.ResponseWriter, r *http.Request) {
 		Description: body.Description,
 		AmountCents: body.AmountCents,
 		Category:    body.Category,
-		GoalID:      body.GoalID,
+		GoalID:      goalID,
 		CreatedAt:   time.Now(),
 	}
 
@@ -1300,6 +1313,7 @@ func (h *Handler) Categories(w http.ResponseWriter, r *http.Request) {
 			Name        string `json:"name"`
 			Color       string `json:"color"`
 			BudgetCents int64  `json:"budget_cents"`
+			GoalID      string `json:"goal_id"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			http.Error(w, "bad request", http.StatusBadRequest)
@@ -1311,6 +1325,7 @@ func (h *Handler) Categories(w http.ResponseWriter, r *http.Request) {
 			Name:        body.Name,
 			Color:       body.Color,
 			BudgetCents: body.BudgetCents,
+			GoalID:      body.GoalID,
 		}
 		if err := h.store.updateCategory(r.Context(), cat); err != nil {
 			slog.Error("update category", "err", err)
@@ -2710,16 +2725,24 @@ func (h *Handler) Settings(w http.ResponseWriter, r *http.Request) {
 
 	accounts, _ := h.store.getAccounts(ctx, a.UserID)
 	categories, _ := h.store.getCategories(ctx, a.UserID)
+	goals, _ := h.store.getGoals(ctx, a.UserID)
+
+	goalNameByID := make(map[string]string, len(goals))
+	for _, g := range goals {
+		goalNameByID[g.ID] = g.Name
+	}
 
 	render(w, settingsTmpl, &SettingsData{
-		T:          h.t(r),
-		UserID:     a.UserID,
-		Email:      a.Email,
-		Title:      "Settings",
-		Route:      "settings",
-		Tab:        tab,
-		Accounts:   accounts,
-		Categories: categories,
+		T:            h.t(r),
+		UserID:       a.UserID,
+		Email:        a.Email,
+		Title:        "Settings",
+		Route:        "settings",
+		Tab:          tab,
+		Accounts:     accounts,
+		Categories:   categories,
+		Goals:        goals,
+		GoalNameByID: goalNameByID,
 	})
 }
 

@@ -87,7 +87,12 @@ tr:last-child td { border-bottom:none; }
 <div class="s-card">
   {{if $d.Categories}}
   <table>
-    <thead><tr><th>{{$d.T.Get "settings.categories.col_category"}}</th><th style="text-align:right;">{{$d.T.Get "settings.categories.col_budget"}}</th><th></th></tr></thead>
+    <thead><tr>
+      <th>{{$d.T.Get "settings.categories.col_category"}}</th>
+      <th style="text-align:right;">{{$d.T.Get "settings.categories.col_budget"}}</th>
+      {{if $d.Goals}}<th style="text-align:left; padding-left:12px; font-size:12px;">{{$d.T.Get "settings.categories.col_goal"}}</th>{{end}}
+      <th></th>
+    </tr></thead>
     <tbody>
     {{range $d.Categories}}
     <tr id="cat-row-{{.ID}}">
@@ -101,9 +106,19 @@ tr:last-child td { border-bottom:none; }
         {{else}}
         <span id="cat-budget-{{.ID}}" style="color:var(--muted);">—</span>
         {{end}}
-        <button onclick="editCat('{{.ID}}','{{.Name}}',{{.BudgetCents}},'{{.Color}}')"
+        <button onclick="editCat('{{.ID}}','{{.Name}}',{{.BudgetCents}},'{{.Color}}','{{.GoalID}}')"
                 style="margin-left:8px; background:none; border:none; cursor:pointer; color:var(--muted); font-size:0.85rem;">✎</button>
       </td>
+      {{if $d.Goals}}
+      <td style="padding-left:12px;">
+        {{$goalName := index $d.GoalNameByID .GoalID}}
+        {{if $goalName}}
+        <span id="cat-goal-{{.ID}}" style="font-size:12px; color:var(--accent);">⚡ {{$goalName}}</span>
+        {{else}}
+        <span id="cat-goal-{{.ID}}" style="font-size:12px; color:var(--muted);">—</span>
+        {{end}}
+      </td>
+      {{end}}
       <td style="text-align:right;">
         <button class="btn btn-danger" onclick="deleteCat('{{.ID}}')">{{$d.T.Get "settings.categories.btn_delete"}}</button>
       </td>
@@ -129,6 +144,18 @@ tr:last-child td { border-bottom:none; }
       <input id="edit-cat-name"   type="text"   placeholder="{{$d.T.Get "settings.categories.modal_edit.placeholder_name"}}" style="padding:8px 12px; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text);">
       <input id="edit-cat-budget" type="number" placeholder="{{$d.T.Get "settings.categories.modal_edit.placeholder_budget"}}" min="0" style="padding:8px 12px; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text);">
       <input id="edit-cat-color"  type="color"  style="width:100%; height:38px; padding:4px; border:1px solid var(--border); border-radius:8px; cursor:pointer;">
+      {{if $d.Goals}}
+      <div>
+        <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:4px;">{{$d.T.Get "settings.categories.modal_edit.label_goal"}}</label>
+        <select id="edit-cat-goal" style="width:100%; padding:8px 12px; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text);">
+          <option value="">{{$d.T.Get "settings.categories.modal_edit.option_no_goal"}}</option>
+          {{range $d.Goals}}
+          <option value="{{.ID}}">{{.Name}}</option>
+          {{end}}
+        </select>
+        <p style="font-size:11px; color:var(--muted); margin-top:4px;">{{$d.T.Get "settings.categories.modal_edit.goal_hint"}}</p>
+      </div>
+      {{end}}
     </div>
     <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:16px;">
       <button onclick="closeEditCat()" class="btn" style="background:var(--bg); border:1px solid var(--border); color:var(--text);">{{$d.T.Get "settings.categories.modal_edit.btn_cancel"}}</button>
@@ -154,11 +181,13 @@ function deleteCat(id) {
     .then(r => { if (r.ok) location.reload(); });
 }
 
-function editCat(id, name, budgetCents, color) {
+function editCat(id, name, budgetCents, color, goalID) {
   editingCatID = id;
   document.getElementById('edit-cat-name').value   = name;
   document.getElementById('edit-cat-budget').value = budgetCents || '';
   document.getElementById('edit-cat-color').value  = color || '#6366f1';
+  const goalSel = document.getElementById('edit-cat-goal');
+  if (goalSel) goalSel.value = goalID || '';
   document.getElementById('edit-cat-modal').style.display = 'flex';
 }
 
@@ -169,13 +198,17 @@ function closeEditCat() {
 
 function saveEditCat() {
   if (!editingCatID) return;
-  const body = new URLSearchParams({
-    name:         document.getElementById('edit-cat-name').value,
-    budget_cents: document.getElementById('edit-cat-budget').value || '0',
-    color:        document.getElementById('edit-cat-color').value,
-  });
-  fetch('/categories/' + editingCatID, { method: 'PUT', body })
-    .then(r => { if (r.ok) { closeEditCat(); location.reload(); } });
+  const goalSel = document.getElementById('edit-cat-goal');
+  fetch('/categories/' + editingCatID, {
+    method: 'PUT',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      name:         document.getElementById('edit-cat-name').value,
+      budget_cents: parseInt(document.getElementById('edit-cat-budget').value || '0'),
+      color:        document.getElementById('edit-cat-color').value,
+      goal_id:      goalSel ? goalSel.value : '',
+    }),
+  }).then(r => { if (r.ok) { closeEditCat(); location.reload(); } });
 }
 
 document.getElementById('add-account-form')?.addEventListener('submit', function(e) {

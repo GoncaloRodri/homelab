@@ -34,11 +34,13 @@ type Account struct {
 }
 
 type Category struct {
-	ID         string `bson:"_id" json:"id"`
-	UserID     string `bson:"user_id" json:"user_id"`
-	Name       string `bson:"name" json:"name"`
-	Color      string `bson:"color" json:"color"`
-	BudgetCents int64 `bson:"budget_cents" json:"budget_cents"`
+	ID          string `bson:"_id" json:"id"`
+	UserID      string `bson:"user_id" json:"user_id"`
+	Name        string `bson:"name" json:"name"`
+	Color       string `bson:"color" json:"color"`
+	BudgetCents int64  `bson:"budget_cents" json:"budget_cents"`
+	// GoalID, when set, auto-tags transactions in this category to the linked goal.
+	GoalID string `bson:"goal_id,omitempty" json:"goal_id,omitempty"`
 }
 
 type Transaction struct {
@@ -322,6 +324,8 @@ type SettingsData struct {
 	Tab        string // "accounts" | "categories"
 	Accounts   []Account
 	Categories []Category
+	Goals      []Goal            // for category → goal linking dropdown
+	GoalNameByID map[string]string // goalID → name, for table display
 }
 
 type HouseholdData struct {
