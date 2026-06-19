@@ -103,11 +103,13 @@ func (s *Store) createCategory(ctx context.Context, c *Category) error {
 func (s *Store) updateCategory(ctx context.Context, c *Category) error {
 	ctx, span := mongo.StartSpan(ctx, "Store.updateCategory")
 	defer span.End()
-	_, err := s.categories().UpdateOne(ctx, bson.M{"_id": c.ID, "user_id": c.UserID}, bson.M{"$set": bson.M{
-		"name":        c.Name,
-		"color":       c.Color,
+	update := bson.M{
+		"name":         c.Name,
+		"color":        c.Color,
 		"budget_cents": c.BudgetCents,
-	}})
+		"goal_id":      c.GoalID, // "" clears the link
+	}
+	_, err := s.categories().UpdateOne(ctx, bson.M{"_id": c.ID, "user_id": c.UserID}, bson.M{"$set": update})
 	return err
 }
 
