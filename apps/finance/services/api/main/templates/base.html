@@ -481,6 +481,55 @@
     }
     .empty-state h3 { font-size: 17px; color: var(--text2); margin-bottom: 8px; }
 
+    /* ── Setup steps (empty-state guidance) ────────────────────────── */
+    .setup-steps { display: flex; flex-direction: column; gap: 10px; max-width: 380px; margin: 0 auto 24px; }
+    .setup-step {
+      display: flex; align-items: flex-start; gap: 12px;
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 11px 14px;
+      text-align: left;
+    }
+    .setup-step-num {
+      flex-shrink: 0;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: var(--accent-glow); border: 1px solid var(--accent);
+      color: var(--accent); font-size: 11px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .setup-step strong { display: block; font-size: 13px; color: var(--text); margin-bottom: 2px; }
+    .setup-step p { font-size: 12px; color: var(--text3); margin: 0; line-height: 1.5; }
+
+    /* ── Help tooltips ──────────────────────────────────────────────── */
+    .help-tip {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 14px; height: 14px; border-radius: 50%;
+      background: var(--bg3); border: 1px solid var(--border2);
+      color: var(--text3); font-size: 8px; font-weight: 700;
+      cursor: help; position: relative; vertical-align: middle;
+      margin-left: 5px; flex-shrink: 0; user-select: none;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .help-tip:hover, .help-tip.open { border-color: var(--accent); color: var(--accent); }
+    .help-popup {
+      display: none; position: absolute; z-index: 400;
+      bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+      min-width: 230px; max-width: 300px;
+      background: var(--surface); border: 1px solid var(--border2);
+      border-radius: var(--radius); padding: 12px 14px;
+      box-shadow: var(--shadow-md);
+      font-size: 12px; line-height: 1.6; color: var(--text2);
+      font-weight: 400; white-space: normal; text-align: left;
+      pointer-events: none; cursor: default;
+    }
+    .help-tip.open .help-popup { display: block; }
+    .help-popup strong { color: var(--text); display: block; margin-bottom: 4px; font-size: 12.5px; font-weight: 600; }
+    .help-popup code {
+      display: block; margin-top: 8px;
+      background: var(--bg3); border-radius: 6px; padding: 7px 9px;
+      font-family: ui-monospace, monospace; font-size: 11px; color: var(--accent2);
+      line-height: 1.7;
+    }
+
     /* ── Misc utils ──────────────────────────────────────────────────── */
     .flex { display: flex; gap: 8px; align-items: center; }
     .flex-wrap { flex-wrap: wrap; }
@@ -730,6 +779,13 @@
     }
     Chart.defaults.color = () => getThemeColor('textColor');
     Chart.defaults.borderColor = () => getThemeColor('gridColor');
+
+    /* ── Help tips ────────────────────────────────────────────────────── */
+    document.addEventListener('click', e => {
+      const tip = e.target.closest('.help-tip');
+      document.querySelectorAll('.help-tip.open').forEach(t => { if (t !== tip) t.classList.remove('open'); });
+      if (tip) { e.stopPropagation(); tip.classList.toggle('open'); }
+    });
   </script>
 </body>
 </html>

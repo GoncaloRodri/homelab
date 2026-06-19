@@ -100,10 +100,39 @@
         </tr>
         {{else}}
         <tr>
-          <td colspan="6" class="text-center text-muted" style="padding:44px;">
-            {{$d.T.Get "transactions.table.empty_msg"}}
-            <a href="/import" style="color:var(--accent);">{{$d.T.Get "transactions.table.empty_import_link"}}</a> or
-            <button class="btn btn-outline btn-sm" onclick="openAddModal()" style="margin-left:4px;">{{$d.T.Get "transactions.table.empty_add_btn"}}</button>.
+          <td colspan="6" style="padding:0;">
+            <div style="text-align:center; padding:40px 24px 48px;">
+              <div style="font-size:40px; margin-bottom:14px;">🧾</div>
+              <div style="font-size:16px; font-weight:600; color:var(--text2); margin-bottom:8px;">No transactions yet</div>
+              <p style="font-size:13px; color:var(--text3); margin-bottom:28px;">Transactions are the foundation of every chart, goal, and insight in this app.</p>
+              <div class="setup-steps" style="margin-bottom:28px;">
+                <div class="setup-step">
+                  <span class="setup-step-num">1</span>
+                  <div>
+                    <strong>Add an account</strong>
+                    <p>Go to Settings → Accounts and create your checking or savings account first.</p>
+                  </div>
+                </div>
+                <div class="setup-step">
+                  <span class="setup-step-num">2</span>
+                  <div>
+                    <strong>Import a CSV or add manually</strong>
+                    <p>Export a statement from your bank and import it, or tap "+ Add Transaction" to enter one by hand.</p>
+                  </div>
+                </div>
+                <div class="setup-step">
+                  <span class="setup-step-num">3</span>
+                  <div>
+                    <strong>Tag categories &amp; goals</strong>
+                    <p>Once imported, categorise your spending. Link categories to goals so contributions are tracked automatically.</p>
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+                <a href="/import" class="btn btn-primary">{{$d.T.Get "transactions.table.empty_import_link"}}</a>
+                <button class="btn btn-outline" onclick="openAddModal()">{{$d.T.Get "transactions.table.empty_add_btn"}}</button>
+              </div>
+            </div>
           </td>
         </tr>
         {{end}}
