@@ -136,7 +136,7 @@
 
   <!-- Free cash total -->
   <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 0 0 0; margin-top:4px; border-top:1px solid var(--border);">
-    <span style="font-size:14px; font-weight:600; color:var(--text);">{{$d.T.Get "dashboard.waterfall.free_cash"}}<span class="help-tip">?<div class="help-popup"><strong>Free Cash</strong>What's left after paying for life and funding your goals. Positive means you have room to save or spend more.<code>Income − Living expenses − Goal contributions</code></div></span></span>
+    <span style="font-size:14px; font-weight:600; color:var(--text);">{{$d.T.Get "dashboard.waterfall.free_cash"}}<span class="help-tip">?<div class="help-popup"><strong>{{$d.T.Get "help.free_cash.title"}}</strong>{{$d.T.Get "help.free_cash.body"}}<code>{{$d.T.Get "help.free_cash.formula"}}</code></div></span></span>
     <div class="animate-counter {{if lt $d.WaterfallFreeCash 0}}negative{{else}}positive{{end}}"
          style="font-size:32px; font-weight:500; letter-spacing:-1px; line-height:1;"
          data-target="{{$d.WaterfallFreeCash}}" data-prefix="€">€0</div>
@@ -249,7 +249,7 @@ function wfToggleCat(id) {
 <div class="grid" style="margin-bottom:16px;">
 
   <div class="card value-card animate-on-scroll">
-    <h2>{{$d.T.Get "dashboard.cards.savings_rate"}}<span class="help-tip">?<div class="help-popup"><strong>Savings Rate</strong>The share of your income you're keeping. Above 20% is healthy; below 0% means you spent more than you earned.<code>(Income − Expenses) ÷ Income × 100</code></div></span></h2>
+    <h2>{{$d.T.Get "dashboard.cards.savings_rate"}}<span class="help-tip">?<div class="help-popup"><strong>{{$d.T.Get "help.savings_rate.title"}}</strong>{{$d.T.Get "help.savings_rate.body"}}<code>{{$d.T.Get "help.savings_rate.formula"}}</code></div></span></h2>
     <div class="value {{if gt $d.SavingsRatePct 0}}positive{{else}}negative{{end}}">{{$d.SavingsRatePct}}%</div>
     {{if $d.LastMonthSavingsRatePct}}
     <p style="font-size:12px; margin-top:6px; {{if gt $d.SavingsRatePct $d.LastMonthSavingsRatePct}}color:var(--green){{else}}color:var(--red){{end}};">
@@ -259,7 +259,7 @@ function wfToggleCat(id) {
   </div>
 
   <div class="card value-card animate-on-scroll">
-    <h2>{{$d.T.Get "dashboard.cards.net_worth"}}<span class="help-tip">?<div class="help-popup"><strong>Net Worth</strong>Everything you own minus everything you owe. Tracking this monthly is the single best measure of financial health.<code>Cash + Investments + Property equity − Debts</code></div></span></h2>
+    <h2>{{$d.T.Get "dashboard.cards.net_worth"}}<span class="help-tip">?<div class="help-popup"><strong>{{$d.T.Get "help.net_worth.title"}}</strong>{{$d.T.Get "help.net_worth.body"}}<code>{{$d.T.Get "help.net_worth.formula"}}</code></div></span></h2>
     <div class="value animate-counter {{if lt $d.NetWorthCents 0}}negative{{else}}positive{{end}}"
          data-target="{{$d.NetWorthCents}}" data-prefix="€">€0.00</div>
     <p style="font-size:12px; color:var(--text3); margin-top:6px;"><a href="/networth" style="color:var(--accent);">{{$d.T.Get "dashboard.cards.net_worth_link"}}</a></p>

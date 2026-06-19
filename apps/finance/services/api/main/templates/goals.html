@@ -80,7 +80,7 @@
 
       <div style="display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start;">
         <div style="text-align:center;">
-          <div style="font-size:11px; color:var(--text3); margin-bottom:3px;">{{$d.T.Get "goals.goal_card.need_per_month"}}<span class="help-tip">?<div class="help-popup"><strong>Monthly amount needed</strong>How much to set aside each month to hit your target by the deadline.<code>(Target − Saved) ÷ Months remaining</code></div></span></div>
+          <div style="font-size:11px; color:var(--text3); margin-bottom:3px;">{{$d.T.Get "goals.goal_card.need_per_month"}}<span class="help-tip">?<div class="help-popup"><strong>{{$d.T.Get "help.monthly_needed.title"}}</strong>{{$d.T.Get "help.monthly_needed.body"}}<code>{{$d.T.Get "help.monthly_needed.formula"}}</code></div></span></div>
           <div class="animate-counter" style="font-size:18px; font-weight:600; color:var(--text);"
                data-target="{{.MonthlyCents}}" data-prefix="€">€0</div>
         </div>
@@ -89,7 +89,7 @@
           <div style="font-size:18px; font-weight:600; color:var(--text);">{{.MonthsLeft}}</div>
         </div>
         <div style="text-align:center;">
-          <div style="font-size:11px; color:var(--text3); margin-bottom:3px;">{{$d.T.Get "goals.goal_card.at_current_rate"}}<span class="help-tip">?<div class="help-popup"><strong>At current rate</strong>How many months it would actually take based on your average monthly savings. Green = on time, red = late.</div></span></div>
+          <div style="font-size:11px; color:var(--text3); margin-bottom:3px;">{{$d.T.Get "goals.goal_card.at_current_rate"}}<span class="help-tip">?<div class="help-popup"><strong>{{$d.T.Get "help.at_current_rate.title"}}</strong>{{$d.T.Get "help.at_current_rate.body"}}</div></span></div>
           {{if gt .MonthsAtCurrentRate 0}}
           <div style="font-size:18px; font-weight:600;
                {{if .Feasible}}color:var(--green){{else}}color:var(--red){{end}};">
@@ -100,7 +100,7 @@
           {{end}}
         </div>
         <div style="text-align:center;">
-          <div style="font-size:11px; color:var(--text3); margin-bottom:3px;">{{$d.T.Get "goals.goal_card.disposable_after"}}<span class="help-tip">?<div class="help-popup"><strong>Free cash after this goal</strong>Your estimated monthly free cash if you commit to this goal. Red means you'd need to cut spending elsewhere.<code>Income − Living − All committed goals − This goal</code></div></span></div>
+          <div style="font-size:11px; color:var(--text3); margin-bottom:3px;">{{$d.T.Get "goals.goal_card.disposable_after"}}<span class="help-tip">?<div class="help-popup"><strong>{{$d.T.Get "help.disposable_after.title"}}</strong>{{$d.T.Get "help.disposable_after.body"}}<code>{{$d.T.Get "help.disposable_after.formula"}}</code></div></span></div>
           <div class="animate-counter" style="font-size:18px; font-weight:600;
                {{if ge .ImpactOnDisposable 0}}color:var(--green){{else}}color:var(--red){{end}};"
                data-target="{{.ImpactOnDisposable}}" data-prefix="€">€0</div>
@@ -191,22 +191,22 @@
     <div class="setup-step">
       <span class="setup-step-num">1</span>
       <div>
-        <strong>Open the Goal Planner</strong>
-        <p>Simulate how much you need to save monthly and by when. Try different deadlines to find a realistic target.</p>
+        <strong>{{$d.T.Get "goals.empty.step1_title"}}</strong>
+        <p>{{$d.T.Get "goals.empty.step1_body"}}</p>
       </div>
     </div>
     <div class="setup-step">
       <span class="setup-step-num">2</span>
       <div>
-        <strong>Commit to the goal</strong>
-        <p>Mark a goal as committed so it appears in your waterfall and "what now?" prompts on the dashboard.</p>
+        <strong>{{$d.T.Get "goals.empty.step2_title"}}</strong>
+        <p>{{$d.T.Get "goals.empty.step2_body"}}</p>
       </div>
     </div>
     <div class="setup-step">
       <span class="setup-step-num">3</span>
       <div>
-        <strong>Fund it every month</strong>
-        <p>Add expense transactions tagged to this goal, or link a spending category in Settings to auto-tag them.</p>
+        <strong>{{$d.T.Get "goals.empty.step3_title"}}</strong>
+        <p>{{$d.T.Get "goals.empty.step3_body"}}</p>
       </div>
     </div>
   </div>

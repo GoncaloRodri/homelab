@@ -290,9 +290,17 @@ col_category        = "Category"
 col_amount          = "Amount"
 btn_edit_category   = "Edit category"
 btn_delete          = "Delete"
-empty_msg           = "No transactions found."
-empty_import_link   = "Import some"
-empty_add_btn       = "add manually"
+empty_msg            = "No transactions found."
+empty_import_link    = "Import some"
+empty_add_btn        = "add manually"
+empty_state_title    = "No transactions yet"
+empty_state_subtitle = "Transactions are the foundation of every chart, goal, and insight in this app."
+empty_step1_title    = "Add an account"
+empty_step1_body     = "Go to Settings → Accounts and create your checking or savings account first."
+empty_step2_title    = "Import a CSV or add manually"
+empty_step2_body     = "Export a statement from your bank and import it, or tap + Add Transaction to enter one by hand."
+empty_step3_title    = "Tag categories & goals"
+empty_step3_body     = "Once imported, categorise your spending. Link categories to goals so contributions are tracked automatically."
 
 [transactions.modal_add]
 title               = "Add Transaction"
@@ -391,6 +399,12 @@ no_funding_yet          = "No transactions tagged yet. Add a transaction and lin
 title                   = "No goals yet"
 desc                    = "Use the Goal Planner tab to simulate a goal and save it here."
 btn_open_planner        = "Open Goal Planner →"
+step1_title             = "Open the Goal Planner"
+step1_body              = "Simulate how much you need to save monthly and by when. Try different deadlines to find a realistic target."
+step2_title             = "Commit to the goal"
+step2_body              = "Mark a goal as committed so it appears in your waterfall and \"what now?\" prompts on the dashboard."
+step3_title             = "Fund it every month"
+step3_body              = "Add expense transactions tagged to this goal, or link a spending category in Settings to auto-tag them."
 
 [goals.planner]
 what_kind               = "What kind of goal?"
@@ -1040,3 +1054,34 @@ lever4_desc                 = "Even 0.5% less on the new loan saves thousands ov
 empty_title                 = "Plan your next big goal"
 empty_desc                  = "Model any transition where you hold an asset with a loan, want to acquire something new, and plan to sell the old to fund it — including the double-payment period, the sale, and the final payoff date."
 empty_tip                   = "Tip: add your current asset and loan first so the planner can pre-fill the numbers."
+
+# ── Help tooltips ─────────────────────────────────────────────────────────────
+
+[help.free_cash]
+title   = "Free Cash"
+body    = "What's left after paying for life and funding your goals. Positive means you have room to save or spend more."
+formula = "Income − Living expenses − Goal contributions"
+
+[help.savings_rate]
+title   = "Savings Rate"
+body    = "The share of your income you're keeping. Above 20% is healthy; below 0% means you spent more than you earned."
+formula = "(Income − Expenses) ÷ Income × 100"
+
+[help.net_worth]
+title   = "Net Worth"
+body    = "Everything you own minus everything you owe. Tracking this monthly is the single best measure of financial health."
+formula = "Cash + Investments + Property equity − Debts"
+
+[help.monthly_needed]
+title   = "Monthly amount needed"
+body    = "How much to set aside each month to hit your target by the deadline."
+formula = "(Target − Saved) ÷ Months remaining"
+
+[help.at_current_rate]
+title   = "At current rate"
+body    = "How many months it would actually take based on your average monthly savings. Green = on time, red = late."
+
+[help.disposable_after]
+title   = "Free cash after this goal"
+body    = "Your estimated monthly free cash if you commit to this goal. Red means you'd need to cut spending elsewhere."
+formula = "Income − Living − All committed goals − This goal"
