@@ -290,9 +290,17 @@ col_category        = "Categoria"
 col_amount          = "Valor"
 btn_edit_category   = "Editar categoria"
 btn_delete          = "Eliminar"
-empty_msg           = "Nenhuma transação encontrada."
-empty_import_link   = "Importar algumas"
-empty_add_btn       = "adicionar manualmente"
+empty_msg            = "Nenhuma transação encontrada."
+empty_import_link    = "Importar algumas"
+empty_add_btn        = "adicionar manualmente"
+empty_state_title    = "Sem transações ainda"
+empty_state_subtitle = "As transações são a base de todos os gráficos, objetivos e análises nesta aplicação."
+empty_step1_title    = "Adicionar uma conta"
+empty_step1_body     = "Vá a Definições → Contas e crie a sua conta à ordem ou poupança primeiro."
+empty_step2_title    = "Importar CSV ou adicionar manualmente"
+empty_step2_body     = "Exporte um extrato do seu banco e importe-o, ou toque em + Adicionar Transação para introduzir manualmente."
+empty_step3_title    = "Etiquetar categorias e objetivos"
+empty_step3_body     = "Após importar, categorize os seus gastos. Ligue categorias a objetivos para que as contribuições sejam registadas automaticamente."
 
 [transactions.modal_add]
 title               = "Adicionar Transação"
@@ -391,6 +399,12 @@ no_funding_yet          = "Nenhuma transação etiquetada ainda. Adicione uma tr
 title                   = "Sem objetivos ainda"
 desc                    = "Use o separador Planeador de Objetivos para simular um objetivo e guardá-lo aqui."
 btn_open_planner        = "Abrir Planeador de Objetivos →"
+step1_title             = "Abrir o Planeador de Objetivos"
+step1_body              = "Simule quanto precisa de poupar mensalmente e até quando. Experimente prazos diferentes para encontrar um objetivo realista."
+step2_title             = "Comprometer-se com o objetivo"
+step2_body              = "Marque um objetivo como comprometido para que apareça na cascata e nas sugestões do painel."
+step3_title             = "Financiar todos os meses"
+step3_body              = "Adicione transações de despesa associadas a este objetivo, ou ligue uma categoria de gastos nas Definições para etiquetagem automática."
 
 [goals.planner]
 what_kind               = "Que tipo de objetivo?"
@@ -1040,3 +1054,34 @@ lever4_desc                 = "Mesmo 0,5% a menos no novo empréstimo poupa milh
 empty_title                 = "Planeie o seu próximo grande objetivo"
 empty_desc                  = "Modele qualquer transição em que detém um ativo com empréstimo, quer adquirir algo novo e planeia vender o antigo para financiar — incluindo o período de duplo pagamento, a venda e a data final de liquidação."
 empty_tip                   = "Dica: adicione primeiro o seu ativo atual e o empréstimo para que o planeador preencha os valores automaticamente."
+
+# ── Dicas de ajuda ────────────────────────────────────────────────────────────
+
+[help.free_cash]
+title   = "Dinheiro Livre"
+body    = "O que sobra depois de pagar a vida e financiar os seus objetivos. Positivo significa que tem margem para poupar ou gastar mais."
+formula = "Rendimento − Despesas de vida − Contribuições para objetivos"
+
+[help.savings_rate]
+title   = "Taxa de Poupança"
+body    = "A parte do rendimento que está a guardar. Acima de 20% é saudável; abaixo de 0% significa que gastou mais do que ganhou."
+formula = "(Rendimento − Despesas) ÷ Rendimento × 100"
+
+[help.net_worth]
+title   = "Património Líquido"
+body    = "Tudo o que possui menos tudo o que deve. Acompanhá-lo mensalmente é a melhor medida de saúde financeira."
+formula = "Dinheiro + Investimentos + Capital próprio imóvel − Dívidas"
+
+[help.monthly_needed]
+title   = "Valor mensal necessário"
+body    = "Quanto precisa de reservar por mês para atingir o objetivo até ao prazo."
+formula = "(Objetivo − Poupado) ÷ Meses restantes"
+
+[help.at_current_rate]
+title   = "Ao ritmo atual"
+body    = "Quantos meses levaria realmente com base na sua poupança mensal média. Verde = a tempo, vermelho = com atraso."
+
+[help.disposable_after]
+title   = "Dinheiro livre após este objetivo"
+body    = "O seu dinheiro livre mensal estimado se se comprometer com este objetivo. Vermelho significa que precisaria de reduzir despesas."
+formula = "Rendimento − Vida − Todos os objetivos comprometidos − Este objetivo"
