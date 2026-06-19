@@ -230,6 +230,13 @@ section_title           = "Committed goals"
 all_goals_link          = "→ all goals"
 months_left             = "mo left"
 per_month_needed        = "/mo needed"
+of                      = "of"
+this_month              = "This month"
+funded                  = "On track"
+fund_link               = "Fund it"
+needed                  = "needed"
+left_to_fund            = "left to fund"
+needed_this_month       = "needed this month"
 
 [dashboard.fixed_costs]
 section_title           = "Fixed costs"
