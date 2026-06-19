@@ -230,6 +230,13 @@ section_title           = "Objetivos comprometidos"
 all_goals_link          = "→ todos os objetivos"
 months_left             = "meses restantes"
 per_month_needed        = "/mês necessários"
+of                      = "de"
+this_month              = "Este mês"
+funded                  = "No bom caminho"
+fund_link               = "Financiar"
+needed                  = "necessários"
+left_to_fund            = "em falta"
+needed_this_month       = "necessários este mês"
 
 [dashboard.fixed_costs]
 section_title           = "Custos fixos"

@@ -377,28 +377,65 @@ function wfToggleCat(id) {
     <h2>{{$d.T.Get "dashboard.goals.section_title"}}</h2>
     <a href="/goals" style="font-size:12px; color:var(--text3);">{{$d.T.Get "dashboard.goals.all_goals_link"}}</a>
   </div>
-  <div style="display:flex; flex-direction:column; gap:14px;">
+  <div style="display:flex; flex-direction:column; gap:18px;">
     {{range $d.DashGoals}}
+    {{$funded := index $d.GoalFundedThisMonth .ID}}
+    {{$needed  := .MonthlyCents}}
+    {{$met     := ge $funded $needed}}
+    {{$partial := and (gt $funded 0) (not $met)}}
+    {{$monthPct := 0}}
+    {{if gt $needed 0}}{{$monthPct = clampPct $funded $needed}}{{end}}
     <div>
-      <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;">
-        <div style="display:flex; align-items:center; gap:8px;">
-          <span style="font-size:15px;">{{if eq .Type "once"}}🎯{{else if eq .Type "deposit"}}🏠{{else if eq .Type "emergency"}}🛡️{{else}}📈{{end}}</span>
-          <span style="font-size:13px; font-weight:500; color:var(--text);">{{.Name}}</span>
+      <!-- name + overall progress -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+        <div style="display:flex; align-items:center; gap:8px; min-width:0;">
+          <span style="font-size:14px; flex-shrink:0;">{{if eq .Type "once"}}🎯{{else if eq .Type "deposit"}}🏠{{else if eq .Type "emergency"}}🛡️{{else}}📈{{end}}</span>
+          <span style="font-size:13px; font-weight:500; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{.Name}}</span>
         </div>
-        <div style="display:flex; align-items:center; gap:12px;">
-          <span style="font-size:12px; color:var(--text3);">{{.MonthsLeft}}{{$d.T.Get "dashboard.goals.months_left"}}</span>
+        <div style="display:flex; align-items:center; gap:10px; flex-shrink:0; margin-left:12px;">
+          <span style="font-size:11px; color:var(--text3);">{{.MonthsLeft}}{{$d.T.Get "dashboard.goals.months_left"}}</span>
           <span style="font-size:12px; font-weight:600; color:{{if .Feasible}}var(--green){{else}}var(--red){{end}};">{{.ProgressPct}}%</span>
         </div>
       </div>
-      <div style="background:var(--bg3); border-radius:99px; height:5px; overflow:hidden;">
+      <!-- overall progress bar -->
+      <div style="background:var(--bg3); border-radius:99px; height:4px; overflow:hidden; margin-bottom:3px;">
         <div style="height:100%; border-radius:99px; width:{{.ProgressPct}}%;
              background:{{if .Feasible}}var(--green){{else}}var(--accent){{end}};
              transition:width 1s ease;"></div>
       </div>
-      <div style="display:flex; justify-content:space-between; margin-top:4px; font-size:11px; color:var(--text3);">
-        <span>€{{cents .SavedCents}} of €{{cents .TargetCents}}</span>
-        <span style="color:{{if .Feasible}}var(--green){{else}}var(--red){{end}};">€{{cents .MonthlyCents}}{{$d.T.Get "dashboard.goals.per_month_needed"}}</span>
+      <div style="font-size:11px; color:var(--text3); margin-bottom:10px;">
+        €{{cents .SavedCents}} {{$d.T.Get "dashboard.goals.of"}} €{{cents .TargetCents}}
       </div>
+
+      <!-- this-month funding status -->
+      {{if gt $needed 0}}
+      <div style="background:var(--bg2); border-radius:8px; padding:8px 12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <span style="font-size:11px; color:var(--text3); text-transform:uppercase; letter-spacing:.04em;">{{$d.T.Get "dashboard.goals.this_month"}}</span>
+          {{if $met}}
+          <span style="font-size:11px; font-weight:600; color:var(--green);">✓ {{$d.T.Get "dashboard.goals.funded"}}</span>
+          {{else if $partial}}
+          <a href="/transactions?fund_goal={{.ID}}" style="font-size:11px; color:var(--accent); text-decoration:none;">{{$d.T.Get "dashboard.goals.fund_link"}} →</a>
+          {{else}}
+          <a href="/transactions?fund_goal={{.ID}}" style="font-size:11px; color:var(--red); text-decoration:none; font-weight:500;">{{$d.T.Get "dashboard.goals.fund_link"}} →</a>
+          {{end}}
+        </div>
+        <div style="background:var(--bg3); border-radius:99px; height:3px; overflow:hidden; margin-bottom:5px;">
+          <div style="height:100%; border-radius:99px; width:{{$monthPct}}%;
+               background:{{if $met}}var(--green){{else if $partial}}var(--accent){{else}}var(--red){{end}};
+               transition:width 1s ease;"></div>
+        </div>
+        <div style="font-size:11px; {{if $met}}color:var(--green){{else if $partial}}color:var(--text2){{else}}color:var(--red){{end}};">
+          {{if $met}}
+          €{{cents $funded}} {{$d.T.Get "dashboard.goals.of"}} €{{cents $needed}} {{$d.T.Get "dashboard.goals.needed"}}
+          {{else if $partial}}
+          €{{cents $funded}} {{$d.T.Get "dashboard.goals.of"}} €{{cents $needed}} — €{{cents (sub $needed $funded)}} {{$d.T.Get "dashboard.goals.left_to_fund"}}
+          {{else}}
+          €{{cents $needed}} {{$d.T.Get "dashboard.goals.needed_this_month"}}
+          {{end}}
+        </div>
+      </div>
+      {{end}}
     </div>
     {{end}}
   </div>
