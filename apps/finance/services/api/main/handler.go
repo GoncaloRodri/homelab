@@ -277,6 +277,8 @@ type storeIface interface {
 	createGoal(ctx context.Context, g *Goal) error
 	updateGoal(ctx context.Context, id, userID string, update bson.M) error
 	deleteGoal(ctx context.Context, id, userID string) error
+	getGoalFundedCentsAll(ctx context.Context, userID string) (map[string]int64, error)
+	getGoalTransactions(ctx context.Context, userID, goalID string) ([]Transaction, error)
 	seedCategories(ctx context.Context, userID string) error
 	getTickerMappings(ctx context.Context, userID string) ([]TickerMapping, error)
 	saveTickerMapping(ctx context.Context, userID, isin, ticker string) error
@@ -465,7 +467,6 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 	now := time.Now()
 	thisStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
 	lastStart := thisStart.AddDate(0, -1, 0)
-	threeMonthsAgo := thisStart.AddDate(0, -3, 0)
 
 	txns, err := h.store.getTransactions(ctx, a.UserID, bson.M{})
 	if err != nil {
@@ -493,9 +494,6 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 	thisMonth := &PeriodSummary{ByCategory: make(map[string]int64), CategoryNames: catNames}
 	lastMonth := &PeriodSummary{ByCategory: make(map[string]int64), CategoryNames: catNames}
 
-	// fixed spending by category over the last 3 months (for recurring detection)
-	fixedByMonth := make(map[string]map[int]int64) // category -> month-offset -> total
-
 	var recent []Transaction
 	var balPoints []BalancePoint
 	balByDate := make(map[string]int64)
@@ -504,7 +502,6 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 	for _, t := range txns {
 		isThisMonth := !t.Date.Before(thisStart)
 		isLastMonth := !t.Date.Before(lastStart) && t.Date.Before(thisStart)
-		isRecent3 := !t.Date.Before(threeMonthsAgo) && t.Date.Before(thisStart)
 
 		if isThisMonth {
 			thisMonth.TotalCents += t.AmountCents
@@ -512,15 +509,6 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 		} else if isLastMonth {
 			lastMonth.TotalCents += t.AmountCents
 			lastMonth.ByCategory[t.Category] += t.AmountCents
-		}
-
-		// accumulate fixed category spending over last 3 months
-		if isRecent3 && FixedCategories[t.Category] && t.AmountCents < 0 {
-			mo := int(t.Date.Month())
-			if fixedByMonth[t.Category] == nil {
-				fixedByMonth[t.Category] = make(map[int]int64)
-			}
-			fixedByMonth[t.Category][mo] += -t.AmountCents
 		}
 
 		if len(recent) < 5 {
@@ -565,96 +553,41 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 		lastMonthSavings = 0
 	}
 
-	// detect recurring fixed expenses (average over last 3 months)
-	var recurringExpenses []RecurringExpense
-	totalFixedCents := int64(0)
-	for cat, byMonth := range fixedByMonth {
-		total := int64(0)
-		for _, v := range byMonth {
-			total += v
+	// transaction-backed waterfall: split this month's transactions into buckets
+	waterfallLiving := int64(0)
+	waterfallGoals := int64(0)
+	incomeByCat := make(map[string]int64)
+	livingByCat := make(map[string]int64)
+	incomeCatTxns := make(map[string][]Transaction)
+	livingCatTxns := make(map[string][]Transaction)
+	goalFundedThisMonth := make(map[string]int64)
+	for _, t := range txns {
+		if t.Date.Before(thisStart) {
+			continue
 		}
-		avg := total / int64(len(byMonth))
-		recurringExpenses = append(recurringExpenses, RecurringExpense{Category: cat, MonthlyCents: avg})
-		totalFixedCents += avg
-	}
-	sort.Slice(recurringExpenses, func(i, j int) bool {
-		return recurringExpenses[i].MonthlyCents > recurringExpenses[j].MonthlyCents
-	})
-
-	// disposable income = income - fixed recurring
-	disposableIncome := thisMonthIncome - totalFixedCents
-
-	// deduct committed goal contributions from disposable and add to fixed costs list
-	committedGoalsCents := int64(0)
-	if goals, err := h.store.getGoals(ctx, a.UserID); err == nil {
-		now2 := time.Now()
-		for _, g := range goals {
-			if !g.Committed {
-				continue
+		if t.AmountCents > 0 {
+			incomeByCat[t.Category] += t.AmountCents
+			incomeCatTxns[t.Category] = append(incomeCatTxns[t.Category], t)
+		} else {
+			if t.GoalID != "" {
+				waterfallGoals += -t.AmountCents
+				goalFundedThisMonth[t.GoalID] += -t.AmountCents
+			} else {
+				waterfallLiving += -t.AmountCents
+				livingByCat[t.Category] += -t.AmountCents
+				livingCatTxns[t.Category] = append(livingCatTxns[t.Category], t)
 			}
-			remaining := g.TargetCents - g.SavedCents
-			if remaining <= 0 {
-				continue
-			}
-			ml := int64(monthsBetween(now2, g.Deadline))
-			if ml < 1 {
-				ml = 1
-			}
-			monthly := remaining / ml
-			committedGoalsCents += monthly
-			recurringExpenses = append(recurringExpenses, RecurringExpense{
-				Category:     g.Name,
-				MonthlyCents: monthly,
-				IsGoal:       true,
-			})
 		}
 	}
-	disposableIncome -= committedGoalsCents
-	totalCommittedCents := totalFixedCents + committedGoalsCents
+	waterfallFreeCash := thisMonthIncome - waterfallLiving - waterfallGoals
 
-	// variable spend so far this month (non-fixed categories, expenses only)
-	variableSpent := int64(0)
-	for cat, amt := range thisMonth.ByCategory {
-		if !FixedCategories[cat] && amt < 0 {
-			variableSpent += -amt
-		}
-	}
-
-	availableToSpend := disposableIncome - variableSpent
-	if availableToSpend < 0 {
-		availableToSpend = 0
-	}
+	// sort category rows by amount descending for the drill-down display
+	incomeCats := sortWaterfallRows(incomeByCat, catColors)
+	livingCats := sortWaterfallRows(livingByCat, catColors)
 
 	// month progress
 	daysInMonth := time.Date(now.Year(), now.Month()+1, 0, 0, 0, 0, 0, now.Location()).Day()
 	monthProgressPct := int(float64(now.Day()) / float64(daysInMonth) * 100)
-
-	// % of disposable already spent
-	monthSpentPct := 0
-	if disposableIncome > 0 {
-		monthSpentPct = int(float64(variableSpent) / float64(disposableIncome) * 100)
-		if monthSpentPct > 100 {
-			monthSpentPct = 100
-		}
-	}
-
-	// safety buffer = 2 weeks of average daily variable spend over last month
-	lastMonthVariableSpent := int64(0)
-	for cat, amt := range lastMonth.ByCategory {
-		if !FixedCategories[cat] && amt < 0 {
-			lastMonthVariableSpent += -amt
-		}
-	}
-	safetyBuffer := lastMonthVariableSpent / 2
-
-	// bank should be = upcoming fixed costs (not yet paid this month) + safety buffer
-	fixedPaidThisMonth := int64(0)
-	for cat, amt := range thisMonth.ByCategory {
-		if FixedCategories[cat] && amt < 0 {
-			fixedPaidThisMonth += -amt
-		}
-	}
-	bankShouldBe := (totalFixedCents - fixedPaidThisMonth) + safetyBuffer
 
 	// savings rate
 	savingsRatePct := 0
@@ -712,13 +645,15 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// ── Committed goals for dashboard widget ─────────────────────────────
+	// ── Committed goals for dashboard widget (tx-backed progress) ────────
 	var dashGoals []GoalPlan
+	goalFunds, _ := h.store.getGoalFundedCentsAll(ctx, a.UserID)
 	if allGoals, err2 := h.store.getGoals(ctx, a.UserID); err2 == nil {
 		for _, g := range allGoals {
 			if !g.Committed {
 				continue
 			}
+			g.SavedCents = goalFunds[g.ID]
 			remaining := g.TargetCents - g.SavedCents
 			if remaining < 0 {
 				remaining = 0
@@ -728,10 +663,6 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 				ml = 1
 			}
 			monthly := remaining / ml
-			var atRate int64
-			if avgSavingsForGoals := disposableIncome; avgSavingsForGoals > 0 {
-				atRate = remaining / avgSavingsForGoals
-			}
 			pct := int64(0)
 			if g.TargetCents > 0 {
 				pct = g.SavedCents * 100 / g.TargetCents
@@ -740,12 +671,11 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 			dashGoals = append(dashGoals, GoalPlan{
-				Goal:                g,
-				MonthsLeft:          ml,
-				MonthlyCents:        monthly,
-				MonthsAtCurrentRate: atRate,
-				Feasible:            disposableIncome >= monthly,
-				ProgressPct:         pct,
+				Goal:        g,
+				MonthsLeft:  ml,
+				MonthlyCents: monthly,
+				Feasible:    waterfallFreeCash >= monthly,
+				ProgressPct: pct,
 			})
 		}
 	}
@@ -773,56 +703,17 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// goal deadline risk alerts
-	if goalList, err := h.store.getGoals(ctx, a.UserID); err == nil {
-		threeAgo := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location()).AddDate(0, -3, 0)
-		moSavings := make(map[int]int64)
-		for _, t := range txns {
-			if !t.Date.Before(threeAgo) && t.Date.Before(thisStart) {
-				moSavings[int(t.Date.Month())] += t.AmountCents
-			}
+	// goal deadline risk alerts (tx-backed remaining)
+	for _, g := range dashGoals {
+		if !g.Committed || g.SavedCents >= g.TargetCents {
+			continue
 		}
-		var totalS int64
-		for _, s := range moSavings {
-			if s > 0 {
-				totalS += s
-			}
+		if waterfallFreeCash < g.MonthlyCents {
+			alerts = append(alerts, Alert{
+				Level:   AlertWarn,
+				Message: fmt.Sprintf("Free cash (€%.0f) is below the monthly need for \"%s\" (€%.0f/mo).", float64(waterfallFreeCash)/100, g.Name, float64(g.MonthlyCents)/100),
+			})
 		}
-		avgS := int64(0)
-		if len(moSavings) > 0 {
-			avgS = totalS / int64(len(moSavings))
-		}
-		for _, g := range goalList {
-			remaining := g.TargetCents - g.SavedCents
-			if remaining <= 0 {
-				continue
-			}
-			ml := int64(monthsBetween(now, g.Deadline))
-			if ml < 1 {
-				ml = 1
-			}
-			needed := remaining / ml
-			if avgS < needed {
-				monthsOff := int64(0)
-				if avgS > 0 {
-					monthsOff = remaining/avgS - ml
-				}
-				msg := fmt.Sprintf("You're on track to miss your \"%s\" goal", g.Name)
-				if monthsOff > 0 {
-					msg += fmt.Sprintf(" by %d month(s)", monthsOff)
-				}
-				msg += fmt.Sprintf(" — need €%.0f/mo but saving ~€%.0f/mo.", float64(needed)/100, float64(avgS)/100)
-				alerts = append(alerts, Alert{Level: AlertWarn, Message: msg})
-			}
-		}
-	}
-
-	// overall spend pace alert
-	if monthProgressPct > 0 && monthSpentPct > monthProgressPct+20 {
-		alerts = append(alerts, Alert{
-			Level:   AlertWarn,
-			Message: fmt.Sprintf("You've spent %d%% of your disposable income but only %d%% of the month has passed — you're ahead of pace.", monthSpentPct, monthProgressPct),
-		})
 	}
 
 	render(w, dashboardTmpl, &DashboardData{
@@ -840,14 +731,16 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 		ThisMonthExpense:        thisMonthExpense,
 		CategoryBudgets:         catBudgets,
 		CategoryColors:          catColors,
-		AvailableToSpend:        availableToSpend,
-		DisposableIncome:        disposableIncome,
+		WaterfallIncome:         thisMonthIncome,
+		WaterfallLiving:         waterfallLiving,
+		WaterfallGoals:          waterfallGoals,
+		WaterfallFreeCash:       waterfallFreeCash,
+		IncomeCats:              incomeCats,
+		LivingCats:              livingCats,
+		IncomeCatTxns:           incomeCatTxns,
+		LivingCatTxns:           livingCatTxns,
+		GoalFundedThisMonth:     goalFundedThisMonth,
 		MonthProgressPct:        monthProgressPct,
-		MonthSpentPct:           monthSpentPct,
-		RecurringExpenses:       recurringExpenses,
-		BankShouldBe:            bankShouldBe,
-		SafetyBufferCents:       safetyBuffer,
-		TotalCommittedCents:     totalCommittedCents,
 		SavingsRatePct:          savingsRatePct,
 		LastMonthSavingsRatePct: lastMonthSavingsRatePct,
 		PortfolioValueCents:          portfolioValueCents,
@@ -902,6 +795,7 @@ func (h *Handler) Transactions(w http.ResponseWriter, r *http.Request) {
 
 	cats, _ := h.store.getCategories(ctx, a.UserID)
 	accounts, _ := h.store.getAccounts(ctx, a.UserID)
+	goals, _ := h.store.getGoals(ctx, a.UserID)
 
 	accountNames := make(map[string]string)
 	for _, acc := range accounts {
@@ -923,6 +817,7 @@ func (h *Handler) Transactions(w http.ResponseWriter, r *http.Request) {
 		"Txns":           txns,
 		"Categories":     cats,
 		"Accounts":       accounts,
+		"Goals":          goals,
 		"AccountNames":   accountNames,
 		"CategoryColors": catColors,
 		"Cat":            cat,
@@ -942,6 +837,7 @@ func (h *Handler) CreateTransaction(w http.ResponseWriter, r *http.Request) {
 		Description string `json:"description"`
 		AmountCents int64  `json:"amount_cents"`
 		Category    string `json:"category"`
+		GoalID      string `json:"goal_id"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, "bad request", http.StatusBadRequest)
@@ -961,6 +857,7 @@ func (h *Handler) CreateTransaction(w http.ResponseWriter, r *http.Request) {
 		Description: body.Description,
 		AmountCents: body.AmountCents,
 		Category:    body.Category,
+		GoalID:      body.GoalID,
 		CreatedAt:   time.Now(),
 	}
 
@@ -1270,6 +1167,7 @@ func (h *Handler) UpdateTransaction(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Category    string `json:"category"`
 		Description string `json:"description"`
+		GoalID      string `json:"goal_id"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, "bad request", http.StatusBadRequest)
@@ -1282,6 +1180,9 @@ func (h *Handler) UpdateTransaction(w http.ResponseWriter, r *http.Request) {
 	}
 	if body.Description != "" {
 		update["description"] = body.Description
+	}
+	if body.GoalID != "" {
+		update["goal_id"] = body.GoalID
 	}
 
 	if err := h.store.updateTransaction(ctx, id, a.UserID, update); err != nil {
@@ -1905,44 +1806,57 @@ func (h *Handler) Goals(w http.ResponseWriter, r *http.Request) {
 	// compute average monthly savings over last 3 months
 	txns, _ := h.store.getTransactions(ctx, a.UserID, bson.M{})
 	now := time.Now()
-	threeMonthsAgo := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location()).AddDate(0, -3, 0)
-	monthlySavings := make(map[int]int64)
+	thisStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+	threeMonthsAgo := thisStart.AddDate(0, -3, 0)
+	// Use year*12+month as key to avoid cross-year collisions
+	type monthKey struct{ year, month int }
+	monthlySavings := make(map[monthKey]int64)
 	for _, t := range txns {
-		if !t.Date.Before(threeMonthsAgo) && t.Date.Before(time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())) {
-			monthlySavings[int(t.Date.Month())] += t.AmountCents
+		if !t.Date.Before(threeMonthsAgo) && t.Date.Before(thisStart) {
+			k := monthKey{t.Date.Year(), int(t.Date.Month())}
+			monthlySavings[k] += t.AmountCents
 		}
 	}
 	var totalSavings int64
+	var posMonths int64
 	for _, s := range monthlySavings {
 		if s > 0 {
 			totalSavings += s
+			posMonths++
 		}
 	}
 	avgMonthlySavings := int64(0)
-	if len(monthlySavings) > 0 {
-		avgMonthlySavings = totalSavings / int64(len(monthlySavings))
+	if posMonths > 0 {
+		avgMonthlySavings = totalSavings / posMonths
 	}
 
-	// compute disposable income from this month's transactions
-	thisStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
-	thisMonthIncome := int64(0)
-	fixedThisMonth := int64(0)
+	// transaction-backed waterfall for this month
+	waterfallIncome := int64(0)
+	waterfallLiving := int64(0)
+	waterfallGoals := int64(0)
 	for _, t := range txns {
 		if t.Date.Before(thisStart) {
 			continue
 		}
 		if t.AmountCents > 0 {
-			thisMonthIncome += t.AmountCents
-		}
-		if FixedCategories[t.Category] && t.AmountCents < 0 {
-			fixedThisMonth += -t.AmountCents
+			waterfallIncome += t.AmountCents
+		} else {
+			if t.GoalID != "" {
+				waterfallGoals += -t.AmountCents
+			} else {
+				waterfallLiving += -t.AmountCents
+			}
 		}
 	}
-	disposable := thisMonthIncome - fixedThisMonth
+	waterfallFreeCash := waterfallIncome - waterfallLiving - waterfallGoals
 
-	// build goal plans
+	// tx-backed funded amounts and recent contributions per goal
+	goalFunds, _ := h.store.getGoalFundedCentsAll(ctx, a.UserID)
+
+	// build goal plans with tx-backed SavedCents
 	var plans []GoalPlan
 	for _, g := range goals {
+		g.SavedCents = goalFunds[g.ID]
 		remaining := g.TargetCents - g.SavedCents
 		if remaining < 0 {
 			remaining = 0
@@ -1968,55 +1882,32 @@ func (h *Handler) Goals(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
+		fundingTxns, _ := h.store.getGoalTransactions(ctx, a.UserID, g.ID)
 		plans = append(plans, GoalPlan{
 			Goal:                g,
 			MonthsLeft:          monthsLeft,
 			MonthlyCents:        monthlyCents,
-			ImpactOnDisposable:  disposable - monthlyCents,
+			ImpactOnDisposable:  waterfallIncome - waterfallLiving - monthlyCents,
 			MonthsAtCurrentRate: monthsAtRate,
 			Feasible:            avgMonthlySavings >= monthlyCents,
 			ProgressPct:         progressPct,
+			FundingTxns:         fundingTxns,
 		})
 	}
 
-	// sum committed goal contributions and detect conflicts
-	committedTotal := int64(0)
-	for _, p := range plans {
-		if p.Committed {
-			committedTotal += p.MonthlyCents
-		}
-	}
-	remainingDisposable := disposable - committedTotal
-
-	conflictWarning := ""
-	if committedTotal > disposable {
-		// find which committed goals are in conflict
-		var conflictNames []string
-		for _, p := range plans {
-			if p.Committed {
-				conflictNames = append(conflictNames, p.Name)
-			}
-		}
-		conflictWarning = fmt.Sprintf(
-			"Your committed goals require €%.0f/month but your disposable income is €%.0f/month. Consider pushing back a deadline or removing a goal.",
-			float64(committedTotal)/100, float64(disposable)/100,
-		)
-		_ = conflictNames
-	}
-
 	data := &GoalsData{
-		T:                     h.t(r),
-		UserID:                a.UserID,
-		Email:                 a.Email,
-		Title:                 "Goals",
-		Route:                 "goals",
-		Tab:                   r.URL.Query().Get("tab"),
-		Goals:                 plans,
-		AvgMonthlySavings:     avgMonthlySavings,
-		DisposableIncome:      disposable,
-		CommittedMonthlyCents: committedTotal,
-		RemainingDisposable:   remainingDisposable,
-		ConflictWarning:       conflictWarning,
+		T:                 h.t(r),
+		UserID:            a.UserID,
+		Email:             a.Email,
+		Title:             "Goals",
+		Route:             "goals",
+		Tab:               r.URL.Query().Get("tab"),
+		Goals:             plans,
+		AvgMonthlySavings: avgMonthlySavings,
+		WaterfallIncome:   waterfallIncome,
+		WaterfallLiving:   waterfallLiving,
+		WaterfallGoals:    waterfallGoals,
+		WaterfallFreeCash: waterfallFreeCash,
 	}
 	if data.Tab == "" {
 		data.Tab = "goals"
@@ -2910,6 +2801,16 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 
 func sortStrings(s []string) {
 	sort.Strings(s)
+}
+
+// sortWaterfallRows converts a category→cents map into a slice sorted by amount descending.
+func sortWaterfallRows(byCat map[string]int64, colors map[string]string) []WaterfallRow {
+	rows := make([]WaterfallRow, 0, len(byCat))
+	for name, cents := range byCat {
+		rows = append(rows, WaterfallRow{Name: name, Color: colors[name], Cents: cents})
+	}
+	sort.Slice(rows, func(i, j int) bool { return rows[i].Cents > rows[j].Cents })
+	return rows
 }
 
 func appendIfMissing(s []string, v string) []string {

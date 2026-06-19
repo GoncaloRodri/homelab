@@ -84,6 +84,14 @@ func SeedExtras(ctx context.Context, store *Store) {
 		if err := seedGoals(ctx, store, userID); err != nil {
 			slog.Error("seed: goals failed", "err", err)
 		}
+		goals, _ = store.getGoals(ctx, userID)
+	}
+
+	// goal-tagged transactions (tx-backed progress — idempotent)
+	if len(goals) > 0 {
+		if err := seedGoalTransactions(ctx, store, userID, goals); err != nil {
+			slog.Error("seed: goal transactions failed", "err", err)
+		}
 	}
 
 	// properties & loans
@@ -150,6 +158,103 @@ func seedGoals(ctx context.Context, store *Store, userID string) error {
 		}
 	}
 	return nil
+}
+
+// seedGoalTransactions back-fills goal-tagged transactions so the tx-backed
+// SavedCents and waterfall reflect realistic progress. Idempotent — skips if
+// any goal-tagged transactions already exist.
+func seedGoalTransactions(ctx context.Context, store *Store, userID string, goals []Goal) error {
+	existing, _ := store.getTransactions(ctx, userID, bson.M{
+		"goal_id": bson.M{"$exists": true, "$ne": ""},
+	})
+	if len(existing) > 0 {
+		slog.Info("seed: goal transactions already present, skipping")
+		return nil
+	}
+
+	accounts, _ := store.getAccounts(ctx, userID)
+	savingsID := ""
+	checkingID := ""
+	for _, a := range accounts {
+		switch a.Type {
+		case "savings":
+			savingsID = a.ID
+		case "checking":
+			if checkingID == "" {
+				checkingID = a.ID
+			}
+		}
+	}
+	if savingsID == "" {
+		savingsID = checkingID
+	}
+	if savingsID == "" && len(accounts) > 0 {
+		savingsID = accounts[0].ID
+	}
+
+	goalsByName := make(map[string]Goal, len(goals))
+	for _, g := range goals {
+		goalsByName[g.Name] = g
+	}
+
+	now := time.Now()
+	monthStart := func(monthsAgo int, day int) time.Time {
+		t := time.Date(now.Year(), now.Month(), day, 0, 0, 0, 0, now.Location())
+		return t.AddDate(0, -monthsAgo, 0)
+	}
+
+	var txns []Transaction
+	mkTxn := func(date time.Time, desc string, cents int64, goalID string) {
+		txns = append(txns, Transaction{
+			ID:          bson.NewObjectID().Hex(),
+			UserID:      userID,
+			AccountID:   savingsID,
+			Date:        date,
+			Description: desc,
+			AmountCents: -cents, // outflow
+			Category:    "Investments",
+			GoalID:      goalID,
+			CreatedAt:   time.Now(),
+		})
+	}
+
+	// Emergency fund (3 months) — 7×€300 past months + €300 this month = €2,400
+	if g, ok := goalsByName["Emergency fund (3 months)"]; ok {
+		for i := 7; i >= 1; i-- {
+			mkTxn(monthStart(i, 5), "Emergency fund transfer", 30000, g.ID)
+		}
+		mkTxn(monthStart(0, 5), "Emergency fund transfer", 30000, g.ID)
+	}
+
+	// House down payment — 10×€500 past months + €500 this month = €5,500
+	if g, ok := goalsByName["House down payment"]; ok {
+		for i := 10; i >= 1; i-- {
+			mkTxn(monthStart(i, 10), "House down payment savings", 50000, g.ID)
+		}
+		mkTxn(monthStart(0, 10), "House down payment savings", 50000, g.ID)
+	}
+
+	// Japan trip — 4×€200 past months + €200 this month = €1,000
+	if g, ok := goalsByName["Japan trip"]; ok {
+		for i := 4; i >= 1; i-- {
+			mkTxn(monthStart(i, 15), "Japan trip savings", 20000, g.ID)
+		}
+		mkTxn(monthStart(0, 15), "Japan trip savings", 20000, g.ID)
+	}
+
+	// MacBook Pro — 2×€200 past months + €200 this month = €600
+	if g, ok := goalsByName["MacBook Pro"]; ok {
+		for i := 2; i >= 1; i-- {
+			mkTxn(monthStart(i, 20), "MacBook Pro savings", 20000, g.ID)
+		}
+		mkTxn(monthStart(0, 20), "MacBook Pro savings", 20000, g.ID)
+	}
+
+	if len(txns) == 0 {
+		return nil
+	}
+	slog.Info("seed: inserting goal-tagged transactions", "count", len(txns))
+	return store.createTransactions(ctx, txns)
 }
 
 func seedProperty(ctx context.Context, store *Store, userID string) error {

@@ -49,6 +49,7 @@ type Transaction struct {
 	Description string    `bson:"description" json:"description"`
 	AmountCents int64     `bson:"amount_cents" json:"amount_cents"`
 	Category    string    `bson:"category" json:"category"`
+	GoalID      string    `bson:"goal_id,omitempty" json:"goal_id,omitempty"`
 	BankRef     string    `bson:"bank_ref,omitempty" json:"bank_ref,omitempty"`
 	RawCSV      string    `bson:"raw_csv,omitempty" json:"raw_csv,omitempty"`
 	CreatedAt   time.Time `bson:"created_at" json:"created_at"`
@@ -114,10 +115,11 @@ var FixedCategories = map[string]bool{
 	"Investments":   true,
 }
 
-type RecurringExpense struct {
-	Category     string
-	MonthlyCents int64
-	IsGoal       bool   // true when this entry comes from a committed goal
+// WaterfallRow is one drilldown entry inside the interactive waterfall.
+type WaterfallRow struct {
+	Name  string
+	Color string
+	Cents int64 // always positive (absolute spend or income amount)
 }
 
 type DashboardData struct {
@@ -132,23 +134,26 @@ type DashboardData struct {
 	RecentTxns    []Transaction
 	BalanceTrend  []BalancePoint
 
-	// Phase 1 fields
 	ThisMonthIncome    int64
 	ThisMonthExpense   int64
 	CategoryBudgets    map[string]int64
 	CategoryColors     map[string]string
+	MonthProgressPct   int
 
-	AvailableToSpend   int64  // income − fixed − variable budgets spent so far
-	DisposableIncome   int64  // income − fixed recurring costs
-	MonthProgressPct   int    // % of month elapsed
-	MonthSpentPct      int    // % of disposable already spent
+	// Transaction-backed waterfall totals
+	WaterfallIncome   int64
+	WaterfallLiving   int64
+	WaterfallGoals    int64
+	WaterfallFreeCash int64
 
-	RecurringExpenses  []RecurringExpense
-	BankShouldBe          int64
-	SafetyBufferCents     int64
-	TotalCommittedCents   int64  // sum of all fixed costs + committed goals
+	// Drill-down: sorted category rows + pre-grouped transactions
+	IncomeCats          []WaterfallRow
+	LivingCats          []WaterfallRow
+	IncomeCatTxns       map[string][]Transaction // category → this-month income txns
+	LivingCatTxns       map[string][]Transaction // category → this-month living txns
+	GoalFundedThisMonth map[string]int64          // goalID → amount funded this month
 
-	SavingsRatePct     int    // savings / income * 100 this month
+	SavingsRatePct          int
 	LastMonthSavingsRatePct int
 
 	PortfolioValueCents      int64
@@ -159,7 +164,7 @@ type DashboardData struct {
 	NetWorthCents int64
 
 	Alerts    []Alert
-	DashGoals []GoalPlan // committed goals for the dashboard widget
+	DashGoals []GoalPlan
 }
 
 type PeriodSummary struct {
@@ -472,6 +477,7 @@ type GoalPlan struct {
 	MonthsAtCurrentRate int64
 	Feasible            bool
 	ProgressPct         int64
+	FundingTxns         []Transaction // recent transactions tagged to this goal
 }
 
 type GoalsData struct {
@@ -481,12 +487,13 @@ type GoalsData struct {
 	Title                   string
 	Route                   string
 	Tab                     string // "goals" or "planner"
-	Goals                   []GoalPlan
-	AvgMonthlySavings       int64
-	DisposableIncome        int64
-	CommittedMonthlyCents   int64  // sum of all committed goal contributions
-	RemainingDisposable     int64  // disposable after committed goals
-	ConflictWarning         string // set when committing would exceed disposable
+	Goals             []GoalPlan
+	AvgMonthlySavings int64
+	// Waterfall (transaction-backed)
+	WaterfallIncome   int64 // gross income this month
+	WaterfallLiving   int64 // outflows not tagged to any goal
+	WaterfallGoals    int64 // outflows tagged to goals this month
+	WaterfallFreeCash int64 // income - living - goals
 	// Planner tab
 	PlannerType       string // "purchase" or "transition"
 	PlanProperties    []PropertyView

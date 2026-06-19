@@ -243,6 +243,15 @@ total_committed         = "Total comprometido"
 vs_last_month_up        = "↑ vs mês anterior"
 vs_last_month_down      = "↓ vs mês anterior"
 
+[dashboard.waterfall]
+title                   = "Fluxo de caixa este mês"
+income                  = "Rendimento"
+living                  = "Despesas de vida"
+goals                   = "Contribuições para objetivos"
+goals_link              = "gerir →"
+free_cash               = "Dinheiro livre"
+month_progress          = "Progresso do mês"
+
 # ── Transações ────────────────────────────────────────────────────────────────
 
 [transactions]
@@ -287,6 +296,8 @@ placeholder_amount  = "0,00"
 label_category      = "Categoria"
 label_account       = "Conta"
 option_no_account   = "— nenhuma —"
+label_goal          = "Financiar um objetivo (opcional)"
+option_no_goal      = "— não é contribuição para objetivo —"
 btn_cancel          = "Cancelar"
 btn_save            = "Guardar Transação"
 error_required      = "Por favor, preencha a data, a descrição e um valor positivo."
@@ -338,11 +349,11 @@ tab_planner             = "Planeador de Objetivos"
 [goals.summary_cards]
 avg_monthly_savings     = "Poupança mensal média"
 last_3_months           = "últimos 3 meses"
-disposable_income       = "Rendimento disponível"
-before_goals            = "antes dos objetivos"
-reserved_for_goals      = "Reservado para objetivos"
-per_month               = "por mês"
-free_to_spend           = "Livre para gastar"
+income                  = "Rendimento"
+this_month              = "este mês"
+goal_funded             = "Financiado para objetivos"
+tagged_transactions     = "via transações etiquetadas"
+free_cash               = "Dinheiro livre"
 after_goals             = "após objetivos"
 
 [goals.goal_card]
@@ -362,6 +373,9 @@ btn_committed           = "✓ Comprometido — clique para cancelar compromisso
 btn_commit              = "Comprometer com este objetivo"
 btn_remove              = "Remover"
 confirm_remove          = "Remover este objetivo?"
+btn_fund                = "Financiar este objetivo"
+funding_history         = "Contribuições recentes"
+no_funding_yet          = "Nenhuma transação etiquetada ainda. Adicione uma transação e associe-a a este objetivo."
 
 [goals.empty]
 title                   = "Sem objetivos ainda"

@@ -243,6 +243,15 @@ total_committed         = "Total committed"
 vs_last_month_up        = "↑ vs last month"
 vs_last_month_down      = "↓ vs last month"
 
+[dashboard.waterfall]
+title                   = "Cash flow this month"
+income                  = "Income"
+living                  = "Living expenses"
+goals                   = "Goal contributions"
+goals_link              = "manage →"
+free_cash               = "Free cash"
+month_progress          = "Month progress"
+
 # ── Transactions ─────────────────────────────────────────────────────────────
 
 [transactions]
@@ -287,6 +296,8 @@ placeholder_amount  = "0.00"
 label_category      = "Category"
 label_account       = "Account"
 option_no_account   = "— none —"
+label_goal          = "Fund a goal (optional)"
+option_no_goal      = "— not a goal contribution —"
 btn_cancel          = "Cancel"
 btn_save            = "Save Transaction"
 error_required      = "Please fill in date, description, and a positive amount."
@@ -338,11 +349,11 @@ tab_planner             = "Goal Planner"
 [goals.summary_cards]
 avg_monthly_savings     = "Avg monthly savings"
 last_3_months           = "last 3 months"
-disposable_income       = "Disposable income"
-before_goals            = "before goals"
-reserved_for_goals      = "Reserved for goals"
-per_month               = "per month"
-free_to_spend           = "Free to spend"
+income                  = "Income"
+this_month              = "this month"
+goal_funded             = "Funded to goals"
+tagged_transactions     = "via tagged transactions"
+free_cash               = "Free cash"
 after_goals             = "after goals"
 
 [goals.goal_card]
@@ -362,6 +373,9 @@ btn_committed           = "✓ Committed — click to uncommit"
 btn_commit              = "Commit to this goal"
 btn_remove              = "Remove"
 confirm_remove          = "Remove this goal?"
+btn_fund                = "Fund this goal"
+funding_history         = "Recent contributions"
+no_funding_yet          = "No transactions tagged yet. Add a transaction and link it to this goal."
 
 [goals.empty]
 title                   = "No goals yet"

@@ -22,40 +22,31 @@
 {{if eq $d.Tab "goals"}}
 {{/* ─── GOALS TAB ─────────────────────────────────────────────────────── */}}
 
-{{if $d.ConflictWarning}}
-<div style="padding:14px 18px; border-radius:10px; margin-bottom:16px; font-size:13px;
-     background:rgba(248,113,113,0.08); border:1px solid rgba(248,113,113,0.25); color:var(--red);">
-  ⚠ {{$d.ConflictWarning}}
-</div>
-{{end}}
-
-{{if $d.AvgMonthlySavings}}
 <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
-  <div class="card value-card animate-on-scroll" style="flex:1; min-width:160px;">
+  {{if $d.AvgMonthlySavings}}
+  <div class="card value-card animate-on-scroll" style="flex:1; min-width:150px;">
     <h2>{{$d.T.Get "goals.summary_cards.avg_monthly_savings"}}</h2>
     <div class="value positive animate-counter" data-target="{{$d.AvgMonthlySavings}}" data-prefix="€">€0</div>
     <p style="font-size:12px; color:var(--text3); margin-top:4px;">{{$d.T.Get "goals.summary_cards.last_3_months"}}</p>
   </div>
-  <div class="card value-card animate-on-scroll" style="flex:1; min-width:160px;">
-    <h2>{{$d.T.Get "goals.summary_cards.disposable_income"}}</h2>
-    <div class="value animate-counter" data-target="{{$d.DisposableIncome}}" data-prefix="€" style="color:var(--text);">€0</div>
-    <p style="font-size:12px; color:var(--text3); margin-top:4px;">{{$d.T.Get "goals.summary_cards.before_goals"}}</p>
+  {{end}}
+  <div class="card value-card animate-on-scroll" style="flex:1; min-width:150px;">
+    <h2>{{$d.T.Get "goals.summary_cards.income"}}</h2>
+    <div class="value positive animate-counter" data-target="{{$d.WaterfallIncome}}" data-prefix="€">€0</div>
+    <p style="font-size:12px; color:var(--text3); margin-top:4px;">{{$d.T.Get "goals.summary_cards.this_month"}}</p>
   </div>
-  {{if $d.CommittedMonthlyCents}}
-  <div class="card value-card animate-on-scroll" style="flex:1; min-width:160px;">
-    <h2>{{$d.T.Get "goals.summary_cards.reserved_for_goals"}}</h2>
-    <div class="value negative animate-counter" data-target="{{$d.CommittedMonthlyCents}}" data-prefix="€">€0</div>
-    <p style="font-size:12px; color:var(--text3); margin-top:4px;">{{$d.T.Get "goals.summary_cards.per_month"}}</p>
+  <div class="card value-card animate-on-scroll" style="flex:1; min-width:150px;">
+    <h2>{{$d.T.Get "goals.summary_cards.goal_funded"}}</h2>
+    <div class="value animate-counter" style="color:var(--accent);" data-target="{{$d.WaterfallGoals}}" data-prefix="€">€0</div>
+    <p style="font-size:12px; color:var(--text3); margin-top:4px;">{{$d.T.Get "goals.summary_cards.tagged_transactions"}}</p>
   </div>
-  <div class="card value-card animate-on-scroll" style="flex:1; min-width:160px;">
-    <h2>{{$d.T.Get "goals.summary_cards.free_to_spend"}}</h2>
-    <div class="value animate-counter {{if lt $d.RemainingDisposable 0}}negative{{else}}positive{{end}}"
-         data-target="{{$d.RemainingDisposable}}" data-prefix="€">€0</div>
+  <div class="card value-card animate-on-scroll" style="flex:1; min-width:150px;">
+    <h2>{{$d.T.Get "goals.summary_cards.free_cash"}}</h2>
+    <div class="value animate-counter {{if lt $d.WaterfallFreeCash 0}}negative{{else}}positive{{end}}"
+         data-target="{{$d.WaterfallFreeCash}}" data-prefix="€">€0</div>
     <p style="font-size:12px; color:var(--text3); margin-top:4px;">{{$d.T.Get "goals.summary_cards.after_goals"}}</p>
   </div>
-  {{end}}
 </div>
-{{end}}
 
 {{if $d.Goals}}
 <div style="display:flex; flex-direction:column; gap:14px;">
@@ -141,25 +132,51 @@
       {{end}}
     </div>
 
-    <!-- commit / uncommit / delete -->
+    <!-- commit / uncommit / delete / fund -->
     <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px; flex-wrap:wrap; gap:8px;">
-      <form method="POST" action="/goals">
-        <input type="hidden" name="action" value="{{if .Committed}}uncommit{{else}}commit{{end}}">
-        <input type="hidden" name="id" value="{{.ID}}">
-        {{if .Committed}}
-        <button type="submit" class="btn btn-outline btn-sm" style="color:var(--green); border-color:var(--green)55;">
-          {{$d.T.Get "goals.goal_card.btn_committed"}}
-        </button>
-        {{else}}
-        <button type="submit" class="btn btn-primary btn-sm">{{$d.T.Get "goals.goal_card.btn_commit"}}</button>
-        {{end}}
-      </form>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <form method="POST" action="/goals">
+          <input type="hidden" name="action" value="{{if .Committed}}uncommit{{else}}commit{{end}}">
+          <input type="hidden" name="id" value="{{.ID}}">
+          {{if .Committed}}
+          <button type="submit" class="btn btn-outline btn-sm" style="color:var(--green); border-color:var(--green)55;">
+            {{$d.T.Get "goals.goal_card.btn_committed"}}
+          </button>
+          {{else}}
+          <button type="submit" class="btn btn-primary btn-sm">{{$d.T.Get "goals.goal_card.btn_commit"}}</button>
+          {{end}}
+        </form>
+        <a href="/transactions?fund_goal={{.ID}}" class="btn btn-outline btn-sm" style="color:var(--accent); border-color:var(--accent)55;">
+          {{$d.T.Get "goals.goal_card.btn_fund"}}
+        </a>
+      </div>
       <form method="POST" action="/goals">
         <input type="hidden" name="action" value="delete">
         <input type="hidden" name="id" value="{{.ID}}">
         <button type="submit" class="btn btn-outline btn-sm" style="color:var(--red); border-color:var(--red)33;"
                 onclick="return confirm('{{$d.T.Get "goals.goal_card.confirm_remove"}}')">{{$d.T.Get "goals.goal_card.btn_remove"}}</button>
       </form>
+    </div>
+
+    <!-- funding history -->
+    <div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--border);">
+      <div style="font-size:12px; font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px;">
+        {{$d.T.Get "goals.goal_card.funding_history"}}
+        <span style="font-weight:400; color:var(--accent); font-size:11px; margin-left:4px;">€{{cents .SavedCents}} {{$d.T.Get "goals.goal_card.saved_of"}} €{{cents .TargetCents}}</span>
+      </div>
+      {{if .FundingTxns}}
+      <div style="display:flex; flex-direction:column; gap:4px;">
+        {{range .FundingTxns}}
+        <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; padding:5px 0; border-bottom:1px solid var(--border);">
+          <span style="color:var(--text2);">{{.Date.Format "02 Jan"}}</span>
+          <span style="flex:1; padding:0 10px; color:var(--text);">{{.Description}}</span>
+          <span style="color:var(--accent); font-weight:600;">€{{cents (abs .AmountCents)}}</span>
+        </div>
+        {{end}}
+      </div>
+      {{else}}
+      <p style="font-size:12px; color:var(--text3); margin:0;">{{$d.T.Get "goals.goal_card.no_funding_yet"}}</p>
+      {{end}}
     </div>
   </div>
   {{end}}

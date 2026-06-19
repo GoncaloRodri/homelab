@@ -301,6 +301,62 @@ func (s *Store) deleteGoal(ctx context.Context, id, userID string) error {
 	return err
 }
 
+// getGoalFundedCentsAll aggregates all transactions tagged with a goal_id and returns
+// a map of goalID → total funded cents (absolute value of outflows).
+func (s *Store) getGoalFundedCentsAll(ctx context.Context, userID string) (map[string]int64, error) {
+	ctx, span := mongo.StartSpan(ctx, "Store.getGoalFundedCentsAll")
+	defer span.End()
+	pipeline := bson.A{
+		bson.M{"$match": bson.M{
+			"user_id":      userID,
+			"goal_id":      bson.M{"$exists": true, "$ne": ""},
+			"amount_cents": bson.M{"$lt": 0},
+		}},
+		bson.M{"$group": bson.M{
+			"_id":   "$goal_id",
+			"total": bson.M{"$sum": bson.M{"$abs": "$amount_cents"}},
+		}},
+	}
+	cur, err := s.transactions().Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, err
+	}
+	defer cur.Close(ctx)
+	var rows []struct {
+		ID    string `bson:"_id"`
+		Total int64  `bson:"total"`
+	}
+	if err := cur.All(ctx, &rows); err != nil {
+		return nil, err
+	}
+	result := make(map[string]int64, len(rows))
+	for _, r := range rows {
+		result[r.ID] = r.Total
+	}
+	return result, nil
+}
+
+// getGoalTransactions returns the most recent transactions tagged to a specific goal.
+func (s *Store) getGoalTransactions(ctx context.Context, userID, goalID string) ([]Transaction, error) {
+	ctx, span := mongo.StartSpan(ctx, "Store.getGoalTransactions")
+	defer span.End()
+	opts := options.Find().SetSort(bson.M{"date": -1}).SetLimit(5)
+	cur, err := s.transactions().Find(ctx, bson.M{
+		"user_id": userID,
+		"goal_id": goalID,
+		"amount_cents": bson.M{"$lt": 0},
+	}, opts)
+	if err != nil {
+		return nil, err
+	}
+	defer cur.Close(ctx)
+	var txns []Transaction
+	if err := cur.All(ctx, &txns); err != nil {
+		return nil, err
+	}
+	return txns, nil
+}
+
 func (s *Store) deletePermission(ctx context.Context, ownerID, viewerID string) error {
 	ctx, span := mongo.StartSpan(ctx, "Store.deletePermission")
 	defer span.End()
