@@ -176,6 +176,9 @@
     <h1>{{.T.Get "auth.login.heading"}}</h1>
     <p class="sub">{{.T.Get "auth.login.subtext"}} <a href="/auth/register">{{.T.Get "auth.login.subtext_link"}}</a></p>
 
+    {{if .Success}}
+    <div style="background:rgba(0,229,176,0.1); border:1px solid rgba(0,229,176,0.3); border-radius:8px; padding:12px 16px; font-size:13px; color:#00e5b0; margin-bottom:16px;">{{.Success}}</div>
+    {{end}}
     {{if .Error}}
     <div class="error-box">{{.Error}}</div>
     {{end}}

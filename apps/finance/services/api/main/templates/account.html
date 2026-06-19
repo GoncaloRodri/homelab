@@ -1,0 +1,104 @@
+{{template "base" .}}
+
+{{define "content"}}
+{{$d := .}}
+<style>
+:root, [data-theme] { --muted: var(--text3); }
+.sec-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:24px; margin-bottom:16px; }
+.sec-card h2 { font-size:15px; font-weight:700; color:var(--text); margin:0 0 4px; }
+.sec-card .sec-sub { font-size:13px; color:var(--muted); margin:0 0 20px; }
+.session-row { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--border); }
+.session-row:last-child { border-bottom:none; }
+.session-icon { width:36px; height:36px; border-radius:10px; background:var(--bg3); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:17px; flex-shrink:0; }
+.session-info { flex:1; min-width:0; }
+.session-device { font-size:13px; font-weight:500; color:var(--text); }
+.session-meta { font-size:12px; color:var(--muted); margin-top:2px; }
+.session-badge { display:inline-block; font-size:10px; font-weight:700; padding:2px 7px; border-radius:20px; background:var(--accent-glow); color:var(--accent); border:1px solid var(--accent); margin-left:6px; vertical-align:middle; }
+.danger-zone { border-color:rgba(248,113,113,0.25); }
+.danger-zone h2 { color:var(--red); }
+.danger-form { display:flex; flex-direction:column; gap:10px; max-width:360px; }
+.danger-form input { padding:9px 12px; border:1px solid var(--border2); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text); font-size:13.5px; }
+.danger-form input:focus { outline:none; border-color:var(--red); box-shadow:0 0 0 3px rgba(248,113,113,0.15); }
+.btn-danger-solid { padding:9px 20px; border:none; border-radius:var(--radius-sm); background:var(--red); color:#fff; font-size:13.5px; font-weight:600; cursor:pointer; transition:opacity 0.15s; }
+.btn-danger-solid:hover { opacity:0.85; }
+</style>
+
+<h1 style="margin:0 0 4px;">{{$d.T.Get "account.title"}}</h1>
+<p style="font-size:13px; color:var(--muted); margin:0 0 24px;">{{$d.Email}}</p>
+
+{{if $d.Error}}
+<div style="background:var(--red-dim); border:1px solid rgba(248,113,113,0.3); border-radius:var(--radius-sm); padding:12px 16px; font-size:13px; color:var(--red); margin-bottom:16px;">{{$d.Error}}</div>
+{{end}}
+{{if $d.Success}}
+<div style="background:var(--green-dim); border:1px solid rgba(0,229,176,0.3); border-radius:var(--radius-sm); padding:12px 16px; font-size:13px; color:var(--green); margin-bottom:16px;">{{$d.Success}}</div>
+{{end}}
+
+<!-- Active sessions -->
+<div class="sec-card">
+  <h2>{{$d.T.Get "account.sessions.title"}}</h2>
+  <p class="sec-sub">{{$d.T.Get "account.sessions.subtitle"}}</p>
+
+  {{if $d.Sessions}}
+  <div>
+    {{range $d.Sessions}}
+    <div class="session-row">
+      <div class="session-icon">
+        {{if or (contains .Device "iPhone") (contains .Device "Android")}}📱
+        {{else}}💻{{end}}
+      </div>
+      <div class="session-info">
+        <div class="session-device">
+          {{if .Device}}{{.Device}}{{else}}Unknown device{{end}}
+          {{if .IsCurrent}}<span class="session-badge">{{$d.T.Get "account.sessions.this_device"}}</span>{{end}}
+        </div>
+        <div class="session-meta">
+          {{if .IPAddress}}{{.IPAddress}} · {{end}}{{$d.T.Get "account.sessions.signed_in"}} {{.CreatedAt.Format "02 Jan 2006, 15:04"}}
+        </div>
+      </div>
+      {{if not .IsCurrent}}
+      <button onclick="revokeSession('{{.ID}}')" style="background:none; border:1px solid var(--border2); border-radius:6px; padding:5px 11px; font-size:12px; color:var(--muted); cursor:pointer; transition:all 0.15s;" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--muted)'">
+        {{$d.T.Get "account.sessions.btn_revoke"}}
+      </button>
+      {{end}}
+    </div>
+    {{end}}
+  </div>
+  {{else}}
+  <p style="font-size:13px; color:var(--muted);">{{$d.T.Get "account.sessions.none"}}</p>
+  {{end}}
+</div>
+
+<!-- Danger zone -->
+<div class="sec-card danger-zone">
+  <h2>{{$d.T.Get "account.delete.title"}}</h2>
+  <p class="sec-sub">{{$d.T.Get "account.delete.subtitle"}}</p>
+
+  <form method="POST" action="/account/delete" class="danger-form" onsubmit="return confirmDelete(event)">
+    {{if $d.HasPassword}}
+    <label style="font-size:12px; font-weight:600; color:var(--text2);">{{$d.T.Get "account.delete.label_password"}}</label>
+    <input type="password" name="password" placeholder="••••••••" autocomplete="current-password" required>
+    {{else}}
+    <label style="font-size:12px; font-weight:600; color:var(--text2);">{{$d.T.Get "account.delete.label_confirm_email"}}</label>
+    <input type="text" name="confirm_email" placeholder="{{$d.Email}}" autocomplete="off" required>
+    {{end}}
+    <button type="submit" class="btn-danger-solid">{{$d.T.Get "account.delete.btn_delete"}}</button>
+  </form>
+</div>
+
+<script>
+const REVOKE_CONFIRM  = {{$d.T.Get "account.sessions.confirm_revoke" | printf "%q"}};
+const DELETE_CONFIRM  = {{$d.T.Get "account.delete.confirm" | printf "%q"}};
+
+function revokeSession(id) {
+  if (!confirm(REVOKE_CONFIRM)) return;
+  fetch('/sessions/' + id, { method: 'DELETE' })
+    .then(r => { if (r.ok) location.reload(); });
+}
+
+function confirmDelete(e) {
+  if (!confirm(DELETE_CONFIRM)) { e.preventDefault(); return false; }
+  return true;
+}
+</script>
+
+{{end}}
