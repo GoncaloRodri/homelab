@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"homelab/pkg/logger"
 	"homelab/pkg/metrics"
 	"homelab/pkg/trace"
 )
@@ -48,7 +49,7 @@ func (s *Server) Run(ctx context.Context) error {
 
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%s", s.Port),
-		Handler:      trace.Middleware(metrics.Middleware(mux)),
+		Handler:      trace.Middleware(logger.AccessMiddleware(metrics.Middleware(mux))),
 		ReadTimeout:  s.ReadTimeout,
 		WriteTimeout: s.WriteTimeout,
 		IdleTimeout:  s.IdleTimeout,
