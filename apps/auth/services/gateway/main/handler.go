@@ -300,7 +300,7 @@ func (h *Handler) LoginAPI(w http.ResponseWriter, r *http.Request) {
 		Name:     "auth_token",
 		Value:    token,
 		Path:     "/",
-		Domain:   "homelab.local",
+		Domain:   ".homelab.local",
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
 	})
@@ -343,7 +343,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		Name:     "auth_token",
 		Value:    token,
 		Path:     "/",
-		Domain:   "homelab.local",
+		Domain:   ".homelab.local",
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
 	})
@@ -364,7 +364,7 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 		Name:     "auth_token",
 		Value:    "",
 		Path:     "/",
-		Domain:   "homelab.local",
+		Domain:   ".homelab.local",
 		MaxAge:   -1,
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
