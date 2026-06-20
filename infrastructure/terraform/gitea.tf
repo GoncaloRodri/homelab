@@ -1,3 +1,8 @@
+resource "random_password" "gitea_admin" {
+  length  = 24
+  special = false
+}
+
 resource "kubernetes_secret" "gitea_admin" {
   metadata {
     name      = "gitea-admin"
@@ -5,7 +10,7 @@ resource "kubernetes_secret" "gitea_admin" {
   }
   data = {
     username = "admin"
-    password = var.gitea_admin_password
+    password = random_password.gitea_admin.result
     email    = "admin@homelab.local"
   }
 }
@@ -42,7 +47,7 @@ resource "helm_release" "gitea" {
       }
     }
 
-    "postgresql-ha" = { enabled = false }
+    "postgresql-ha"  = { enabled = false }
     "valkey-cluster" = { enabled = false }
 
     ingress = {
@@ -81,6 +86,58 @@ resource "helm_release" "gitea" {
   })]
 }
 
+# Placeholder secret created by Terraform; data is populated by the
+# terraform_data bootstrapper below after Gitea is reachable.
+resource "kubernetes_secret" "gitea_runner_token" {
+  metadata {
+    name      = "gitea-runner-token"
+    namespace = kubernetes_namespace.domains["gitea"].metadata[0].name
+  }
+  data = { token = "" }
+
+  lifecycle {
+    # After the bootstrapper writes the real token we must not overwrite it
+    # with the empty placeholder on subsequent applies.
+    ignore_changes = [data]
+  }
+}
+
+# On first apply: poll until Gitea is up, call the admin API to obtain a
+# runner registration token, and patch the secret in place.
+# On subsequent applies this resource is a no-op (terraform_data only
+# re-runs its provisioner when triggers_replace changes).
+resource "terraform_data" "gitea_runner_registration" {
+  depends_on = [helm_release.gitea, kubernetes_secret.gitea_runner_token]
+
+  # Re-bootstrap only if the admin password rotates.
+  triggers_replace = [random_password.gitea_admin.id]
+
+  provisioner "local-exec" {
+    interpreter = ["/bin/sh", "-c"]
+    command     = <<-EOT
+      set -e
+
+      echo "Waiting for Gitea to be ready..."
+      until curl -sf "http://git.homelab.local/api/v1/version" > /dev/null 2>&1; do
+        sleep 5
+      done
+
+      PASSWORD=$(kubectl get secret gitea-admin -n gitea \
+        -o jsonpath='{.data.password}' | base64 -d)
+
+      TOKEN=$(curl -sf -X POST \
+        -u "admin:$PASSWORD" \
+        "http://git.homelab.local/api/v1/admin/runners/registration-token" \
+        | grep -o '"token":"[^"]*"' | cut -d'"' -f4)
+
+      kubectl patch secret gitea-runner-token -n gitea \
+        -p "{\"data\":{\"token\":\"$(printf '%s' "$TOKEN" | base64)\"}}"
+
+      echo "Runner registration token written to gitea-runner-token secret."
+    EOT
+  }
+}
+
 # imagePullSecret for finance namespace — allows k8s to pull images from Gitea registry.
 # Containerd mirrors "git.homelab.local" to localhost:30002 (see k3d/config.yaml) and
 # forwards these credentials to authenticate against the Gitea NodePort.
@@ -94,7 +151,7 @@ resource "kubernetes_secret" "gitea_registry_finance" {
     ".dockerconfigjson" = jsonencode({
       auths = {
         "git.homelab.local" = {
-          auth = base64encode("admin:${var.gitea_admin_password}")
+          auth = base64encode("admin:${random_password.gitea_admin.result}")
         }
       }
     })
