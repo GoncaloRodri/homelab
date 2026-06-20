@@ -1,5 +1,5 @@
 locals {
-  namespaces = ["auth", "home", "finance", "test", "monitoring", "infrastructure", "gitea"]
+  namespaces = ["auth", "home", "finance", "test", "monitoring", "infrastructure"]
 }
 
 resource "kubernetes_namespace" "domains" {
