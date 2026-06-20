@@ -15,7 +15,7 @@ resource "helm_release" "gitea" {
   namespace  = kubernetes_namespace.domains["gitea"].metadata[0].name
   repository = "https://dl.gitea.com/charts/"
   chart      = "gitea"
-  version    = "~> 10.0"
+  version    = "~> 12.0"
   atomic     = true
   timeout    = 300
 
