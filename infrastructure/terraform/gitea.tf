@@ -32,11 +32,18 @@ resource "helm_release" "gitea" {
           SSH_DOMAIN = "localhost"
           SSH_PORT   = 30001
         }
+        database = { DB_TYPE = "sqlite3" }
+        queue    = { TYPE = "level" }
+        cache    = { ADAPTER = "memory" }
+        session  = { PROVIDER = "memory" }
         packages = { ENABLED = "true" }
         service  = { DISABLE_REGISTRATION = "true" }
         log      = { LEVEL = "Warn" }
       }
     }
+
+    "postgresql-ha" = { enabled = false }
+    "valkey-cluster" = { enabled = false }
 
     ingress = {
       enabled   = true
