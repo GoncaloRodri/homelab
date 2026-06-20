@@ -138,13 +138,19 @@ resource "terraform_data" "gitea_runner_registration" {
   }
 }
 
-# imagePullSecret for finance namespace — allows k8s to pull images from Gitea registry.
-# Containerd mirrors "git.homelab.local" to localhost:30002 (see k3d/config.yaml) and
-# forwards these credentials to authenticate against the Gitea NodePort.
-resource "kubernetes_secret" "gitea_registry_finance" {
+# imagePullSecret for all app namespaces — allows k8s to pull images from the
+# local Gitea registry. Containerd mirrors "git.homelab.local" to localhost:30002
+# (see k3d/config.yaml) and forwards these credentials to authenticate.
+locals {
+  app_namespaces = ["auth", "finance", "home", "test"]
+}
+
+resource "kubernetes_secret" "gitea_registry" {
+  for_each = toset(local.app_namespaces)
+
   metadata {
     name      = "gitea-registry"
-    namespace = kubernetes_namespace.domains["finance"].metadata[0].name
+    namespace = kubernetes_namespace.domains[each.value].metadata[0].name
   }
   type = "kubernetes.io/dockerconfigjson"
   data = {

@@ -15,9 +15,11 @@ spec:
       labels:
         app: users
     spec:
+      imagePullSecrets:
+        - name: gitea-registry
       containers:
         - name: users
-          image: homelab/users:latest
+          image: git.homelab.local/homelab/users:latest
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
