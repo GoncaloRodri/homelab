@@ -215,7 +215,7 @@ resource "helm_release" "fluent_bit" {
         # Static label keeps backward compat; dynamic labels let you filter
         # {namespace="finance"} or {app="api"} in Grafana/LogQL.
         "    Labels      job=fluent-bit\n",
-        "    label_keys  $$kube_namespace_name,$$kube_container_name\n",
+        "    label_keys  $kube_namespace_name,$kube_container_name\n",
       ])
     }
     tolerations = [
