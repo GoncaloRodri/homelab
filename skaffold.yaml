@@ -1,0 +1,20 @@
+apiVersion: skaffold/v4beta13
+kind: Config
+metadata:
+  name: homelab
+
+requires:
+  - path: apps/auth/services/gateway
+    configs: [gateway]
+  - path: apps/auth/services/users
+    configs: [users]
+  - path: apps/test/services/example-service
+    configs: [example-service]
+  - path: apps/finance/services/api
+    configs: [finance-api]
+
+profiles:
+  - name: local
+    activation:
+      - kubeContext: k3d-homelab
+  - name: ci

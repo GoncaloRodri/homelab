@@ -19,7 +19,7 @@ spec:
         - name: gitea-registry
       containers:
         - name: api
-          image: git.homelab.local/admin/finance-api:latest
+          image: homelab/finance-api
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
