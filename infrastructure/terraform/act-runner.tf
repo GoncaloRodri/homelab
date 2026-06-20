@@ -44,20 +44,6 @@ resource "kubernetes_cluster_role_binding" "act_runner" {
   }
 }
 
-# Populated after initial Gitea deploy:
-#   1. Open http://git.homelab.local → Admin Area → Runners → Create Runner
-#   2. Copy the token
-#   3. terraform apply -var gitea_runner_token=<token>
-resource "kubernetes_secret" "gitea_runner_token" {
-  metadata {
-    name      = "gitea-runner-token"
-    namespace = kubernetes_namespace.domains["gitea"].metadata[0].name
-  }
-  data = {
-    token = var.gitea_runner_token
-  }
-}
-
 # ConfigMap for act runner config (host executor mode — steps run directly in runner container)
 resource "kubernetes_config_map" "act_runner" {
   metadata {
