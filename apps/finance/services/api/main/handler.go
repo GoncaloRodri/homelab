@@ -148,6 +148,7 @@ func parseTmpl(files ...string) *template.Template {
 			}
 			return template.JS("[" + strings.Join(vals, ",") + "]")
 		},
+		"contains": strings.Contains,
 	}).ParseFS(templateFS, files...))
 }
 
@@ -182,6 +183,7 @@ var (
 	autoImportTmpl  = parseTmpl("templates/base.html", "templates/auto_import.html")
 	peopleTmpl      = parseTmpl("templates/base.html", "templates/people.html")
 	settingsTmpl    = parseTmpl("templates/base.html", "templates/settings.html")
+	accountTmpl     = parseTmpl("templates/base.html", "templates/account.html")
 
 	// Org — list/create/join stay on personal base; inner org pages use business base
 	orgListTmpl   = parseTmpl("templates/base.html", "templates/org_list.html")
@@ -353,10 +355,14 @@ type storeIface interface {
 	// Auth
 	createAuthUser(ctx context.Context, u *AuthUser) error
 	findAuthUserByEmail(ctx context.Context, email string) (*AuthUser, error)
+	findAuthUserByID(ctx context.Context, userID string) (*AuthUser, error)
 	findAuthUserByProvider(ctx context.Context, provider, providerID string) (*AuthUser, error)
 	createAuthSession(ctx context.Context, sess *AuthSession) error
 	getAuthSession(ctx context.Context, id string) (*AuthSession, error)
 	deleteAuthSession(ctx context.Context, id string) error
+	getSessionsByUserID(ctx context.Context, userID string) ([]AuthSession, error)
+	deleteSessionForUser(ctx context.Context, sessionID, userID string) error
+	deleteAllUserData(ctx context.Context, userID string) error
 }
 
 type Handler struct {
@@ -2767,6 +2773,9 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /auth/logout", h.AuthLogout)
 	mux.HandleFunc("GET /auth/oauth/google", h.AuthGoogleStart)
 	mux.HandleFunc("GET /auth/oauth/google/callback", h.AuthGoogleCallback)
+	mux.HandleFunc("GET /account", h.authMW(h.AccountPage))
+	mux.HandleFunc("POST /account/delete", h.authMW(h.DeleteAccount))
+	mux.HandleFunc("DELETE /sessions/{id}", h.authMW(h.RevokeSession))
 
 	mux.HandleFunc("GET /{$}", h.Homepage)
 	mux.HandleFunc("GET /dashboard", h.authMW(h.Dashboard))

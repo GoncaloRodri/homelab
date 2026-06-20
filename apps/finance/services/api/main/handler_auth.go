@@ -163,6 +163,38 @@ func (h *Handler) authFromSession(r *http.Request) (authInfo, bool) {
 	return authInfo{UserID: sess.UserID.Hex(), Email: sess.Email}, true
 }
 
+func deviceHint(ua string) string {
+	lower := strings.ToLower(ua)
+	browser := "Unknown browser"
+	switch {
+	case strings.Contains(lower, "edg"):
+		browser = "Edge"
+	case strings.Contains(lower, "chrome"):
+		browser = "Chrome"
+	case strings.Contains(lower, "firefox"):
+		browser = "Firefox"
+	case strings.Contains(lower, "safari"):
+		browser = "Safari"
+	}
+	os := ""
+	switch {
+	case strings.Contains(lower, "iphone"):
+		os = "iPhone"
+	case strings.Contains(lower, "android"):
+		os = "Android"
+	case strings.Contains(lower, "windows"):
+		os = "Windows"
+	case strings.Contains(lower, "mac os"):
+		os = "macOS"
+	case strings.Contains(lower, "linux"):
+		os = "Linux"
+	}
+	if os != "" {
+		return browser + " on " + os
+	}
+	return browser
+}
+
 func (h *Handler) startSession(w http.ResponseWriter, r *http.Request, userID bson.ObjectID, email string) error {
 	// Rotate: delete any existing session to prevent session fixation.
 	if cookie, err := r.Cookie(cookieName); err == nil {
@@ -174,6 +206,8 @@ func (h *Handler) startSession(w http.ResponseWriter, r *http.Request, userID bs
 		UserID:    userID,
 		Email:     email,
 		ExpiresAt: time.Now().Add(sessionTTL),
+		IPAddress: clientIP(r),
+		Device:    deviceHint(r.Header.Get("User-Agent")),
 	}
 	if err := h.store.createAuthSession(r.Context(), sess); err != nil {
 		return err
@@ -215,9 +249,14 @@ func (h *Handler) AuthLogin(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Query().Get("error") == "oauth" {
 		errMsg = "Google sign-in failed. Please try again or use email and password."
 	}
+	successMsg := ""
+	if r.URL.Query().Get("deleted") == "1" {
+		successMsg = h.t(r).Get("account.delete.success_login")
+	}
 	renderRaw(w, authLoginTmpl, map[string]any{
 		"GoogleEnabled": h.googleID != "",
 		"Error":         errMsg,
+		"Success":       successMsg,
 		"T":             h.t(r),
 	})
 }
@@ -522,4 +561,135 @@ func (h *Handler) googleUserInfo(ctx context.Context, accessToken string) (*goog
 		return nil, err
 	}
 	return &u, nil
+}
+
+// ── Account / security page ───────────────────────────────────────────────────
+
+func (h *Handler) AccountPage(w http.ResponseWriter, r *http.Request) {
+	a := h.getAuth(r)
+	if a.UserID == "" {
+		http.Redirect(w, r, "/auth/login", http.StatusSeeOther)
+		return
+	}
+	t := h.t(r)
+
+	// Current session ID (to highlight it in the list)
+	currentID := ""
+	if cookie, err := r.Cookie(cookieName); err == nil {
+		currentID, _ = h.verifySessionToken(cookie.Value)
+	}
+
+	sessions, _ := h.store.getSessionsByUserID(r.Context(), a.UserID)
+	var views []SessionView
+	for _, s := range sessions {
+		views = append(views, SessionView{
+			ID:        s.ID.Hex(),
+			CreatedAt: s.CreatedAt,
+			IPAddress: s.IPAddress,
+			Device:    s.Device,
+			IsCurrent: s.ID.Hex() == currentID,
+		})
+	}
+
+	user, _ := h.store.findAuthUserByID(r.Context(), a.UserID)
+
+	render(w, accountTmpl, AccountData{
+		T:           t,
+		UserID:      a.UserID,
+		Email:       a.Email,
+		Title:       t.Get("account.title"),
+		Route:       "account",
+		Sessions:    views,
+		HasPassword: user != nil && user.PasswordHash != "",
+		Success:     r.URL.Query().Get("success"),
+	})
+}
+
+func (h *Handler) RevokeSession(w http.ResponseWriter, r *http.Request) {
+	a := h.getAuth(r)
+	if a.UserID == "" {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+	sessionID := r.PathValue("id")
+	// Prevent revoking your own current session via this endpoint (use logout instead)
+	if cookie, err := r.Cookie(cookieName); err == nil {
+		if cur, ok := h.verifySessionToken(cookie.Value); ok && cur == sessionID {
+			http.Error(w, "use /auth/logout to end your current session", http.StatusBadRequest)
+			return
+		}
+	}
+	_ = h.store.deleteSessionForUser(r.Context(), sessionID, a.UserID)
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *Handler) DeleteAccount(w http.ResponseWriter, r *http.Request) {
+	a := h.getAuth(r)
+	if a.UserID == "" {
+		http.Redirect(w, r, "/auth/login", http.StatusSeeOther)
+		return
+	}
+	t := h.t(r)
+
+	fail := func(msg string) {
+		sessions, _ := h.store.getSessionsByUserID(r.Context(), a.UserID)
+		var views []SessionView
+		for _, s := range sessions {
+			views = append(views, SessionView{
+				ID:        s.ID.Hex(),
+				CreatedAt: s.CreatedAt,
+				IPAddress: s.IPAddress,
+				Device:    s.Device,
+			})
+		}
+		user, _ := h.store.findAuthUserByID(r.Context(), a.UserID)
+		render(w, accountTmpl, AccountData{
+			T:           t,
+			UserID:      a.UserID,
+			Email:       a.Email,
+			Title:       t.Get("account.title"),
+			Route:       "account",
+			Sessions:    views,
+			HasPassword: user != nil && user.PasswordHash != "",
+			Error:       msg,
+		})
+	}
+
+	user, err := h.store.findAuthUserByID(r.Context(), a.UserID)
+	if err != nil || user == nil {
+		fail(t.Get("account.delete.error_generic"))
+		return
+	}
+
+	// Password accounts require password confirmation; OAuth accounts require typing email.
+	if user.PasswordHash != "" {
+		password := r.FormValue("password")
+		if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
+			fail(t.Get("account.delete.error_wrong_password"))
+			return
+		}
+	} else {
+		confirm := r.FormValue("confirm_email")
+		if !strings.EqualFold(confirm, user.Email) {
+			fail(t.Get("account.delete.error_wrong_email"))
+			return
+		}
+	}
+
+	if err := h.store.deleteAllUserData(r.Context(), a.UserID); err != nil {
+		slog.Error("deleteAllUserData", "user", a.UserID, "err", err)
+		fail(t.Get("account.delete.error_generic"))
+		return
+	}
+
+	// Clear the session cookie.
+	http.SetCookie(w, &http.Cookie{
+		Name:     cookieName,
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   h.isSecure(),
+		MaxAge:   -1,
+	})
+	http.Redirect(w, r, "/auth/login?deleted=1", http.StatusSeeOther)
 }

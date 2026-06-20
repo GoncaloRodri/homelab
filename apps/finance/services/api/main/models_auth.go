@@ -22,4 +22,6 @@ type AuthSession struct {
 	Email     string        `bson:"email"`
 	ExpiresAt time.Time     `bson:"expires_at"`
 	CreatedAt time.Time     `bson:"created_at"`
+	IPAddress string        `bson:"ip,omitempty"`
+	Device    string        `bson:"device,omitempty"` // "Chrome on macOS" etc.
 }

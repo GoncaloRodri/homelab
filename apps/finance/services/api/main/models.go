@@ -314,6 +314,28 @@ type PeopleData struct {
 	PartnerGoals         []GoalPlan
 }
 
+// SessionView is a display-safe projection of AuthSession.
+type SessionView struct {
+	ID        string
+	CreatedAt time.Time
+	IPAddress string
+	Device    string
+	IsCurrent bool
+}
+
+// AccountData backs the /account security page.
+type AccountData struct {
+	T          *Translator
+	UserID     string
+	Email      string
+	Title      string
+	Route      string
+	Sessions   []SessionView
+	HasPassword bool // false for OAuth-only accounts
+	Error      string
+	Success    string
+}
+
 // SettingsData combines Accounts and Categories into a single page.
 type SettingsData struct {
 	T          *Translator

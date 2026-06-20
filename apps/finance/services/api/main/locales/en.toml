@@ -8,7 +8,8 @@ portfolio      = "Portfolio"
 goals          = "Goals"
 property       = "Property"
 people         = "People"
-business       = "🏢 Business"
+business       = "Business"
+account        = "Account"
 hub_back       = "← Hub"
 
 [nav.analysis]
@@ -1085,3 +1086,29 @@ body    = "How many months it would actually take based on your average monthly 
 title   = "Free cash after this goal"
 body    = "Your estimated monthly free cash if you commit to this goal. Red means you'd need to cut spending elsewhere."
 formula = "Income − Living − All committed goals − This goal"
+
+# ── Account / security page ───────────────────────────────────────────────────
+
+[account]
+title = "Account & Security"
+
+[account.sessions]
+title           = "Active sessions"
+subtitle        = "Every device currently signed into your account. Revoke any session you don't recognise."
+this_device     = "This device"
+signed_in       = "Signed in"
+btn_revoke      = "Revoke"
+confirm_revoke  = "Sign out this session? The device will need to log in again."
+none            = "No active sessions found."
+
+[account.delete]
+title               = "Delete account"
+subtitle            = "Permanently deletes your account and all associated data — transactions, goals, accounts, portfolio, and everything else. This cannot be undone."
+label_password      = "Confirm your password"
+label_confirm_email = "Type your email address to confirm"
+btn_delete          = "Delete my account permanently"
+confirm             = "This will permanently delete all your data. There is no undo. Are you sure?"
+error_wrong_password = "Incorrect password."
+error_wrong_email    = "Email address does not match."
+error_generic        = "Something went wrong. Please try again."
+success_login        = "Your account has been deleted. All data has been removed."
