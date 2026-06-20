@@ -190,8 +190,33 @@ resource "helm_release" "fluent_bit" {
     config = {
       service = "[SERVICE]\n    Daemon       Off\n    Log_Level    info\n    Parsers_File /fluent-bit/etc/parsers.conf\n    HTTP_Server  On\n    HTTP_Listen  0.0.0.0\n    HTTP_Port    2020\n    Health_Check On\n"
       inputs  = "[INPUT]\n    Name             tail\n    Path             /var/log/containers/*.log\n    Exclude_Path     /var/log/containers/fluent-bit-*.log\n    multiline.parser docker,cri\n    Tag              kube.*\n    Mem_Buf_Limit    50MB\n    Skip_Long_Lines  On\n"
-      filters = "[FILTER]\n    Name        kubernetes\n    Match       kube.*\n    Annotations Off\n    Labels      On\n"
-      outputs = "[OUTPUT]\n    Name   loki\n    Match  *\n    Host   loki-gateway.monitoring.svc\n    Port   80\n    Labels job=fluent-bit\n"
+      filters = join("", [
+        "[FILTER]\n",
+        "    Name        kubernetes\n",
+        "    Match       kube.*\n",
+        "    Annotations Off\n",
+        "    Labels      On\n",
+        "\n",
+        # Lift the nested 'kubernetes' object to the top level so label_keys
+        # can reference flat fields like $kube_namespace_name.
+        "[FILTER]\n",
+        "    Name         nest\n",
+        "    Match        kube.*\n",
+        "    Operation    lift\n",
+        "    Nested_under kubernetes\n",
+        "    Add_prefix   kube_\n",
+      ])
+      outputs = join("", [
+        "[OUTPUT]\n",
+        "    Name        loki\n",
+        "    Match       kube.*\n",
+        "    Host        loki-gateway.monitoring.svc\n",
+        "    Port        80\n",
+        # Static label keeps backward compat; dynamic labels let you filter
+        # {namespace="finance"} or {app="api"} in Grafana/LogQL.
+        "    Labels      job=fluent-bit\n",
+        "    label_keys  $$kube_namespace_name,$$kube_container_name\n",
+      ])
     }
     tolerations = [
       { operator = "Exists" }
