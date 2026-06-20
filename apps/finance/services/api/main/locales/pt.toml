@@ -8,7 +8,8 @@ portfolio      = "Carteira"
 goals          = "Objetivos"
 property       = "Imóveis"
 people         = "Pessoas"
-business       = "🏢 Empresa"
+business       = "Empresa"
+account        = "Conta"
 hub_back       = "← Hub"
 
 [nav.analysis]
@@ -1085,3 +1086,29 @@ body    = "Quantos meses levaria realmente com base na sua poupança mensal méd
 title   = "Dinheiro livre após este objetivo"
 body    = "O seu dinheiro livre mensal estimado se se comprometer com este objetivo. Vermelho significa que precisaria de reduzir despesas."
 formula = "Rendimento − Vida − Todos os objetivos comprometidos − Este objetivo"
+
+# ── Página de conta / segurança ───────────────────────────────────────────────
+
+[account]
+title = "Conta & Segurança"
+
+[account.sessions]
+title           = "Sessões ativas"
+subtitle        = "Todos os dispositivos com sessão iniciada na sua conta. Revogue qualquer sessão que não reconheça."
+this_device     = "Este dispositivo"
+signed_in       = "Sessão iniciada"
+btn_revoke      = "Revogar"
+confirm_revoke  = "Terminar esta sessão? O dispositivo terá de iniciar sessão novamente."
+none            = "Nenhuma sessão ativa encontrada."
+
+[account.delete]
+title               = "Eliminar conta"
+subtitle            = "Elimina permanentemente a sua conta e todos os dados associados — transações, objetivos, contas, carteira e tudo o mais. Esta ação não pode ser desfeita."
+label_password      = "Confirme a sua palavra-passe"
+label_confirm_email = "Escreva o seu endereço de e-mail para confirmar"
+btn_delete          = "Eliminar a minha conta permanentemente"
+confirm             = "Isto irá eliminar permanentemente todos os seus dados. Não há forma de desfazer. Tem a certeza?"
+error_wrong_password = "Palavra-passe incorreta."
+error_wrong_email    = "O endereço de e-mail não corresponde."
+error_generic        = "Algo correu mal. Por favor, tente novamente."
+success_login        = "A sua conta foi eliminada. Todos os dados foram removidos."

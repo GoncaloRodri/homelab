@@ -25,12 +25,29 @@ type mockStore struct {
 	trades       []Trade
 	goals        []Goal
 	permissions  []Permission
+	properties   []Property
+	loans        []Loan
 
-	createGoalErr        error
-	updateGoalErr        error
-	deleteTransactionErr error
-	createTransactionErr error
-	createTradesErr      error
+	createGoalErr              error
+	updateGoalErr              error
+	deleteTransactionErr       error
+	createTransactionErr       error
+	createTradesErr            error
+	updateFiscalYearStatusErr  error
+
+	authUsers           map[string]*AuthUser
+	sessions            []AuthSession
+	household           *Household
+	deleteAllUserDataErr error
+
+	// Org support (keyed for lookup)
+	orgsBySlug   map[string]*Org
+	orgsByID     map[string]*Org
+	membersByKey map[string]*OrgMember // key: orgID+":"+userID
+	invitesByToken map[string]*OrgInvite
+	fiscalYears  []FiscalYear
+	orgEvents    []OrgEvent
+	txRequests   []TxRequest
 }
 
 func (m *mockStore) getAccounts(_ context.Context, _ string) ([]Account, error) {
@@ -160,6 +177,9 @@ func (m *mockStore) getTickerMappings(_ context.Context, _ string) ([]TickerMapp
 func (m *mockStore) saveTickerMapping(_ context.Context, _, _, _ string) error { return nil }
 
 func (m *mockStore) getHousehold(_ context.Context, _ string) (*Household, error) {
+	if m.household != nil {
+		return m.household, nil
+	}
 	return nil, fmt.Errorf("not found")
 }
 func (m *mockStore) createHousehold(_ context.Context, _ *Household) error  { return nil }
@@ -172,24 +192,74 @@ func (m *mockStore) deleteImportSchedule(_ context.Context, _, _ string) error  
 
 // ── Property & Loan stubs ─────────────────────────────────────────────────────
 
-func (m *mockStore) getProperties(_ context.Context, _ string) ([]Property, error)            { return nil, nil }
-func (m *mockStore) getProperty(_ context.Context, _, _ string) (*Property, error)            { return nil, nil }
-func (m *mockStore) createProperty(_ context.Context, _ *Property) error                      { return nil }
-func (m *mockStore) updateProperty(_ context.Context, _, _ string, _ bson.M) error            { return nil }
-func (m *mockStore) deleteProperty(_ context.Context, _, _ string) error                      { return nil }
-func (m *mockStore) getLoans(_ context.Context, _ string) ([]Loan, error)                     { return nil, nil }
-func (m *mockStore) getLoan(_ context.Context, _, _ string) (*Loan, error)                    { return nil, nil }
-func (m *mockStore) createLoan(_ context.Context, _ *Loan) error                              { return nil }
-func (m *mockStore) updateLoan(_ context.Context, _, _ string, _ bson.M) error                { return nil }
-func (m *mockStore) deleteLoan(_ context.Context, _, _ string) error                          { return nil }
+func (m *mockStore) getProperties(_ context.Context, _ string) ([]Property, error) {
+	return m.properties, nil
+}
+func (m *mockStore) getProperty(_ context.Context, id, _ string) (*Property, error) {
+	for i := range m.properties {
+		if m.properties[i].ID == id {
+			return &m.properties[i], nil
+		}
+	}
+	return nil, nil
+}
+func (m *mockStore) createProperty(_ context.Context, p *Property) error {
+	m.properties = append(m.properties, *p)
+	return nil
+}
+func (m *mockStore) updateProperty(_ context.Context, _, _ string, _ bson.M) error { return nil }
+func (m *mockStore) deleteProperty(_ context.Context, id, _ string) error {
+	for i, p := range m.properties {
+		if p.ID == id {
+			m.properties = append(m.properties[:i], m.properties[i+1:]...)
+			return nil
+		}
+	}
+	return nil
+}
+func (m *mockStore) getLoans(_ context.Context, _ string) ([]Loan, error) {
+	return m.loans, nil
+}
+func (m *mockStore) getLoan(_ context.Context, id, _ string) (*Loan, error) {
+	for i := range m.loans {
+		if m.loans[i].ID == id {
+			return &m.loans[i], nil
+		}
+	}
+	return nil, nil
+}
+func (m *mockStore) createLoan(_ context.Context, l *Loan) error {
+	m.loans = append(m.loans, *l)
+	return nil
+}
+func (m *mockStore) updateLoan(_ context.Context, _, _ string, _ bson.M) error { return nil }
+func (m *mockStore) deleteLoan(_ context.Context, id, _ string) error {
+	for i, l := range m.loans {
+		if l.ID == id {
+			m.loans = append(m.loans[:i], m.loans[i+1:]...)
+			return nil
+		}
+	}
+	return nil
+}
 
 // ── Org stubs (not exercised in unit tests) ───────────────────────────────────
 
 func (m *mockStore) getOrgsForUser(_ context.Context, _ string) ([]OrgWithRole, error) {
 	return nil, nil
 }
-func (m *mockStore) getOrg(_ context.Context, _ string) (*Org, error)            { return nil, nil }
-func (m *mockStore) getOrgBySlug(_ context.Context, _ string) (*Org, error)      { return nil, nil }
+func (m *mockStore) getOrg(_ context.Context, id string) (*Org, error) {
+	if o, ok := m.orgsByID[id]; ok {
+		return o, nil
+	}
+	return nil, fmt.Errorf("not found")
+}
+func (m *mockStore) getOrgBySlug(_ context.Context, slug string) (*Org, error) {
+	if o, ok := m.orgsBySlug[slug]; ok {
+		return o, nil
+	}
+	return nil, fmt.Errorf("not found")
+}
 func (m *mockStore) createOrg(_ context.Context, _ *Org) error                   { return nil }
 func (m *mockStore) slugExists(_ context.Context, _ string) (bool, error)        { return false, nil }
 func (m *mockStore) getTeams(_ context.Context, _ string) ([]OrgTeam, error)     { return nil, nil }
@@ -197,26 +267,60 @@ func (m *mockStore) getTeam(_ context.Context, _, _ string) (*OrgTeam, error)   
 func (m *mockStore) createTeam(_ context.Context, _ *OrgTeam) error              { return nil }
 func (m *mockStore) deleteTeam(_ context.Context, _, _ string) error             { return nil }
 func (m *mockStore) getMembers(_ context.Context, _ string) ([]OrgMember, error) { return nil, nil }
-func (m *mockStore) getMember(_ context.Context, _, _ string) (*OrgMember, error) {
-	return nil, nil
+func (m *mockStore) getMember(_ context.Context, orgID, userID string) (*OrgMember, error) {
+	key := orgID + ":" + userID
+	if me, ok := m.membersByKey[key]; ok {
+		return me, nil
+	}
+	return nil, fmt.Errorf("not a member")
 }
 func (m *mockStore) createMember(_ context.Context, _ *OrgMember) error                   { return nil }
 func (m *mockStore) updateMemberRole(_ context.Context, _, _ string, _ OrgRole) error     { return nil }
 func (m *mockStore) removeMember(_ context.Context, _, _ string) error                    { return nil }
 func (m *mockStore) getInvites(_ context.Context, _ string) ([]OrgInvite, error)          { return nil, nil }
-func (m *mockStore) getInviteByToken(_ context.Context, _ string) (*OrgInvite, error)     { return nil, nil }
+func (m *mockStore) getInviteByToken(_ context.Context, token string) (*OrgInvite, error) {
+	if inv, ok := m.invitesByToken[token]; ok {
+		return inv, nil
+	}
+	return nil, fmt.Errorf("not found")
+}
 func (m *mockStore) createInvite(_ context.Context, _ *OrgInvite) error                   { return nil }
 func (m *mockStore) consumeInvite(_ context.Context, _ string) error                      { return nil }
 func (m *mockStore) revokeInvite(_ context.Context, _, _ string) error                    { return nil }
-func (m *mockStore) getFiscalYears(_ context.Context, _ string) ([]FiscalYear, error)     { return nil, nil }
-func (m *mockStore) getFiscalYear(_ context.Context, _, _ string) (*FiscalYear, error)    { return nil, nil }
-func (m *mockStore) getActiveFiscalYear(_ context.Context, _ string) (*FiscalYear, error) { return nil, nil }
+func (m *mockStore) getFiscalYears(_ context.Context, _ string) ([]FiscalYear, error) {
+	return m.fiscalYears, nil
+}
+func (m *mockStore) getFiscalYear(_ context.Context, id, _ string) (*FiscalYear, error) {
+	for _, y := range m.fiscalYears {
+		if y.ID == id {
+			return &y, nil
+		}
+	}
+	return nil, fmt.Errorf("not found")
+}
+func (m *mockStore) getActiveFiscalYear(_ context.Context, _ string) (*FiscalYear, error) {
+	for _, y := range m.fiscalYears {
+		if y.Status == FiscalYearActive {
+			return &y, nil
+		}
+	}
+	return nil, fmt.Errorf("no active fiscal year")
+}
 func (m *mockStore) createFiscalYear(_ context.Context, _ *FiscalYear) error              { return nil }
 func (m *mockStore) updateFiscalYearStatus(_ context.Context, _, _ string, _ FiscalYearStatus, _ bson.M) error {
-	return nil
+	return m.updateFiscalYearStatusErr
 }
-func (m *mockStore) getEvents(_ context.Context, _, _ string) ([]OrgEvent, error)      { return nil, nil }
-func (m *mockStore) getEvent(_ context.Context, _, _ string) (*OrgEvent, error)        { return nil, nil }
+func (m *mockStore) getEvents(_ context.Context, _, _ string) ([]OrgEvent, error) {
+	return m.orgEvents, nil
+}
+func (m *mockStore) getEvent(_ context.Context, id, _ string) (*OrgEvent, error) {
+	for i := range m.orgEvents {
+		if m.orgEvents[i].ID == id {
+			return &m.orgEvents[i], nil
+		}
+	}
+	return nil, fmt.Errorf("event not found")
+}
 func (m *mockStore) createEvent(_ context.Context, _ *OrgEvent) error                  { return nil }
 func (m *mockStore) updateEvent(_ context.Context, _, _ string, _ bson.M) error        { return nil }
 func (m *mockStore) deleteEvent(_ context.Context, _, _ string) error                  { return nil }
@@ -231,7 +335,14 @@ func (m *mockStore) deleteBudgetLine(_ context.Context, _, _ string) error      
 func (m *mockStore) getEventComments(_ context.Context, _, _ string) ([]EventComment, error) { return nil, nil }
 func (m *mockStore) createEventComment(_ context.Context, _ *EventComment) error             { return nil }
 func (m *mockStore) getTxRequests(_ context.Context, _ string, _ bson.M) ([]TxRequest, error) { return nil, nil }
-func (m *mockStore) getTxRequest(_ context.Context, _, _ string) (*TxRequest, error)          { return nil, nil }
+func (m *mockStore) getTxRequest(_ context.Context, id, _ string) (*TxRequest, error) {
+	for i := range m.txRequests {
+		if m.txRequests[i].ID == id {
+			return &m.txRequests[i], nil
+		}
+	}
+	return nil, fmt.Errorf("not found")
+}
 func (m *mockStore) createTxRequest(_ context.Context, _ *TxRequest) error                    { return nil }
 func (m *mockStore) appendStatusLog(_ context.Context, _, _ string, _ StatusLogEntry) error   { return nil }
 func (m *mockStore) updateTxRequest(_ context.Context, _, _ string, _ bson.M) error           { return nil }
@@ -245,18 +356,54 @@ func (m *mockStore) getAttachments(_ context.Context, _, _ string) ([]OrgAttachm
 }
 func (m *mockStore) createAttachment(_ context.Context, _ *OrgAttachment) error { return nil }
 
-func (m *mockStore) createAuthUser(_ context.Context, _ *AuthUser) error           { return nil }
-func (m *mockStore) findAuthUserByEmail(_ context.Context, _ string) (*AuthUser, error) {
+func (m *mockStore) createAuthUser(_ context.Context, _ *AuthUser) error { return nil }
+func (m *mockStore) findAuthUserByEmail(_ context.Context, email string) (*AuthUser, error) {
+	if m.authUsers != nil {
+		for _, u := range m.authUsers {
+			if u.Email == email {
+				return u, nil
+			}
+		}
+	}
 	return nil, nil
 }
 func (m *mockStore) findAuthUserByProvider(_ context.Context, _, _ string) (*AuthUser, error) {
 	return nil, nil
 }
-func (m *mockStore) createAuthSession(_ context.Context, _ *AuthSession) error      { return nil }
-func (m *mockStore) getAuthSession(_ context.Context, _ string) (*AuthSession, error) {
+func (m *mockStore) createAuthSession(_ context.Context, sess *AuthSession) error {
+	m.sessions = append(m.sessions, *sess)
+	return nil
+}
+func (m *mockStore) getAuthSession(_ context.Context, id string) (*AuthSession, error) {
+	for i := range m.sessions {
+		if m.sessions[i].ID.Hex() == id {
+			return &m.sessions[i], nil
+		}
+	}
 	return nil, nil
 }
 func (m *mockStore) deleteAuthSession(_ context.Context, _ string) error { return nil }
+func (m *mockStore) findAuthUserByID(_ context.Context, userID string) (*AuthUser, error) {
+	if m.authUsers != nil {
+		if u, ok := m.authUsers[userID]; ok {
+			return u, nil
+		}
+	}
+	return nil, nil
+}
+func (m *mockStore) getSessionsByUserID(_ context.Context, _ string) ([]AuthSession, error) {
+	return m.sessions, nil
+}
+func (m *mockStore) deleteSessionForUser(_ context.Context, _, _ string) error { return nil }
+func (m *mockStore) deleteAllUserData(_ context.Context, _ string) error {
+	return m.deleteAllUserDataErr
+}
+func (m *mockStore) getGoalFundedCentsAll(_ context.Context, _ string) (map[string]int64, error) {
+	return nil, nil
+}
+func (m *mockStore) getGoalTransactions(_ context.Context, _, _ string) ([]Transaction, error) {
+	return nil, nil
+}
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -907,6 +1054,7 @@ func TestDashboard_GoalMissAlert(t *testing.T) {
 			TargetCents: 5000000,
 			SavedCents:  0,
 			Deadline:    now.AddDate(0, 5, 0),
+			Committed:   true,
 		}},
 	}
 	h := newHandler(store)
