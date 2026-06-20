@@ -392,6 +392,10 @@ func (s *Store) getEvent(ctx context.Context, eventID, orgID string) (*OrgEvent,
 func (s *Store) createEvent(ctx context.Context, e *OrgEvent) error {
 	ctx, span := mongo.StartSpan(ctx, "Store.createEvent")
 	defer span.End()
+	// Ensure goal_items is always an array so $push works without a null-field error.
+	if e.GoalItems == nil {
+		e.GoalItems = []EventGoal{}
+	}
 	_, err := s.orgEvents().InsertOne(ctx, e)
 	return err
 }

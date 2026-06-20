@@ -118,26 +118,27 @@ func (s *Store) deleteAllUserData(ctx context.Context, userID string) error {
 	if err != nil {
 		return err
 	}
-	filter := bson.M{"user_id": uid}
-	orFilter := bson.M{"$or": bson.A{bson.M{"owner_id": uid}, bson.M{"partner_id": uid}}}
-	orFilterPerms := bson.M{"$or": bson.A{bson.M{"owner_id": uid}, bson.M{"viewer_id": uid}}}
+	// Most collections store user_id as a plain string; only sessions use ObjectID.
+	strFilter := bson.M{"user_id": userID}
+	orFilter := bson.M{"$or": bson.A{bson.M{"owner_id": userID}, bson.M{"partner_id": userID}}}
+	orFilterPerms := bson.M{"$or": bson.A{bson.M{"owner_id": userID}, bson.M{"viewer_id": userID}}}
 
 	collections := []struct {
 		name   string
 		filter interface{}
 	}{
-		{"finance_accounts", filter},
-		{"finance_categories", filter},
-		{"finance_transactions", filter},
-		{"finance_trades", filter},
-		{"finance_ticker_mappings", filter},
-		{"finance_goals", filter},
-		{"finance_import_schedules", filter},
-		{"finance_properties", filter},
-		{"finance_loans", filter},
+		{"finance_accounts", strFilter},
+		{"finance_categories", strFilter},
+		{"finance_transactions", strFilter},
+		{"finance_trades", strFilter},
+		{"finance_ticker_mappings", strFilter},
+		{"finance_goals", strFilter},
+		{"finance_import_schedules", strFilter},
+		{"finance_properties", strFilter},
+		{"finance_loans", strFilter},
 		{"finance_permissions", orFilterPerms},
 		{"finance_households", orFilter},
-		{"finance_sessions", bson.M{"user_id": uid}},
+		{"finance_sessions", bson.M{"user_id": uid}}, // AuthSession.UserID is bson.ObjectID
 	}
 	for _, c := range collections {
 		if _, err := s.db.Collection(c.name).DeleteMany(ctx, c.filter); err != nil {
