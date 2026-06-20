@@ -16,9 +16,11 @@ spec:
       labels:
         app: example-service
     spec:
+      imagePullSecrets:
+        - name: gitea-registry
       containers:
         - name: example-service
-          image: homelab/example-service:latest
+          image: git.homelab.local/homelab/example-service:latest
           imagePullPolicy: IfNotPresent
           ports:
             - name: http

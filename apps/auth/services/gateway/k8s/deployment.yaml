@@ -15,9 +15,11 @@ spec:
       labels:
         app: gateway
     spec:
+      imagePullSecrets:
+        - name: gitea-registry
       containers:
         - name: gateway
-          image: homelab/gateway:latest
+          image: git.homelab.local/homelab/gateway:latest
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
