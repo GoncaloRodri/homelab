@@ -1,6 +1,7 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
+  namespace: auth
   name: gateway-home
   annotations:
     traefik.ingress.kubernetes.io/router.middlewares: auth-forward-auth@kubernetescrd

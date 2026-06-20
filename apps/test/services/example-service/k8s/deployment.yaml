@@ -20,7 +20,7 @@ spec:
         - name: gitea-registry
       containers:
         - name: example-service
-          image: git.homelab.local/homelab/example-service:latest
+          image: homelab/example-service
           imagePullPolicy: IfNotPresent
           ports:
             - name: http

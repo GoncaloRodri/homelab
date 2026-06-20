@@ -1,0 +1,28 @@
+apiVersion: skaffold/v4beta13
+kind: Config
+metadata:
+  name: example-service
+build:
+  artifacts:
+    - image: homelab/example-service
+      context: ../../../../
+      docker:
+        dockerfile: apps/test/services/example-service/Dockerfile
+manifests:
+  rawYaml:
+    - k8s/*.yaml
+deploy:
+  kubectl: {}
+profiles:
+  - name: local
+    activation:
+      - kubeContext: k3d-homelab
+    build:
+      local:
+        push: false
+  - name: ci
+    build:
+      local:
+        push: true
+      tagPolicy:
+        gitCommit: {}

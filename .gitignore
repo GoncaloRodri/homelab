@@ -1,5 +1,3 @@
-skaffold.yaml
-
 # terraform
 *.tfstate*
 .terraform

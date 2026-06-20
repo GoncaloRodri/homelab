@@ -2,6 +2,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  namespace: auth
   name: users
   labels:
     app: users
@@ -19,7 +20,7 @@ spec:
         - name: gitea-registry
       containers:
         - name: users
-          image: git.homelab.local/homelab/users:latest
+          image: homelab/users
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
