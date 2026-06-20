@@ -3,7 +3,10 @@ SHELL := /bin/zsh
 .DEFAULT_GOAL := help
 
 K3D_SCRIPT := infrastructure/k3d/k3d.sh
-TERRAFORM := terraform
+TERRAFORM   := terraform
+
+# ── Cluster ───────────────────────────────────────────────────────────────────
+
 .PHONY: up
 up: ## Create the k3d dev cluster
 	$(K3D_SCRIPT) homelab
@@ -12,48 +15,57 @@ up: ## Create the k3d dev cluster
 down: ## Delete the k3d dev cluster
 	$(K3D_SCRIPT) homelab delete
 
+# ── Infrastructure ────────────────────────────────────────────────────────────
+
 .PHONY: infra
-infra: ## Deploy shared infrastructure (MongoDB, monitoring, Traefik metrics)
+infra: ## Deploy shared infrastructure (MongoDB, monitoring, Traefik)
 	$(TERRAFORM) -chdir=infrastructure/terraform/ apply
 
-SERVICES := $(shell find apps -name Makefile -path "*/services/*" -exec dirname {} \;)
-
-.PHONY: deploy-finance
-deploy-finance: ## Build and deploy the finance API
-	$(MAKE) -C apps/finance/services/api build-deploy
-
-.PHONY: deploy-auth-users
-deploy-auth-users: ## Build and deploy the auth users service
-	$(MAKE) -C apps/auth/services/users build-deploy
-
-.PHONY: deploy-auth-gateway
-deploy-auth-gateway: ## Build and deploy the auth gateway service
-	$(MAKE) -C apps/auth/services/gateway build-deploy
-
-.PHONY: test
-test: ## Run all tests
-	go test ./...
-
-.PHONY: deploy-all
-deploy-all: ## Build, load, deploy, and restart every service
-	@for dir in $(SERVICES); do \
-		echo "\033[36m>>> $$dir\033[0m"; \
-		$(MAKE) -C "$$dir" build-deploy || true; \
-	done
-
-.PHONY: restart-all
-restart-all: ## Restart all deployments (pick up new images)
-	@for dir in $(SERVICES); do \
-		ns=$$(echo "$$dir" | awk -F/ '{print $$2}'); \
-		svc=$$(basename "$$dir"); \
-		kubectl rollout restart deployment "$$svc" -n "$$ns" 2>/dev/null || true; \
-	done
+# ── Services (Skaffold) ───────────────────────────────────────────────────────
 
 .PHONY: dev
-dev: up infra deploy-all ## Full cycle: cluster + infra + all services
+dev: ## Watch all services — rebuild and redeploy on file change
+	skaffold dev
+
+.PHONY: run
+run: ## Build and deploy all services once
+	skaffold run
+
+.PHONY: dev-finance
+dev-finance: ## Watch finance API only
+	skaffold dev -f apps/finance/services/api/skaffold.yaml -p local
+
+.PHONY: dev-gateway
+dev-gateway: ## Watch auth gateway only
+	skaffold dev -f apps/auth/services/gateway/skaffold.yaml -p local
+
+.PHONY: dev-users
+dev-users: ## Watch auth users only
+	skaffold dev -f apps/auth/services/users/skaffold.yaml -p local
+
+.PHONY: dev-example
+dev-example: ## Watch test example-service only
+	skaffold dev -f apps/test/services/example-service/skaffold.yaml -p local
+
+# ── Tests ─────────────────────────────────────────────────────────────────────
+
+.PHONY: test
+test: ## Run all unit tests
+	go test ./...
+
+.PHONY: test-integration
+test-integration: ## Run integration tests (requires Docker for testcontainers)
+	go test -tags integration ./...
+
+# ── Lifecycle ─────────────────────────────────────────────────────────────────
+
+.PHONY: bootstrap
+bootstrap: up infra run ## Full bootstrap: cluster + infra + all services
 
 .PHONY: reset
-reset: down up infra deploy-all
+reset: down bootstrap ## Tear down and rebuild everything from scratch
+
+# ── Help ──────────────────────────────────────────────────────────────────────
 
 .PHONY: help
 help: ## Show this help
