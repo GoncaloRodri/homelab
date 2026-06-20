@@ -125,7 +125,7 @@ resource "terraform_data" "gitea_runner_registration" {
       PASSWORD=$(kubectl get secret gitea-admin -n gitea \
         -o jsonpath='{.data.password}' | base64 -d)
 
-      TOKEN=$(curl -sf -X POST \
+      TOKEN=$(curl -sf \
         -u "admin:$PASSWORD" \
         "http://git.homelab.local/api/v1/admin/runners/registration-token" \
         | grep -o '"token":"[^"]*"' | cut -d'"' -f4)
