@@ -8,7 +8,8 @@ portfolio      = "Carteira"
 goals          = "Objetivos"
 property       = "Imóveis"
 people         = "Pessoas"
-business       = "🏢 Empresa"
+business       = "Empresa"
+account        = "Conta"
 hub_back       = "← Hub"
 
 [nav.analysis]
