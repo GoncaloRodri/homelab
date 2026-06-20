@@ -659,8 +659,8 @@
       </div>
     </div>
     <div class="nav-spacer"></div>
-    <a href="/orgs" style="font-size:12px; color:var(--text3); padding:5px 9px; border:1px solid var(--border); border-radius:var(--radius-sm); text-decoration:none; transition:all 0.18s;" onmouseover="this.style.color='var(--text2)';this.style.borderColor='var(--border2)'" onmouseout="this.style.color='var(--text3)';this.style.borderColor='var(--border)'">{{.T.Get "nav.business"}}</a>
-    <a href="/account" title="{{.T.Get "account.title"}}" style="font-size:13px; color:var(--text3); padding:5px 9px; border:1px solid var(--border); border-radius:var(--radius-sm); text-decoration:none; transition:all 0.18s;" onmouseover="this.style.color='var(--text2)';this.style.borderColor='var(--border2)'" onmouseout="this.style.color='var(--text3)';this.style.borderColor='var(--border)'">🔐</a>
+    <a href="/orgs"    class="{{if eq .Route "orgs"}}active{{end}}">{{.T.Get "nav.business"}}</a>
+    <a href="/account" class="{{if eq .Route "account"}}active{{end}}">{{.T.Get "nav.account"}}</a>
     <span class="nav-email">{{.Email}}</span>
     <form method="POST" action="/lang" style="display:inline;">
       <select name="lang" onchange="this.form.submit()" style="font-size:12px; background:var(--bg2); color:var(--text2); border:1px solid var(--border2); border-radius:var(--radius-sm); padding:4px 6px; cursor:pointer;">
@@ -697,6 +697,7 @@
     <a href="/auto-import"           class="{{if eq .Route "auto-import"}}active{{end}}">{{.T.Get "nav.settings.import_guide"}}</a>
     <hr>
     <a href="/orgs">{{.T.Get "nav.business"}}</a>
+    <a href="/account" class="{{if eq .Route "account"}}active{{end}}">{{.T.Get "nav.account"}}</a>
     <a href="/">{{.T.Get "nav.hub_back"}}</a>
   </div>
 
