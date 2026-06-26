@@ -77,6 +77,7 @@ resource "kubernetes_stateful_set" "mongodb" {
         container {
           name  = "mongodb"
           image = "mongo:8"
+          args  = ["--wiredTigerCacheSizeGB=0.25"]
 
           env {
             name  = "MONGO_INITDB_ROOT_USERNAME"
