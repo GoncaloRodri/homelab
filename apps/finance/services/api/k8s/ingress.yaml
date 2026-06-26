@@ -3,13 +3,16 @@ kind: Ingress
 metadata:
   name: api
   namespace: finance
+  annotations:
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
 spec:
   ingressClassName: traefik
   tls:
     - hosts:
-        - finance.homelab.local
+        - finance.gugagr.xyz
   rules:
-    - host: finance.homelab.local
+    - host: finance.gugagr.xyz
       http:
         paths:
           - path: /

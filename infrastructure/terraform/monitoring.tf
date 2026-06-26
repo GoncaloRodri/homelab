@@ -21,7 +21,7 @@ resource "helm_release" "kube_prometheus_stack" {
       adminPassword = random_password.grafana[0].result
       ingress = {
         enabled          = true
-        hosts            = ["grafana.homelab.local"]
+        hosts            = ["grafana.${var.domain}"]
         ingressClassName = "traefik"
         annotations = {
           "traefik.ingress.kubernetes.io/router.middlewares" = "auth-forward-auth@kubernetescrd"
@@ -32,7 +32,7 @@ resource "helm_release" "kube_prometheus_stack" {
           name      = "Jaeger"
           type      = "jaeger"
           uid       = "jaeger"
-          url       = "http://jaeger.monitoring.svc:16686"
+          url       = "http://jaeger.monitoring.svc.cluster.local:16686"
           access    = "proxy"
           isDefault = false
         },
@@ -92,7 +92,7 @@ resource "helm_release" "jaeger" {
     jaeger = {
       ingress = {
         enabled = true
-        hosts   = ["jaeger.homelab.local"]
+        hosts   = ["jaeger.${var.domain}"]
         annotations = {
           "traefik.ingress.kubernetes.io/router.middlewares" = "auth-forward-auth@kubernetescrd"
         }

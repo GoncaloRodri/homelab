@@ -39,6 +39,20 @@ var dashboardTmpl = parseTmpl("templates/base.html", "templates/dashboard.html")
 var homeTmpl = parseTmpl("templates/base.html", "templates/home.html")
 var forbiddenTmpl = parseTmpl("templates/base.html", "templates/forbidden.html")
 
+func domain() string {
+	if d := os.Getenv("DOMAIN"); d != "" {
+		return d
+	}
+	return "homelab.local"
+}
+
+func scheme() string {
+	if os.Getenv("DOMAIN") != "" {
+		return "https"
+	}
+	return "http"
+}
+
 var tracer = otel.Tracer("gateway")
 
 type Handler struct{}
@@ -142,12 +156,13 @@ func (h *Handler) Home(w http.ResponseWriter, r *http.Request) {
 	_, span := tracer.Start(r.Context(), "Home", trace.WithAttributes(spanAttrs(r)...))
 	defer span.End()
 
+	s, d := scheme(), domain()
 	services := []ServiceCard{
-		{Name: "Auth", Description: "Login and account management", URL: "http://auth.homelab.local/dashboard", Icon: "🔑", Delay: 0},
-		{Name: "Finance", Description: "Track your finances", URL: "http://finance.homelab.local", Icon: "💰", Delay: 0.2},
-		{Name: "Test App", Description: "Example Go service", URL: "http://test.homelab.local", Icon: "🧪", Delay: 0.4},
-		{Name: "Monitoring", Description: "Use Grafana to monitor services", URL: "http://grafana.homelab.local", Icon: "📊", Delay: 0.6},
-		{Name: "Jaeger", Description: "Trace service requests", URL: "http://jaeger.homelab.local", Icon: "🔍", Delay: 0.8},
+		{Name: "Auth", Description: "Login and account management", URL: s + "://auth." + d + "/dashboard", Icon: "🔑", Delay: 0},
+		{Name: "Finance", Description: "Track your finances", URL: s + "://finance." + d, Icon: "💰", Delay: 0.2},
+		{Name: "Test App", Description: "Example Go service", URL: s + "://example-service." + d, Icon: "🧪", Delay: 0.4},
+		{Name: "Monitoring", Description: "Use Grafana to monitor services", URL: s + "://grafana." + d, Icon: "📊", Delay: 0.6},
+		{Name: "Jaeger", Description: "Trace service requests", URL: s + "://jaeger." + d, Icon: "🔍", Delay: 0.8},
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -300,7 +315,7 @@ func (h *Handler) LoginAPI(w http.ResponseWriter, r *http.Request) {
 		Name:     "auth_token",
 		Value:    token,
 		Path:     "/",
-		Domain:   ".homelab.local",
+		Domain:   "." + domain(),
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
 	})
@@ -343,7 +358,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		Name:     "auth_token",
 		Value:    token,
 		Path:     "/",
-		Domain:   ".homelab.local",
+		Domain:   "." + domain(),
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
 	})
@@ -364,12 +379,12 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 		Name:     "auth_token",
 		Value:    "",
 		Path:     "/",
-		Domain:   ".homelab.local",
+		Domain:   "." + domain(),
 		MaxAge:   -1,
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
 	})
-	http.Redirect(w, r, "http://homelab.local/", http.StatusSeeOther)
+	http.Redirect(w, r, scheme()+"://"+domain()+"/", http.StatusSeeOther)
 	slog.InfoContext(ctx, "user logged out")
 }
 
@@ -384,7 +399,7 @@ func (h *Handler) Verify(w http.ResponseWriter, r *http.Request) {
 		if redirect == "" {
 			redirect = fmt.Sprintf("http://%s/", host)
 		}
-		loginURL := fmt.Sprintf("http://auth.homelab.local/login?redirect=%s", url.QueryEscape(redirect))
+		loginURL := fmt.Sprintf("%s://auth.%s/login?redirect=%s", scheme(), domain(), url.QueryEscape(redirect))
 		span.SetAttributes(attribute.String("verify.result", "no_cookie"))
 		slog.DebugContext(ctx, "verify: no cookie, redirecting", "to", loginURL)
 		http.Redirect(w, r, loginURL, http.StatusFound)
@@ -395,7 +410,7 @@ func (h *Handler) Verify(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		span.SetAttributes(attribute.String("verify.result", "invalid_token"))
 		slog.WarnContext(ctx, "verify: invalid token")
-		http.Redirect(w, r, "http://auth.homelab.local/login", http.StatusFound)
+		http.Redirect(w, r, scheme()+"://auth."+domain()+"/login", http.StatusFound)
 		return
 	}
 	span.SetAttributes(
@@ -407,7 +422,7 @@ func (h *Handler) Verify(w http.ResponseWriter, r *http.Request) {
 
 	// Check service-specific permission
 	host := originalHost(r)
-	if reqPerm, ok := servicePermissions[host]; ok {
+	if reqPerm, ok := servicePermissions()[host]; ok {
 		span.SetAttributes(attribute.String("verify.target_host", host), attribute.String("verify.required_perm", reqPerm))
 		if !hasPermission(claims.Permissions, reqPerm) {
 			span.SetAttributes(attribute.String("verify.result", "forbidden"))
@@ -541,10 +556,13 @@ func (h *Handler) RegisterProxy(w http.ResponseWriter, r *http.Request) {
 	w.Write(respBody)
 }
 
-var servicePermissions = map[string]string{
-	"grafana.homelab.local": "service:grafana:access",
-	"jaeger.homelab.local":  "service:jaeger:access",
-	"homelab.local":         "service:home:access",
+func servicePermissions() map[string]string {
+	d := domain()
+	return map[string]string{
+		"grafana." + d: "service:grafana:access",
+		"jaeger." + d:  "service:jaeger:access",
+		d:              "service:home:access",
+	}
 }
 
 func hasPermission(perms []string, target string) bool {

@@ -3,10 +3,16 @@ kind: Ingress
 metadata:
   namespace: auth
   name: gateway
+  annotations:
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
 spec:
   ingressClassName: traefik
+  tls:
+    - hosts:
+        - auth.gugagr.xyz
   rules:
-    - host: auth.homelab.local
+    - host: auth.gugagr.xyz
       http:
         paths:
           - path: /api/
