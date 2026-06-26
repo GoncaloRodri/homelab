@@ -21,6 +21,8 @@ profiles:
     build:
       local:
         push: true
+      platforms:
+        - linux/arm64
       tagPolicy:
         gitCommit: {}
     defaultRepo: git.gugagr.xyz/admin
