@@ -20,7 +20,7 @@ spec:
       containers:
         - name: api
           image: homelab/finance-api
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - name: http
               containerPort: 8080

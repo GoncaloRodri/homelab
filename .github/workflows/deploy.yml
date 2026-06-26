@@ -1,0 +1,50 @@
+name: deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy-finance:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Gitea registry
+        uses: docker/login-action@v3
+        with:
+          registry: git.gugagr.xyz
+          username: admin
+          password: ${{ secrets.GITEA_REGISTRY_PASSWORD }}
+
+      - name: Build and push finance-api
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/finance/services/api/Dockerfile
+          platforms: linux/arm64
+          push: true
+          tags: git.gugagr.xyz/admin/homelab_finance-api:${{ github.sha }}
+          cache-from: type=registry,ref=git.gugagr.xyz/admin/homelab_finance-api:buildcache
+          cache-to: type=registry,ref=git.gugagr.xyz/admin/homelab_finance-api:buildcache,mode=max
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            kubectl set image deployment/api \
+              api=git.gugagr.xyz/admin/homelab_finance-api:${{ github.sha }} \
+              -n finance
+            kubectl rollout status deployment/api -n finance --timeout=120s
