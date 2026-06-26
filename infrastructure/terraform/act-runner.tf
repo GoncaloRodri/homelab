@@ -100,6 +100,11 @@ resource "kubernetes_deployment" "act_runner" {
           command = ["/bin/sh", "-c"]
           args = [<<-EOT
             set -e
+            echo "Waiting for Docker daemon..."
+            until docker -H tcp://localhost:2375 info > /dev/null 2>&1; do
+              sleep 2
+            done
+            echo "Docker daemon ready."
             if [ ! -f /data/.runner ]; then
               act_runner register \
                 --no-interactive \
