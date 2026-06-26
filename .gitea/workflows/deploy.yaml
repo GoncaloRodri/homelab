@@ -23,6 +23,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install Docker CLI
+        run: apt-get update -qq && apt-get install -y -qq docker.io
+
       - name: Login to Gitea registry
         run: |
           echo "${{ secrets.REGISTRY_PASSWORD }}" \

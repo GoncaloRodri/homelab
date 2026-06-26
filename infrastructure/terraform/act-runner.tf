@@ -106,7 +106,7 @@ resource "kubernetes_deployment" "act_runner" {
                 --instance http://gitea-http.gitea.svc.cluster.local:3000 \
                 --token "$(cat /etc/runner-token/token)" \
                 --name "k3d-runner-$(hostname)" \
-                --labels ubuntu-latest
+                --labels ubuntu-latest:docker:node:20
             fi
             exec act_runner daemon --config /etc/act-runner/config.yaml
           EOT
