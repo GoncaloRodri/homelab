@@ -5,6 +5,7 @@
 # node
 node_modules
 
-# go build artifacts
-/main
+# go build artifacts — ignore compiled binaries (files named main, no extension)
+**/main
+!**/main/
 *.test
