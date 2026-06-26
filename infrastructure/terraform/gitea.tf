@@ -13,7 +13,7 @@ resource "kubernetes_secret" "gitea_admin" {
   data = {
     username = "admin"
     password = random_password.gitea_admin[0].result
-    email    = "admin@homelab.local"
+    email    = "admin@${var.domain}"
   }
 }
 
@@ -35,8 +35,8 @@ resource "helm_release" "gitea" {
       config = {
         APP_NAME = "Homelab Git"
         server = {
-          DOMAIN     = "git.homelab.local"
-          ROOT_URL   = "http://git.homelab.local"
+          DOMAIN     = "git.${var.domain}"
+          ROOT_URL   = "http://git.${var.domain}"
           SSH_DOMAIN = "localhost"
           SSH_PORT   = 30001
         }
@@ -57,7 +57,7 @@ resource "helm_release" "gitea" {
       enabled   = true
       className = "traefik"
       hosts = [{
-        host  = "git.homelab.local"
+        host  = "git.${var.domain}"
         paths = [{ path = "/", pathType = "Prefix" }]
       }]
     }
@@ -112,7 +112,7 @@ resource "terraform_data" "gitea_runner_registration" {
     command     = <<-EOT
       set -e
       echo "Waiting for Gitea to be ready..."
-      until curl -sf "http://git.homelab.local/api/v1/version" > /dev/null 2>&1; do
+      until curl -sf "http://git.${var.domain}/api/v1/version" > /dev/null 2>&1; do
         sleep 5
       done
 
@@ -121,7 +121,7 @@ resource "terraform_data" "gitea_runner_registration" {
 
       TOKEN=$(curl -sf \
         -u "admin:$PASSWORD" \
-        "http://git.homelab.local/api/v1/admin/runners/registration-token" \
+        "http://git.${var.domain}/api/v1/admin/runners/registration-token" \
         | grep -o '"token":"[^"]*"' | cut -d'"' -f4)
 
       kubectl patch secret gitea-runner-token -n gitea \
@@ -147,7 +147,7 @@ resource "kubernetes_secret" "gitea_registry" {
   data = {
     ".dockerconfigjson" = jsonencode({
       auths = {
-        "git.homelab.local" = {
+        "git.${var.domain}" = {
           auth = base64encode("admin:${random_password.gitea_admin[0].result}")
         }
       }

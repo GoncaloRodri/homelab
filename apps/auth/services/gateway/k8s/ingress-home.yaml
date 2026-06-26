@@ -5,10 +5,15 @@ metadata:
   name: gateway-home
   annotations:
     traefik.ingress.kubernetes.io/router.middlewares: auth-forward-auth@kubernetescrd
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
 spec:
   ingressClassName: traefik
+  tls:
+    - hosts:
+        - gugagr.xyz
   rules:
-    - host: homelab.local
+    - host: gugagr.xyz
       http:
         paths:
           - path: /

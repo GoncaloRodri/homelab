@@ -36,6 +36,8 @@ spec:
               value: "http://users"
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               value: "jaeger.monitoring.svc:4317"
+            - name: DOMAIN
+              value: "gugagr.xyz"
           livenessProbe:
             httpGet:
               path: /healthz
