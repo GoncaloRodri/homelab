@@ -1,0 +1,52 @@
+name: deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Run tests
+        run: go test ./...
+
+  deploy-finance:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to Gitea registry
+        run: |
+          echo "${{ secrets.GITEA_REGISTRY_PASSWORD }}" \
+            | docker login git.gugagr.xyz -u admin --password-stdin
+
+      - name: Build and push finance-api
+        run: |
+          docker build \
+            -t git.gugagr.xyz/admin/homelab_finance-api:${{ gitea.sha }} \
+            -f apps/finance/services/api/Dockerfile \
+            .
+          docker push git.gugagr.xyz/admin/homelab_finance-api:${{ gitea.sha }}
+
+      - name: Install kubectl
+        run: |
+          curl -sSLo kubectl \
+            https://dl.k8s.io/release/v1.30.0/bin/linux/arm64/kubectl
+          install -m 0755 kubectl /usr/local/bin/kubectl
+
+      - name: Deploy
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_B64 }}" | base64 -d > ~/.kube/config
+          kubectl set image deployment/api \
+            api=git.gugagr.xyz/admin/homelab_finance-api:${{ gitea.sha }} \
+            -n finance
+          kubectl rollout status deployment/api -n finance --timeout=120s
