@@ -2,8 +2,9 @@ SHELL := /bin/zsh
 
 .DEFAULT_GOAL := help
 
-K3D_SCRIPT := infrastructure/k3d/k3d.sh
+K3D_SCRIPT  := infrastructure/k3d/k3d.sh
 TERRAFORM   := terraform
+REGISTRY    := git.gugagr.xyz/admin
 
 # ── Cluster ───────────────────────────────────────────────────────────────────
 
@@ -28,8 +29,16 @@ dev: ## Watch all services — rebuild and redeploy on file change
 	skaffold dev
 
 .PHONY: run
-run: ## Build and deploy all services once
+run: ## Build and deploy all services once (local)
 	skaffold run
+
+.PHONY: deploy
+deploy: ## Build for ARM64, push to Gitea, and deploy all services to VPS
+	skaffold run -p ci --default-repo $(REGISTRY)
+
+.PHONY: deploy-%
+deploy-%: ## Build and deploy a single service to VPS (e.g. make deploy-finance-api)
+	skaffold run -p ci -m $* --default-repo $(REGISTRY)
 
 .PHONY: dev-finance
 dev-finance: ## Watch finance API only
