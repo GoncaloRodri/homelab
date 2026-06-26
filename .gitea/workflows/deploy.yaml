@@ -24,7 +24,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install Docker CLI
-        run: apt-get update -qq && apt-get install -y -qq docker.io
+        run: |
+          curl -fsSL https://download.docker.com/linux/static/stable/aarch64/docker-27.3.1.tgz \
+            | tar xzf - --strip-components=1 -C /usr/local/bin docker/docker
 
       - name: Login to Gitea registry
         run: |
