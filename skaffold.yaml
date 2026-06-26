@@ -19,10 +19,10 @@ profiles:
       - kubeContext: k3d-homelab
   - name: ci
     build:
+      defaultRepo: git.gugagr.xyz/admin
       local:
         push: true
       platforms:
         - linux/arm64
       tagPolicy:
         gitCommit: {}
-    defaultRepo: git.gugagr.xyz/admin
