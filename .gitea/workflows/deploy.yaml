@@ -25,7 +25,7 @@ jobs:
 
       - name: Login to Gitea registry
         run: |
-          echo "${{ secrets.GITEA_REGISTRY_PASSWORD }}" \
+          echo "${{ secrets.REGISTRY_PASSWORD }}" \
             | docker login git.gugagr.xyz -u admin --password-stdin
 
       - name: Build and push finance-api
