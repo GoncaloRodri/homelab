@@ -76,7 +76,7 @@ resource "kubernetes_stateful_set" "mongodb" {
       spec {
         container {
           name  = "mongodb"
-          image = "mongo:7"
+          image = "mongo:8"
 
           env {
             name  = "MONGO_INITDB_ROOT_USERNAME"
