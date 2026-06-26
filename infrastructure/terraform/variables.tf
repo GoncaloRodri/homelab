@@ -15,3 +15,7 @@ variable "domain" {
   type        = string
   default     = "homelab.local"
 }
+
+locals {
+  scheme = var.domain == "homelab.local" ? "http" : "https"
+}
