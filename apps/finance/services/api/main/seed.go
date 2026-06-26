@@ -8,15 +8,43 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
+	"golang.org/x/crypto/bcrypt"
 )
 
-// SeedAdmin looks up the admin user by email directly in the shared MongoDB
-// (both services use the same DB) and seeds demo data if the account has no
-// existing transactions.
+// SeedAdmin ensures an admin account exists in finance_users, then seeds demo
+// data if the account has no existing transactions.
 func SeedAdmin(ctx context.Context, store *Store) {
 	email := os.Getenv("SEED_USER_EMAIL")
 	if email == "" {
 		email = "admin@homelab.local"
+	}
+
+	if _, err := store.findAuthUserByEmail(ctx, email); err != nil {
+		password := os.Getenv("ADMIN_PASSWORD")
+		if password == "" {
+			slog.Warn("seed: no finance_users account and ADMIN_PASSWORD not set, skipping", "email", email)
+		} else {
+			hash, err := bcrypt.GenerateFromPassword([]byte(password), bcryptCost)
+			if err != nil {
+				slog.Error("seed: bcrypt failed", "err", err)
+				return
+			}
+			name := os.Getenv("ADMIN_NAME")
+			if name == "" {
+				name = "Admin"
+			}
+			u := &AuthUser{
+				Email:        email,
+				Name:         name,
+				PasswordHash: string(hash),
+				CreatedAt:    time.Now(),
+			}
+			if err := store.createAuthUser(ctx, u); err != nil {
+				slog.Error("seed: create admin user failed", "err", err)
+				return
+			}
+			slog.Info("seed: created admin user", "email", email)
+		}
 	}
 
 	userID, err := lookupUserByEmailMongo(ctx, store, email)
