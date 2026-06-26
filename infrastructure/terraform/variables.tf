@@ -9,3 +9,9 @@ variable "enable_monitoring" {
   type        = bool
   default     = true
 }
+
+variable "domain" {
+  description = "Base domain for all ingress hostnames (e.g. gugagr.xyz). Subdomains are created per service."
+  type        = string
+  default     = "homelab.local"
+}
