@@ -1,9 +1,11 @@
 resource "random_password" "grafana" {
+  count   = var.enable_monitoring ? 1 : 0
   length  = 24
   special = false
 }
 
 resource "helm_release" "kube_prometheus_stack" {
+  count      = var.enable_monitoring ? 1 : 0
   name       = "kps"
   namespace  = kubernetes_namespace.domains["monitoring"].metadata[0].name
   repository = "https://prometheus-community.github.io/helm-charts"
@@ -16,7 +18,7 @@ resource "helm_release" "kube_prometheus_stack" {
       enabled = false
     }
     grafana = {
-      adminPassword = random_password.grafana.result
+      adminPassword = random_password.grafana[0].result
       ingress = {
         enabled          = true
         hosts            = ["grafana.homelab.local"]
@@ -78,6 +80,7 @@ resource "helm_release" "kube_prometheus_stack" {
 }
 
 resource "helm_release" "jaeger" {
+  count      = var.enable_monitoring ? 1 : 0
   name       = "jaeger"
   namespace  = kubernetes_namespace.domains["monitoring"].metadata[0].name
   repository = "https://jaegertracing.github.io/helm-charts"
@@ -99,6 +102,7 @@ resource "helm_release" "jaeger" {
 }
 
 resource "helm_release" "loki" {
+  count      = var.enable_monitoring ? 1 : 0
   name       = "loki"
   namespace  = kubernetes_namespace.domains["monitoring"].metadata[0].name
   repository = "https://grafana.github.io/helm-charts"
@@ -175,6 +179,7 @@ resource "helm_release" "loki" {
 }
 
 resource "helm_release" "fluent_bit" {
+  count      = var.enable_monitoring ? 1 : 0
   name       = "fluent-bit"
   namespace  = kubernetes_namespace.domains["monitoring"].metadata[0].name
   repository = "https://fluent.github.io/helm-charts"
