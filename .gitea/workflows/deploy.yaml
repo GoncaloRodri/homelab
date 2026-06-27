@@ -63,7 +63,9 @@ jobs:
       - name: Deploy
         run: |
           mkdir -p ~/.kube
-          echo "${{ secrets.KUBECONFIG_B64 }}" | base64 -d > ~/.kube/config
+          echo "${{ secrets.KUBECONFIG_B64 }}" | base64 -d \
+            | sed 's|https://127.0.0.1:6443|https://167.233.80.5:6443|g' \
+            > ~/.kube/config
           kubectl set image deployment/api \
             api=git.gugagr.xyz/admin/homelab_finance-api:${{ gitea.sha }} \
             -n finance
