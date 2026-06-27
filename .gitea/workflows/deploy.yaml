@@ -20,6 +20,8 @@ jobs:
   deploy-finance:
     needs: test
     runs-on: ubuntu-latest
+    env:
+      DOCKER_HOST: tcp://localhost:2375
     steps:
       - uses: actions/checkout@v4
 
