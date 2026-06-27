@@ -25,7 +25,8 @@ jobs:
 
       - name: Install Docker CLI
         run: |
-          curl -fsSL https://download.docker.com/linux/static/stable/aarch64/docker-27.3.1.tgz \
+          ARCH=$(uname -m)
+          curl -fsSL "https://download.docker.com/linux/static/stable/${ARCH}/docker-27.3.1.tgz" \
             | tar xzf - --strip-components=1 -C /usr/local/bin docker/docker
 
       - name: Login to Gitea registry
@@ -36,6 +37,7 @@ jobs:
       - name: Build and push finance-api
         run: |
           docker build \
+            --platform linux/arm64 \
             -t git.gugagr.xyz/admin/homelab_finance-api:${{ gitea.sha }} \
             -f apps/finance/services/api/Dockerfile \
             .
@@ -43,9 +45,10 @@ jobs:
 
       - name: Install kubectl
         run: |
-          curl -sSLo kubectl \
-            https://dl.k8s.io/release/v1.30.0/bin/linux/arm64/kubectl
-          install -m 0755 kubectl /usr/local/bin/kubectl
+          ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
+          curl -sSLo /usr/local/bin/kubectl \
+            "https://dl.k8s.io/release/v1.30.0/bin/linux/${ARCH}/kubectl"
+          chmod +x /usr/local/bin/kubectl
 
       - name: Deploy
         run: |
