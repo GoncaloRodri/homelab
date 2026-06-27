@@ -25,6 +25,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Check architecture
+        run: uname -m
+
       - name: Install Docker CLI and buildx
         run: |
           ARCH=$(uname -m)

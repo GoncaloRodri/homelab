@@ -95,7 +95,7 @@ resource "kubernetes_deployment" "act_runner" {
 
         container {
           name  = "runner"
-          image = "gitea/act_runner:latest-arm64"
+          image = "gitea/act_runner:latest"
 
           command = ["/bin/sh", "-c"]
           args = [<<-EOT
@@ -151,7 +151,7 @@ resource "kubernetes_deployment" "act_runner" {
 
         container {
           name  = "dind"
-          image = "arm64v8/docker:27-dind"
+          image = "docker:27-dind"
 
           security_context {
             privileged = true
