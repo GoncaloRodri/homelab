@@ -36,9 +36,6 @@ jobs:
             -o /root/.docker/cli-plugins/docker-buildx
           chmod +x /root/.docker/cli-plugins/docker-buildx
 
-      - name: Set up QEMU for ARM64 cross-build
-        run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-
       - name: Login to Gitea registry
         run: |
           echo "${{ secrets.REGISTRY_PASSWORD }}" \
@@ -48,7 +45,6 @@ jobs:
         run: |
           docker buildx create --use --driver docker-container
           docker buildx build \
-            --platform linux/arm64 \
             --push \
             -t git.gugagr.xyz/admin/homelab_finance-api:${{ gitea.sha }} \
             -f apps/finance/services/api/Dockerfile \
